@@ -8,7 +8,11 @@ module MySDL where
     import qualified IO
 
     renderTextSolid :: TTF.Font -> String -> SDL.Color -> IO SDL.Surface
-    renderTextSolid = TTF.renderTextSolid
+    renderTextSolid font text color = if null text
+                                      then
+                                          SDL.createRGBSurface [] 0 0 0 0 0 0 0
+                                      else 
+                                          TTF.renderTextSolid font text color
         
     defaultFont :: Int -> IO TTF.Font
     defaultFont = TTF.openFont "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf"
@@ -35,8 +39,17 @@ module MySDL where
       -- tree though.
       deriving (Eq, Ord, Show, Read)
 
-    makeRect :: Vector2 Int -> SDL.Rect
-    makeRect (Vector2 x y) = SDL.Rect x y 0 0
+    makePosRect :: Vector2 Int -> SDL.Rect
+    makePosRect (Vector2 x y) = SDL.Rect x y 0 0
+
+    makeSizedRect :: Vector2 Int -> Vector2 Int -> SDL.Rect
+    makeSizedRect (Vector2 x y) (Vector2 w h) = SDL.Rect x y w h
+
+    rectX, rectY, rectW, rectH :: (Int -> Int) -> SDL.Rect -> SDL.Rect
+    rectX modifyX (SDL.Rect x y w h) = SDL.Rect (modifyX x) y w h
+    rectY modifyY (SDL.Rect x y w h) = SDL.Rect x (modifyY y) w h
+    rectW modifyW (SDL.Rect x y w h) = SDL.Rect x y (modifyW w) h
+    rectH modifyH (SDL.Rect x y w h) = SDL.Rect x y w (modifyH h)
 
     zipVectorWiths :: (a -> b -> c) -> (a -> b -> c) ->
                       Vector2 a -> Vector2 b -> Vector2 c
@@ -44,6 +57,10 @@ module MySDL where
 
     zipVectorWith :: (a -> b -> c) -> Vector2 a -> Vector2 b -> Vector2 c
     zipVectorWith f = zipVectorWiths f f
+
+    vectorX, vectorY :: (a -> a) -> Vector2 a -> Vector2 a
+    vectorX modifyX (Vector2 x y) = Vector2 (modifyX x) y
+    vectorY modifyY (Vector2 x y) = Vector2 x (modifyY y)
 
     instance Functor Vector2 where
       fmap f (Vector2 x y) = Vector2 (f x) (f y)

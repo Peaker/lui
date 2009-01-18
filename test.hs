@@ -21,7 +21,8 @@ instance Exc.Exception QuitRequest where
 handleKeyAction :: Widget.Widget a => a -> Widget.KeyStatus -> SDL.Keysym -> IO ()
 handleKeyAction widget keyStatus keySym = do
   keyMap <- Widget.getKeymap widget
-  case HierMap.lookup (keyStatus, SDL.symKey keySym) keyMap of
+  let mods = MySDLKey.modsOf (SDL.symModifiers keySym)
+  case HierMap.lookup (keyStatus, mods, SDL.symKey keySym) keyMap of
     Nothing -> return ()
     Just (description, action) -> do
       putStrLn $ "Executing " ++ description
@@ -42,7 +43,7 @@ mainLoop widget = do
   blackPixel <- MySDL.sdlPixel display (0, 0, 0)
   forever $ do
     SDL.fillRect display Nothing blackPixel
-    Widget.draw widget (MySDL.makeRect $ MySDL.Vector2 0 0) display
+    Widget.draw widget (MySDL.Vector2 0 0) display
     events <- MySDL.getEvents
     handleEvents widget events
     SDL.flip display
@@ -52,8 +53,8 @@ mainLoop widget = do
 main :: IO ()
 main = do
   MySDL.withSDL $ do
-    let red = MySDL.sdlColor (255, 0, 0)
-    textEdit <- TextEdit.new red 40 "Hello"
+    let blue = MySDL.sdlColor (0, 0, 255)
+    textEdit <- TextEdit.new blue 40 "Hello"
     flip Exc.catch errHandler (mainLoop textEdit)
     where
       errHandler :: QuitRequest -> IO ()

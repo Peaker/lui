@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wall -XDeriveDataTypeable #-}
+{-# OPTIONS_GHC -Wall #-}
 
 module HierMap(HierMap, simpleHierMap, lookup) where
 

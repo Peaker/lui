@@ -1,18 +1,19 @@
-{-# OPTIONS_GHC -Wall -XDeriveDataTypeable #-}
+{-# OPTIONS_GHC -Wall -XDeriveDataTypeable -O2 #-}
 
 module Main where
 
 import qualified Graphics.UI.SDL as SDL
 import qualified MySDL
+import qualified MySDLKey
 import qualified Control.Exception as Exc
 import qualified TextEdit
 import qualified Widget
 import qualified HierMap
 import Data.Typeable(Typeable)
-import Control.Monad(forM_, forever)
+import Control.Monad(forM, forM_)
 
 speed :: Num a => a
-speed = 10
+speed = 30
 
 data QuitRequest = QuitRequest
   deriving (Typeable, Show)
@@ -24,37 +25,42 @@ handleKeyAction widget keyStatus keySym = do
   let mods = MySDLKey.modsOf (SDL.symModifiers keySym)
   case HierMap.lookup (keyStatus, mods, SDL.symKey keySym) keyMap of
     Nothing -> return ()
-    Just (description, action) -> do
-      putStrLn $ "Executing " ++ description
+    Just (_, action) -> do
+      -- putStrLn $ "Executing " ++ description
       action
 
-handleEvents :: Widget.Widget a => a -> [SDL.Event] -> IO ()
+($>) :: Functor f => f a -> b -> f b
+x $> y = fmap (const y) x
+
+handleEvents :: Widget.Widget a => a -> [SDL.Event] -> IO Bool
 handleEvents widget events = do
-  forM_ events $ \event ->
-      case event of 
+  fmap or $ forM events $ \event ->
+      case event of
         SDL.Quit -> Exc.throwIO QuitRequest
-        SDL.KeyDown k -> handleKeyAction widget Widget.KeyDown k
-        SDL.KeyUp k -> handleKeyAction widget Widget.KeyUp k
-        _ -> return ()
+        SDL.KeyDown k -> handleKeyAction widget Widget.KeyDown k $> True
+        SDL.KeyUp k -> handleKeyAction widget Widget.KeyUp k $> True
+        _ -> return False
 
 mainLoop :: Widget.Widget a => a -> IO ()
 mainLoop widget = do
   display <- SDL.setVideoMode 800 600 16 [SDL.DoubleBuf]
   blackPixel <- MySDL.sdlPixel display (0, 0, 0)
-  forever $ do
+  forM_ (True:repeat False) $ \shouldDraw -> do
     SDL.fillRect display Nothing blackPixel
-    Widget.draw widget (MySDL.Vector2 0 0) display
     events <- MySDL.getEvents
-    handleEvents widget events
-    SDL.flip display
-    ticks <- SDL.getTicks
-    SDL.delay (speed - (ticks `mod` speed))
+    handledEvent <- handleEvents widget events
+    if handledEvent || shouldDraw
+      then do
+        Widget.draw widget (MySDL.Vector2 0 0) display
+        SDL.flip display
+      else
+        SDL.delay 10
 
 main :: IO ()
 main = do
   MySDL.withSDL $ do
-    let blue = MySDL.sdlColor (0, 0, 255)
-    textEdit <- TextEdit.new blue 40 "Hello"
+    let col = MySDL.sdlColor (255, 255, 255)
+    textEdit <- TextEdit.new col 40 "Hello"
     flip Exc.catch errHandler (mainLoop textEdit)
     where
       errHandler :: QuitRequest -> IO ()

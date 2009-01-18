@@ -7,16 +7,25 @@ module MySDL where
     import qualified Graphics.UI.SDL.TTF as TTF
     import qualified IO
 
-    renderTextSolid :: TTF.Font -> String -> SDL.Color -> IO SDL.Surface
-    renderTextSolid font text color = if null text
-                                      then
-                                          SDL.createRGBSurface [] 0 0 0 0 0 0 0
-                                      else 
-                                          TTF.renderTextSolid font text color
-        
+    import qualified Graphics.UI.SDL.Utilities as Utils
+    allValues :: (Bounded a, Utils.Enum a v) => [a]
+    allValues = Utils.enumFromTo minBound maxBound
+
+    renderText :: TTF.Font -> String -> SDL.Color -> IO SDL.Surface
+    renderText font text color = if null text
+                                 then
+                                     SDL.createRGBSurface [] 0 0 0 0 0 0 0
+                                 else
+                                     TTF.renderTextBlended font text color
+
+    textSize :: TTF.Font -> String -> IO (Vector2 Int)
+    textSize font text = do
+      (w, h) <- TTF.textSize font text
+      return $ Vector2 w h
+
     defaultFont :: Int -> IO TTF.Font
     defaultFont = TTF.openFont "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf"
-        
+
     withSDL :: IO () -> IO ()
     withSDL code = SDL.withInit [SDL.InitEverything] (IO.bracket TTF.init (const TTF.quit) (const code))
 

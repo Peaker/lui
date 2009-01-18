@@ -1,19 +1,23 @@
-{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall -O2 #-}
 
-module MySDLKey(allValues, strOf, modsOf,
-                Mods,
+module MySDLKey(strOf, modsOf, noMods, Mods, shift, ctrl, alt,
                 isShift, isCtrl, isAlt)
 where
 
 import qualified Data.Map as Map
 import Graphics.UI.SDL.Keysym
-import Graphics.UI.SDL.Utilities as Utils
 import Data.Char(toUpper)
 
-allValues :: (Bounded a, Utils.Enum a v) => [a]
-allValues = Utils.enumFromTo minBound maxBound
-
 data Mods = MkMods { isShift, isCtrl, isAlt :: Bool }
+  deriving (Eq, Ord, Show, Read)
+
+noMods :: Mods
+noMods = MkMods False False False
+
+shift, ctrl, alt :: Mods
+shift = noMods{isShift=True}
+ctrl = noMods{isCtrl=True}
+alt = noMods{isAlt=True}
 
 modsOf :: [Modifier] -> Mods
 modsOf mods =
@@ -24,9 +28,9 @@ modsOf mods =
            (any (`elem` mods)
             [KeyModLeftAlt, KeyModRightAlt, KeyModAlt])
 
-strOf :: [Modifier] -> SDLKey -> Maybe String
-strOf modifiers key =
-    case modsOf modifiers of
+strOf :: Mods -> SDLKey -> Maybe String
+strOf mods key =
+    case mods of
       MkMods False False False -> id
       MkMods True False False -> (fmap . map) toUpper
       _ -> const Nothing

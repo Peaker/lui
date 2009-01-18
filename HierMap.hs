@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall -O2 #-}
 
 module HierMap(HierMap, simpleHierMap, lookup) where
 

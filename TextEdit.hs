@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall -O2 #-}
 
 module TextEdit where
 
@@ -34,13 +34,20 @@ insert iText (TextEditState oldText oldCursor) =
         newCursor = oldCursor + length iText
     in TextEditState newText newCursor
 
-backspace :: TextEditState -> TextEditState
-backspace (TextEditState oldText oldCursor) =
-    let (preOldText, postOldText) = splitAt oldCursor oldText
-        newPreText = take (length preOldText - 1) preOldText
-        newText = concat [newPreText, postOldText]
+delBackward :: Int -> TextEditState -> TextEditState
+delBackward count (TextEditState oldText oldCursor) =
+    let (oldPreText, oldPostText) = splitAt oldCursor oldText
+        newPreText = take (length oldPreText - count) oldPreText
+        newText = newPreText ++ oldPostText
         newCursor = length newPreText
     in TextEditState newText newCursor
+
+delForward :: Int -> TextEditState -> TextEditState
+delForward count (TextEditState oldText oldCursor) =
+    let (oldPreText, oldPostText) = splitAt oldCursor oldText
+        newPostText = drop count oldPostText
+        newText = oldPreText ++ newPostText
+    in TextEditState newText oldCursor
 
 moveCursor :: (Int -> Int) -> TextEditState -> TextEditState
 moveCursor cursorFunc (TextEditState text oldCursor) =
@@ -49,25 +56,55 @@ moveCursor cursorFunc (TextEditState text oldCursor) =
                             then newCursor
                             else oldCursor
 
-textEditAction :: (TextEditState -> TextEditState) -> TextEdit -> IO ()
-textEditAction func te = modifyIORef (textEditStateRef te) func
+goHome :: TextEditState -> TextEditState
+goHome (TextEditState text _) = TextEditState text 0
 
-textEditKeysMap :: Map.Map (Widget.KeyStatus, SDLKey) (String, TextEdit -> IO ())
+goEnd :: TextEditState -> TextEditState
+goEnd (TextEditState text _) = TextEditState text (length text)
+
+type TextEditAction = (String, TextEdit -> IO ())
+
+textEditAction :: String -> (TextEditState -> TextEditState) -> TextEditAction
+textEditAction description func = (description, act)
+    where act te = modifyIORef (textEditStateRef te) func
+
+actBackspace, actDelete, actMovePrev, actMoveNext, actHome, actEnd :: TextEditAction
+actBackspace = textEditAction "Delete previous character" $ delBackward 1
+actDelete = textEditAction "Delete next character" $ delForward 1
+actMovePrev = textEditAction "Move to previous character" $ moveCursor (subtract 1)
+actMoveNext = textEditAction "Move to next character" $ moveCursor (+1)
+actHome = textEditAction "Move to beginning of text" goHome
+actEnd = textEditAction "Move to end of text" goEnd
+
+normKey, ctrlKey :: SDLKey -> (Widget.KeyStatus, MySDLKey.Mods, SDLKey)
+normKey key = (Widget.KeyDown, MySDLKey.noMods, key)
+ctrlKey key = (Widget.KeyDown, MySDLKey.ctrl, key)
+
+textEditKeysMap :: Map.Map (Widget.KeyStatus, MySDLKey.Mods, SDLKey) TextEditAction
 textEditKeysMap = Map.fromList $
-  ((Widget.KeyDown, SDL.SDLK_BACKSPACE),
-   ("Delete previous character", textEditAction backspace)) :
-  ((Widget.KeyDown, SDL.SDLK_LEFT),
-   ("Move to previous character", textEditAction . moveCursor $ (subtract 1))) :
-  ((Widget.KeyDown, SDL.SDLK_RIGHT),
-   ("Move to next character", textEditAction . moveCursor $ (+1))) :
+  (normKey SDL.SDLK_BACKSPACE, actBackspace) :
+  (ctrlKey SDL.SDLK_h, actBackspace) :
+
+  (normKey SDL.SDLK_DELETE, actDelete) :
+  (ctrlKey SDL.SDLK_d, actDelete) :
+
+  (normKey SDL.SDLK_LEFT, actMovePrev) :
+  (normKey SDL.SDLK_RIGHT, actMoveNext) :
+
+  (normKey SDL.SDLK_HOME, actHome) :
+  (ctrlKey SDL.SDLK_a, actHome) :
+
+  (normKey SDL.SDLK_END, actEnd) :
+  (ctrlKey SDL.SDLK_e, actEnd) :
+
   catMaybes [
-   insertableKeyHandler key
-   `fmap` MySDLKey.strOf key
-   | key <- MySDLKey.allValues
+   insertableKeyHandler key mods
+   `fmap` MySDLKey.strOf mods key
+   | key <- MySDL.allValues
+   , mods <- [MySDLKey.noMods, MySDLKey.shift]
   ]
-    where insertableKeyHandler key str =
-              ((Widget.KeyDown, key),
-               (("Insert "++str), textEditAction . insert $ str))
+    where insertableKeyHandler key mods str =
+              ((Widget.KeyDown, mods, key), textEditAction ("Insert " ++ str) . insert $ str)
 
 cursorWidth :: Int
 cursorWidth = 2
@@ -82,24 +119,18 @@ instance Widget.Widget TextEdit where
       state <- readIORef (textEditStateRef te)
       let text = textEditStateText state
           cursor = textEditStateCursor state
-          (preText, postText) = splitAt cursor text
+          preText = take cursor text
 
-      preTextSurface <- MySDL.renderTextSolid font
-                        preText (textEditColor te)
-      postTextSurface <- MySDL.renderTextSolid font
-                         postText (textEditColor te)
+      textSurface <- MySDL.renderText font text (textEditColor te)
+      MySDL.Vector2 preTextWidth preTextHeight <- MySDL.textSize font preText
       cursorPixelColor <- MySDL.sdlPixel surf cursorColor
-
-      let (preTextWidth, preTextHeight) = MySDL.surfaceGetSize preTextSurface
 
       let cursorJRect = Just $ MySDL.makeSizedRect (MySDL.vectorX (preTextWidth+) pos)
                                                    (MySDL.Vector2 cursorWidth preTextHeight)
 
           leftJRect = Just . MySDL.makePosRect $ pos
-          rightJRect = (fmap . MySDL.rectX) (preTextWidth+cursorWidth+) leftJRect
-      SDL.blitSurface preTextSurface Nothing surf leftJRect
+      SDL.blitSurface textSurface Nothing surf leftJRect
       SDL.fillRect surf cursorJRect cursorPixelColor
-      SDL.blitSurface postTextSurface Nothing surf rightJRect
       return ()
 
 new :: SDL.Color -> Int -> String -> IO TextEdit

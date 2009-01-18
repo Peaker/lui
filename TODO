@@ -1,0 +1,5 @@
+* All widgets are going to have an IORef State, so have the Widget
+  contain this.
+* Widgets need an update function?
+* Widgets need to return the size, separately from drawing, and then
+  draw into that size.

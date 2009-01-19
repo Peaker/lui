@@ -125,8 +125,8 @@ instance Widget.Widget TextEdit where
       MySDL.Vector2 preTextWidth preTextHeight <- MySDL.textSize font preText
       cursorPixelColor <- MySDL.sdlPixel surf cursorColor
 
-      let cursorJRect = Just $ MySDL.makeSizedRect (MySDL.vectorX (preTextWidth+) pos)
-                                                   (MySDL.Vector2 cursorWidth preTextHeight)
+      let cursorJRect = Just $ MySDL.makeRect (MySDL.vector2first (preTextWidth+) pos)
+                                              (MySDL.Vector2 cursorWidth preTextHeight)
 
           leftJRect = Just . MySDL.makePosRect $ pos
       SDL.blitSurface textSurface Nothing surf leftJRect

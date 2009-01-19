@@ -7,6 +7,7 @@ module MySDL where
     import qualified Graphics.UI.SDL.TTF as TTF
     import qualified IO
     import Control.Exception(throwIO)
+    import Control.Arrow(first, second)
 
     import qualified Graphics.UI.SDL.Utilities as Utils
     allValues :: (Bounded a, Utils.Enum a v) => [a]
@@ -67,17 +68,33 @@ module MySDL where
       -- tree though.
       deriving (Eq, Ord, Show, Read)
 
+    vector2first, vector2second :: Endo a -> Endo (Vector2 a)
+    vector2first f (Vector2 x y) = Vector2 (f x) y
+    vector2second f (Vector2 x y) = Vector2 x (f y)
+
+    rectToVectors :: SDL.Rect -> (Vector2 Int, Vector2 Int)
+    rectToVectors (SDL.Rect x y w h) = (Vector2 x y, Vector2 w h)
+    makeRect :: Vector2 Int -> Vector2 Int -> SDL.Rect
+    makeRect (Vector2 x y) (Vector2 w h) = SDL.Rect x y w h
+
+    type Endo a = a -> a
+    type Two a = (a, a)
+
+    inRect :: Endo (Two (Vector2 Int)) -> Endo (SDL.Rect)
+    inRect f = uncurry makeRect . f . rectToVectors
+
+    rectPos, rectSize :: Endo (Vector2 Int) -> Endo (SDL.Rect)
+    rectPos f = (inRect . first) f
+    rectSize f = (inRect . second) f
+
+    rectX, rectY, rectW, rectH :: Endo Int -> Endo (SDL.Rect)
+    rectX = rectPos . vector2first
+    rectY = rectPos . vector2second
+    rectW = rectSize . vector2first
+    rectH = rectSize . vector2second
+
     makePosRect :: Vector2 Int -> SDL.Rect
     makePosRect (Vector2 x y) = SDL.Rect x y 0 0
-
-    makeSizedRect :: Vector2 Int -> Vector2 Int -> SDL.Rect
-    makeSizedRect (Vector2 x y) (Vector2 w h) = SDL.Rect x y w h
-
-    rectX, rectY, rectW, rectH :: (Int -> Int) -> SDL.Rect -> SDL.Rect
-    rectX modifyX (SDL.Rect x y w h) = SDL.Rect (modifyX x) y w h
-    rectY modifyY (SDL.Rect x y w h) = SDL.Rect x (modifyY y) w h
-    rectW modifyW (SDL.Rect x y w h) = SDL.Rect x y (modifyW w) h
-    rectH modifyH (SDL.Rect x y w h) = SDL.Rect x y w (modifyH h)
 
     zipVectorWiths :: (a -> b -> c) -> (a -> b -> c) ->
                       Vector2 a -> Vector2 b -> Vector2 c
@@ -85,10 +102,6 @@ module MySDL where
 
     zipVectorWith :: (a -> b -> c) -> Vector2 a -> Vector2 b -> Vector2 c
     zipVectorWith f = zipVectorWiths f f
-
-    vectorX, vectorY :: (a -> a) -> Vector2 a -> Vector2 a
-    vectorX modifyX (Vector2 x y) = Vector2 (modifyX x) y
-    vectorY modifyY (Vector2 x y) = Vector2 x (modifyY y)
 
     instance Functor Vector2 where
       fmap f (Vector2 x y) = Vector2 (f x) (f y)

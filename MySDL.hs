@@ -1,114 +1,89 @@
 {-# OPTIONS -Wall -O2 #-}
 
 module MySDL where
-    import Data.Word(Word8)
-    import qualified MyMonad
-    import qualified Graphics.UI.SDL as SDL
-    import qualified Graphics.UI.SDL.TTF as TTF
-    import qualified IO
-    import Control.Exception(throwIO)
-    import Control.Arrow(first, second)
-    import Control.Applicative(Applicative(..), liftA2)
 
-    import qualified Graphics.UI.SDL.Utilities as Utils
-    allValues :: (Bounded a, Utils.Enum a v) => [a]
-    allValues = Utils.enumFromTo minBound maxBound
+import Data.Word(Word8)
+import qualified MyMonad
+import qualified Graphics.UI.SDL as SDL
+import qualified Graphics.UI.SDL.TTF as TTF
+import qualified IO
+import Vector2(Vector2(..), vector2first, vector2second)
+import Control.Exception(throwIO)
+import Control.Arrow(first, second)
 
-    renderText :: TTF.Font -> String -> SDL.Color -> IO SDL.Surface
-    renderText font text color = if null text
-                                 then
-                                     SDL.createRGBSurface [] 0 0 0 0 0 0 0
-                                 else
-                                     TTF.renderTextBlended font text color
+import qualified Graphics.UI.SDL.Utilities as Utils
+allValues :: (Bounded a, Utils.Enum a v) => [a]
+allValues = Utils.enumFromTo minBound maxBound
 
-    textSize :: TTF.Font -> String -> IO (Vector2 Int)
-    textSize font text = do
-      (w, h) <- TTF.textSize font text
-      return $ Vector2 w h
+renderText :: TTF.Font -> String -> SDL.Color -> IO SDL.Surface
+renderText font text color = if null text
+                             then
+                                 SDL.createRGBSurface [] 0 0 0 0 0 0 0
+                             else
+                                 TTF.renderTextBlended font text color
 
-    defaultFont :: Int -> IO TTF.Font
-    defaultFont = TTF.openFont "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf"
+textSize :: TTF.Font -> String -> IO (Vector2 Int)
+textSize font text = do
+  (w, h) <- TTF.textSize font text
+  return $ Vector2 w h
 
-    doNothing :: IO ()
-    doNothing = return ()
+defaultFont :: Int -> IO TTF.Font
+defaultFont = TTF.openFont "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf"
 
-    ioBoolToError :: String -> IO Bool -> IO ()
-    ioBoolToError errStr act = do
-      isSuccess <- act
-      if isSuccess
-        then return ()
-        else throwIO . userError $ errStr
+doNothing :: IO ()
+doNothing = return ()
 
-    initKeyRepeat :: IO ()
-    initKeyRepeat = ioBoolToError "enableKeyRepeat failed" $ SDL.enableKeyRepeat 150 10
+ioBoolToError :: String -> IO Bool -> IO ()
+ioBoolToError errStr act = do
+  isSuccess <- act
+  if isSuccess
+    then return ()
+    else throwIO . userError $ errStr
 
-    bracket__ :: IO () -> IO () -> IO () -> IO ()
-    bracket__ pre post code = IO.bracket_ pre (const post) code
+initKeyRepeat :: IO ()
+initKeyRepeat = ioBoolToError "enableKeyRepeat failed" $ SDL.enableKeyRepeat 150 10
 
-    withSDL :: IO () -> IO ()
-    withSDL = SDL.withInit [SDL.InitEverything] .
-              bracket__ initKeyRepeat doNothing .
-              bracket__ (ioBoolToError "TTF init failure" TTF.init) TTF.quit
+bracket__ :: IO () -> IO () -> IO () -> IO ()
+bracket__ pre post code = IO.bracket_ pre (const post) code
 
-    type Color = (Word8, Word8, Word8)
-    sdlColor :: Color -> SDL.Color
-    sdlColor (r, g, b) = (SDL.Color r g b)
-    sdlPixel :: SDL.Surface -> Color -> IO SDL.Pixel
-    sdlPixel surface (r, g, b) = SDL.mapRGB (SDL.surfaceGetPixelFormat surface) r g b
+withSDL :: IO () -> IO ()
+withSDL = SDL.withInit [SDL.InitEverything] .
+          bracket__ initKeyRepeat doNothing .
+          bracket__ (ioBoolToError "TTF init failure" TTF.init) TTF.quit
 
-    getEvents :: IO [SDL.Event]
-    getEvents = MyMonad.takeWhileM (return . (/=SDL.NoEvent)) SDL.pollEvent
+type Color = (Word8, Word8, Word8)
+sdlColor :: Color -> SDL.Color
+sdlColor (r, g, b) = (SDL.Color r g b)
+sdlPixel :: SDL.Surface -> Color -> IO SDL.Pixel
+sdlPixel surface (r, g, b) = SDL.mapRGB (SDL.surfaceGetPixelFormat surface) r g b
 
-    surfaceGetSize :: SDL.Surface -> (Int, Int)
-    surfaceGetSize surface = (fromIntegral (SDL.surfaceGetWidth surface),
-                              fromIntegral (SDL.surfaceGetHeight surface))
+getEvents :: IO [SDL.Event]
+getEvents = MyMonad.takeWhileM (return . (/=SDL.NoEvent)) SDL.pollEvent
 
-    data Vector2 a = Vector2 !a !a
-      -- Note the Ord instance is obviously not a mathematical one
-      -- (Vectors aren't ordinals!). Useful to have in a binary search
-      -- tree though.
-      deriving (Eq, Ord, Show, Read)
+surfaceGetSize :: SDL.Surface -> (Int, Int)
+surfaceGetSize surface = (fromIntegral (SDL.surfaceGetWidth surface),
+                          fromIntegral (SDL.surfaceGetHeight surface))
 
-    vector2first, vector2second :: Endo a -> Endo (Vector2 a)
-    vector2first f (Vector2 x y) = Vector2 (f x) y
-    vector2second f (Vector2 x y) = Vector2 x (f y)
+rectToVectors :: SDL.Rect -> (Vector2 Int, Vector2 Int)
+rectToVectors (SDL.Rect x y w h) = (Vector2 x y, Vector2 w h)
+makeRect :: Vector2 Int -> Vector2 Int -> SDL.Rect
+makeRect (Vector2 x y) (Vector2 w h) = SDL.Rect x y w h
 
-    rectToVectors :: SDL.Rect -> (Vector2 Int, Vector2 Int)
-    rectToVectors (SDL.Rect x y w h) = (Vector2 x y, Vector2 w h)
-    makeRect :: Vector2 Int -> Vector2 Int -> SDL.Rect
-    makeRect (Vector2 x y) (Vector2 w h) = SDL.Rect x y w h
+type Endo a = a -> a
+type Two a = (a, a)
 
-    type Endo a = a -> a
-    type Two a = (a, a)
+inRect :: Endo (Two (Vector2 Int)) -> Endo (SDL.Rect)
+inRect f = uncurry makeRect . f . rectToVectors
 
-    inRect :: Endo (Two (Vector2 Int)) -> Endo (SDL.Rect)
-    inRect f = uncurry makeRect . f . rectToVectors
+rectPos, rectSize :: Endo (Vector2 Int) -> Endo (SDL.Rect)
+rectPos f = (inRect . first) f
+rectSize f = (inRect . second) f
 
-    rectPos, rectSize :: Endo (Vector2 Int) -> Endo (SDL.Rect)
-    rectPos f = (inRect . first) f
-    rectSize f = (inRect . second) f
+rectX, rectY, rectW, rectH :: Endo Int -> Endo (SDL.Rect)
+rectX = rectPos . vector2first
+rectY = rectPos . vector2second
+rectW = rectSize . vector2first
+rectH = rectSize . vector2second
 
-    rectX, rectY, rectW, rectH :: Endo Int -> Endo (SDL.Rect)
-    rectX = rectPos . vector2first
-    rectY = rectPos . vector2second
-    rectW = rectSize . vector2first
-    rectH = rectSize . vector2second
-
-    makePosRect :: Vector2 Int -> SDL.Rect
-    makePosRect (Vector2 x y) = SDL.Rect x y 0 0
-
-    instance Functor Vector2 where
-      fmap f (Vector2 x y) = Vector2 (f x) (f y)
-    instance Applicative Vector2 where
-      pure x = Vector2 x x
-      Vector2 f g <*> Vector2 x y = Vector2 (f x) (g y)
-
-    -- An improper Num instance, for convenience
-    instance (Eq a, Show a, Num a) => Num (Vector2 a) where
-      (+) = liftA2 (+)
-      (-) = liftA2 (-)
-      (*) = liftA2 (*)
-      abs = fmap abs
-      negate = fmap negate
-      signum = fmap signum
-      fromInteger x = let fi = fromInteger x in Vector2 fi fi
+makePosRect :: Vector2 Int -> SDL.Rect
+makePosRect (Vector2 x y) = SDL.Rect x y 0 0

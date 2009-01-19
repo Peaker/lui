@@ -7,6 +7,7 @@ import qualified Widget
 import qualified HierMap
 import qualified Graphics.UI.SDL as SDL
 import qualified MySDLKey
+import Vector2(Vector2(..), vector2first)
 import Graphics.UI.SDL.Keysym(SDLKey)
 import qualified Data.Map as Map
 import Data.IORef(IORef, newIORef, readIORef, modifyIORef)
@@ -122,11 +123,11 @@ instance Widget.Widget TextEdit where
           preText = take cursor text
 
       textSurface <- MySDL.renderText font text (textEditColor te)
-      MySDL.Vector2 preTextWidth preTextHeight <- MySDL.textSize font preText
+      Vector2 preTextWidth preTextHeight <- MySDL.textSize font preText
       cursorPixelColor <- MySDL.sdlPixel surf cursorColor
 
-      let cursorJRect = Just $ MySDL.makeRect (MySDL.vector2first (preTextWidth+) pos)
-                                              (MySDL.Vector2 cursorWidth preTextHeight)
+      let cursorJRect = Just $ MySDL.makeRect (vector2first (preTextWidth+) pos)
+                                              (Vector2 cursorWidth preTextHeight)
 
           leftJRect = Just . MySDL.makePosRect $ pos
       SDL.blitSurface textSurface Nothing surf leftJRect

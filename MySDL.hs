@@ -6,6 +6,7 @@ module MySDL where
     import qualified Graphics.UI.SDL as SDL
     import qualified Graphics.UI.SDL.TTF as TTF
     import qualified IO
+    import Control.Exception(throwIO)
 
     import qualified Graphics.UI.SDL.Utilities as Utils
     allValues :: (Bounded a, Utils.Enum a v) => [a]
@@ -26,8 +27,26 @@ module MySDL where
     defaultFont :: Int -> IO TTF.Font
     defaultFont = TTF.openFont "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf"
 
+    doNothing :: IO ()
+    doNothing = return ()
+
+    ioBoolToError :: String -> IO Bool -> IO ()
+    ioBoolToError errStr act = do
+      isSuccess <- act
+      if isSuccess
+        then return ()
+        else throwIO . userError $ errStr
+
+    initKeyRepeat :: IO ()
+    initKeyRepeat = ioBoolToError "enableKeyRepeat failed" $ SDL.enableKeyRepeat 150 10
+
+    bracket__ :: IO () -> IO () -> IO () -> IO ()
+    bracket__ pre post code = IO.bracket_ pre (const post) code
+
     withSDL :: IO () -> IO ()
-    withSDL code = SDL.withInit [SDL.InitEverything] (IO.bracket TTF.init (const TTF.quit) (const code))
+    withSDL = SDL.withInit [SDL.InitEverything] .
+              bracket__ initKeyRepeat doNothing .
+              bracket__ (ioBoolToError "TTF init failure" TTF.init) TTF.quit
 
     type Color = (Word8, Word8, Word8)
     sdlColor :: Color -> SDL.Color

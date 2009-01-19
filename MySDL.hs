@@ -8,6 +8,7 @@ module MySDL where
     import qualified IO
     import Control.Exception(throwIO)
     import Control.Arrow(first, second)
+    import Control.Applicative(Applicative(..), liftA2)
 
     import qualified Graphics.UI.SDL.Utilities as Utils
     allValues :: (Bounded a, Utils.Enum a v) => [a]
@@ -96,21 +97,17 @@ module MySDL where
     makePosRect :: Vector2 Int -> SDL.Rect
     makePosRect (Vector2 x y) = SDL.Rect x y 0 0
 
-    zipVectorWiths :: (a -> b -> c) -> (a -> b -> c) ->
-                      Vector2 a -> Vector2 b -> Vector2 c
-    zipVectorWiths f g (Vector2 ax ay) (Vector2 bx by) = Vector2 (f ax bx) (g ay by)
-
-    zipVectorWith :: (a -> b -> c) -> Vector2 a -> Vector2 b -> Vector2 c
-    zipVectorWith f = zipVectorWiths f f
-
     instance Functor Vector2 where
       fmap f (Vector2 x y) = Vector2 (f x) (f y)
+    instance Applicative Vector2 where
+      pure x = Vector2 x x
+      Vector2 f g <*> Vector2 x y = Vector2 (f x) (g y)
 
     -- An improper Num instance, for convenience
     instance (Eq a, Show a, Num a) => Num (Vector2 a) where
-      (+) = zipVectorWith (+)
-      (-) = zipVectorWith (-)
-      (*) = zipVectorWith (*)
+      (+) = liftA2 (+)
+      (-) = liftA2 (-)
+      (*) = liftA2 (*)
       abs = fmap abs
       negate = fmap negate
       signum = fmap signum

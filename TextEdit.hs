@@ -115,24 +115,28 @@ cursorColor = (255, 0, 0)
 
 instance Widget.Widget TextEdit where
     getKeymap w = return . HierMap.simpleHierMap $ Map.map (second ($w)) textEditKeysMap
-    draw te pos surf = do
+    draw te = do
       font <- MySDL.defaultFont (textEditFontSize te)
       state <- readIORef (textEditStateRef te)
       let text = textEditStateText state
           cursor = textEditStateCursor state
           preText = take cursor text
 
-      textSurface <- MySDL.renderText font text (textEditColor te)
       Vector2 preTextWidth preTextHeight <- MySDL.textSize font preText
-      cursorPixelColor <- MySDL.sdlPixel surf cursorColor
 
-      let cursorJRect = Just $ MySDL.makeRect (vector2first (preTextWidth+) pos)
-                                              (Vector2 cursorWidth preTextHeight)
+      origTextSurface <- MySDL.renderText font text (textEditColor te)
+      textSurface <- SDL.displayFormatAlpha origTextSurface
 
-          leftJRect = Just . MySDL.makePosRect $ pos
-      SDL.blitSurface textSurface Nothing surf leftJRect
-      SDL.fillRect surf cursorJRect cursorPixelColor
-      return ()
+      let cursorRect = MySDL.makeRect (Vector2 preTextWidth 0)
+                                      (Vector2 cursorWidth preTextHeight)
+      cursorPixelColor <- MySDL.sdlPixel textSurface cursorColor
+
+      resultSurface <- MySDL.createRGBSurface $
+                       vector2first (+cursorWidth) (MySDL.surfaceSize textSurface)
+      SDL.blitSurface textSurface Nothing resultSurface Nothing
+      SDL.fillRect resultSurface (Just cursorRect) cursorPixelColor
+
+      return resultSurface
 
 new :: SDL.Color -> Int -> String -> IO TextEdit
 new color fontSize initText = do

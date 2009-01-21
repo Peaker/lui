@@ -15,6 +15,13 @@ import qualified Graphics.UI.SDL.Utilities as Utils
 allValues :: (Bounded a, Utils.Enum a v) => [a]
 allValues = Utils.enumFromTo minBound maxBound
 
+type ColorDepth = Int
+createRGBSurface :: Vector2 Int -> IO SDL.Surface
+createRGBSurface (Vector2 w h) = do
+  surface <- SDL.createRGBSurface [SDL.SWSurface]
+     w h 32 0xFF 0xFF00 0xFF0000 0x00000000
+  SDL.displayFormatAlpha surface
+
 renderText :: TTF.Font -> String -> SDL.Color -> IO SDL.Surface
 renderText font text color = if null text
                              then
@@ -60,9 +67,9 @@ sdlPixel surface (r, g, b) = SDL.mapRGB (SDL.surfaceGetPixelFormat surface) r g 
 getEvents :: IO [SDL.Event]
 getEvents = MyMonad.takeWhileM (return . (/=SDL.NoEvent)) SDL.pollEvent
 
-surfaceGetSize :: SDL.Surface -> (Int, Int)
-surfaceGetSize surface = (fromIntegral (SDL.surfaceGetWidth surface),
-                          fromIntegral (SDL.surfaceGetHeight surface))
+surfaceSize :: SDL.Surface -> Vector2 Int
+surfaceSize surface = Vector2 (SDL.surfaceGetWidth surface)
+                              (SDL.surfaceGetHeight surface)
 
 rectToVectors :: SDL.Rect -> (Vector2 Int, Vector2 Int)
 rectToVectors (SDL.Rect x y w h) = (Vector2 x y, Vector2 w h)

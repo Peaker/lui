@@ -11,7 +11,6 @@ import qualified Widget
 import qualified HierMap
 import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_)
-import Vector2(Vector2(..))
 
 speed :: Num a => a
 speed = 30
@@ -52,7 +51,8 @@ mainLoop widget = do
     handledEvent <- handleEvents widget events
     if handledEvent || shouldDraw
       then do
-        Widget.draw widget (Vector2 0 0) display
+        surf <- Widget.draw widget
+        SDL.blitSurface surf Nothing display Nothing
         SDL.flip display
       else
         SDL.delay 10

@@ -1,3 +1,4 @@
+* Draw monad instead of IO SDL.Surface
 * All widgets are going to have an IORef State, so have the Widget
   contain this.
 * Widgets need an update function?

@@ -71,22 +71,27 @@ surfaceSize :: SDL.Surface -> Vector2 Int
 surfaceSize surface = Vector2 (SDL.surfaceGetWidth surface)
                               (SDL.surfaceGetHeight surface)
 
-rectToVectors :: SDL.Rect -> (Vector2 Int, Vector2 Int)
-rectToVectors (SDL.Rect x y w h) = (Vector2 x y, Vector2 w h)
-makeRect :: Vector2 Int -> Vector2 Int -> SDL.Rect
-makeRect (Vector2 x y) (Vector2 w h) = SDL.Rect x y w h
 
 type Endo a = a -> a
 type Two a = (a, a)
 
-inRect :: Endo (Two (Vector2 Int)) -> Endo (SDL.Rect)
-inRect f = uncurry makeRect . f . rectToVectors
+rectToVectors :: SDL.Rect -> Two (Vector2 Int)
+rectToVectors (SDL.Rect x y w h) = (Vector2 x y, Vector2 w h)
 
-rectPos, rectSize :: Endo (Vector2 Int) -> Endo (SDL.Rect)
+vectorsToRect :: Two (Vector2 Int) -> SDL.Rect
+vectorsToRect (Vector2 x y, Vector2 w h) = SDL.Rect x y w h
+
+makeRect :: Vector2 Int -> Vector2 Int -> SDL.Rect
+makeRect = curry vectorsToRect
+
+inRect :: Endo (Two (Vector2 Int)) -> Endo SDL.Rect
+inRect f = vectorsToRect . f . rectToVectors
+
+rectPos, rectSize :: Endo (Vector2 Int) -> Endo SDL.Rect
 rectPos f = (inRect . first) f
 rectSize f = (inRect . second) f
 
-rectX, rectY, rectW, rectH :: Endo Int -> Endo (SDL.Rect)
+rectX, rectY, rectW, rectH :: Endo Int -> Endo SDL.Rect
 rectX = rectPos . vector2first
 rectY = rectPos . vector2second
 rectW = rectSize . vector2first

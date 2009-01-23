@@ -124,16 +124,15 @@ instance Widget.Widget TextEdit where
 
       Vector2 preTextWidth preTextHeight <- MySDL.textSize font preText
 
-      origTextSurface <- MySDL.renderText font text (textEditColor te)
-      textSurface <- SDL.displayFormatAlpha origTextSurface
+      textSurface <- MySDL.renderText font text (textEditColor te)
 
       let cursorRect = MySDL.makeRect (Vector2 preTextWidth 0)
                                       (Vector2 cursorWidth preTextHeight)
-      cursorPixelColor <- MySDL.sdlPixel textSurface cursorColor
 
       resultSurface <- MySDL.createRGBSurface $
                        vector2first (+cursorWidth) (MySDL.surfaceSize textSurface)
       SDL.blitSurface textSurface Nothing resultSurface Nothing
+      cursorPixelColor <- MySDL.sdlPixel resultSurface cursorColor
       SDL.fillRect resultSurface (Just cursorRect) cursorPixelColor
 
       return resultSurface

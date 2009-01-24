@@ -9,7 +9,7 @@ import qualified MySDLKeys
 import qualified Draw
 import qualified Control.Exception as Exc
 import qualified Control.Monad.State as State
-import qualified TextEdit
+import qualified Widgets.TextEdit as TextEdit
 import qualified Widget
 import qualified Data.Map as Map
 import Data.Typeable(Typeable)

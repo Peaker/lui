@@ -2,7 +2,7 @@
     -XMultiParamTypeClasses
   #-}
 
-module TextEdit where
+module Widgets.TextEdit where
 
 import qualified MySDL
 import qualified MySDLKey

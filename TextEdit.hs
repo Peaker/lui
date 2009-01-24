@@ -1,18 +1,19 @@
-{-# OPTIONS_GHC -Wall -O2 #-}
+{-# OPTIONS_GHC -Wall -O2
+    -XMultiParamTypeClasses
+  #-}
 
 module TextEdit where
 
 import qualified MySDL
 import qualified Widget
-import qualified HierMap
 import qualified Graphics.UI.SDL as SDL
 import qualified MySDLKey
-import Vector2(Vector2(..), vector2first)
-import Graphics.UI.SDL.Keysym(SDLKey)
+import qualified Draw
 import qualified Data.Map as Map
-import Data.IORef(IORef, newIORef, readIORef, modifyIORef)
+import Graphics.UI.SDL.Keysym(SDLKey)
 import Data.Maybe(catMaybes)
 import Control.Arrow(second)
+import Vector2(Vector2(..))
 
 isSorted :: (Ord a) => [a] -> Bool
 isSorted xs = and $ zipWith (<=) xs (tail xs)
@@ -23,9 +24,7 @@ data TextEditState = TextEditState {
 }
 
 data TextEdit = TextEdit {
-  textEditColor :: SDL.Color,
-  textEditFontSize :: Int,
-  textEditStateRef :: IORef TextEditState
+  textEditColor :: SDL.Color
 }
 
 insert :: String -> TextEditState -> TextEditState
@@ -63,19 +62,15 @@ goHome (TextEditState text _) = TextEditState text 0
 goEnd :: TextEditState -> TextEditState
 goEnd (TextEditState text _) = TextEditState text (length text)
 
-type TextEditAction = (String, TextEdit -> IO ())
-
-textEditAction :: String -> (TextEditState -> TextEditState) -> TextEditAction
-textEditAction description func = (description, act)
-    where act te = modifyIORef (textEditStateRef te) func
+type TextEditAction = (String, TextEditState -> TextEditState)
 
 actBackspace, actDelete, actMovePrev, actMoveNext, actHome, actEnd :: TextEditAction
-actBackspace = textEditAction "Delete previous character" $ delBackward 1
-actDelete = textEditAction "Delete next character" $ delForward 1
-actMovePrev = textEditAction "Move to previous character" $ moveCursor (subtract 1)
-actMoveNext = textEditAction "Move to next character" $ moveCursor (+1)
-actHome = textEditAction "Move to beginning of text" goHome
-actEnd = textEditAction "Move to end of text" goEnd
+actBackspace = ("Delete previous character", delBackward 1)
+actDelete = ("Delete next character", delForward 1)
+actMovePrev = ("Move to previous character", moveCursor (subtract 1))
+actMoveNext = ("Move to next character", moveCursor (+1))
+actHome = ("Move to beginning of text", goHome)
+actEnd = ("Move to end of text", goEnd)
 
 normKey, ctrlKey :: SDLKey -> (Widget.KeyStatus, MySDLKey.Mods, SDLKey)
 normKey key = (Widget.KeyDown, MySDLKey.noMods, key)
@@ -105,7 +100,7 @@ textEditKeysMap = Map.fromList $
    , mods <- [MySDLKey.noMods, MySDLKey.shift]
   ]
     where insertableKeyHandler key mods str =
-              ((Widget.KeyDown, mods, key), textEditAction ("Insert " ++ str) . insert $ str)
+              ((Widget.KeyDown, mods, key), (("Insert " ++ str), insert str))
 
 cursorWidth :: Int
 cursorWidth = 2
@@ -113,31 +108,11 @@ cursorWidth = 2
 cursorColor :: MySDL.Color
 cursorColor = (255, 0, 0)
 
-instance Widget.Widget TextEdit where
-    getKeymap w = return . HierMap.simpleHierMap $ Map.map (second ($w)) textEditKeysMap
-    draw te = do
-      font <- MySDL.defaultFont (textEditFontSize te)
-      state <- readIORef (textEditStateRef te)
-      let text = textEditStateText state
-          cursor = textEditStateCursor state
-          preText = take cursor text
-
-      Vector2 preTextWidth preTextHeight <- MySDL.textSize font preText
-
-      textSurface <- MySDL.renderText font text (textEditColor te)
-
-      let cursorRect = MySDL.makeRect (Vector2 preTextWidth 0)
-                                      (Vector2 cursorWidth preTextHeight)
-
-      resultSurface <- MySDL.createRGBSurface $
-                       vector2first (+cursorWidth) (MySDL.surfaceSize textSurface)
-      SDL.blitSurface textSurface Nothing resultSurface Nothing
-      cursorPixelColor <- MySDL.sdlPixel resultSurface cursorColor
-      SDL.fillRect resultSurface (Just cursorRect) cursorPixelColor
-
-      return resultSurface
-
-new :: SDL.Color -> Int -> String -> IO TextEdit
-new color fontSize initText = do
-  textState <- newIORef (TextEditState initText (length initText))
-  return $ TextEdit color fontSize textState
+instance Widget.Widget TextEdit TextEditState where
+    getKeymap _ s = Map.map (second ($s)) textEditKeysMap
+    draw te (TextEditState text cursor) = do
+        Vector2 w h <- Draw.textSize (take cursor text)
+        let cursorSize = Vector2 cursorWidth h
+            cursorPos = Vector2 w 0
+        Draw.move cursorPos $ Draw.rect cursorColor cursorSize
+        Draw.text (textEditColor te) text

@@ -1,17 +1,20 @@
-{-# OPTIONS_GHC -Wall -O2 #-}
+{-# OPTIONS_GHC -Wall -O2
+    -XMultiParamTypeClasses
+    -XFunctionalDependencies
+  #-}
 
 module Widget where
 
-import qualified Graphics.UI.SDL as SDL
 import qualified MySDLKey
-import qualified HierMap
+import qualified Data.Map as Map
 import Graphics.UI.SDL.Keysym(SDLKey)
+import Draw(Draw)
 
 data KeyStatus = KeyDown | KeyUp
   deriving (Eq, Ord, Show, Read)
 
-type Action = (String, IO ())
-
-class Widget w where
-    getKeymap :: w -> IO (HierMap.HierMap (KeyStatus, MySDLKey.Mods, SDLKey) Action)
-    draw :: w -> IO SDL.Surface
+class Widget w s | w -> s where
+    getKeymap :: w -> s -> Map.Map
+                             (KeyStatus, MySDLKey.Mods, SDLKey)
+                             (String, s)
+    draw :: w -> s -> Draw ()

@@ -14,6 +14,6 @@ data KeyStatus = KeyDown | KeyUp
 
 class Widget w s | w -> s where
     getKeymap :: w -> s -> Map.Map
-                             (KeyStatus, MySDLKey.Key)
-                             (String, s)
+                             (KeyStatus, MySDLKey.KeyGroup)
+                             (String, MySDLKey.Key -> s)
     draw :: w -> s -> Draw ()

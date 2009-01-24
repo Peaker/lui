@@ -5,6 +5,7 @@ module Main where
 import qualified Graphics.UI.SDL as SDL
 import qualified MySDL
 import qualified MySDLKey
+import qualified MySDLKeys
 import qualified Draw
 import qualified Control.Exception as Exc
 import qualified Control.Monad.State as State
@@ -12,7 +13,7 @@ import qualified TextEdit
 import qualified Widget
 import qualified Data.Map as Map
 import Data.Typeable(Typeable)
-import Control.Monad(forM, forM_)
+import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
 
 speed :: Num a => a
@@ -24,10 +25,14 @@ instance Exc.Exception QuitRequest where
 
 handleKeyAction :: Widget.Widget a s =>
                    a -> Widget.KeyStatus -> SDL.Keysym -> s -> Maybe s
-handleKeyAction widget keyStatus keySym state = do
+handleKeyAction widget keyStatus keySym state =
   let keyMap = Widget.getKeymap widget state
       key = MySDLKey.keyOfEvent keySym
-  fmap snd $ Map.lookup (keyStatus, key) keyMap
+      keyGroups = MySDLKeys.groupsOfKey key
+      mKeyHandler = msum $ flip map keyGroups lookupGroup
+      lookupGroup keyGroup = Map.lookup (keyStatus, keyGroup) keyMap
+      runHandler (_, func) = func key
+  in fmap runHandler mKeyHandler
 
 maybeModify :: State.MonadState s m => (s -> Maybe s) -> m Bool
 maybeModify f = do
@@ -39,7 +44,7 @@ maybeModify f = do
       return True
 
 handleEvents :: Widget.Widget a s => a -> [SDL.Event] -> State.StateT s IO Bool
-handleEvents widget events = do
+handleEvents widget events =
   fmap or $ forM events $ \event ->
       case event of
         SDL.Quit -> lift $ Exc.throwIO QuitRequest
@@ -63,6 +68,9 @@ mainLoop widget initState = do
       lift $
         if handledEvent || shouldDraw
         then do
+          forM_ (Map.assocs (Widget.getKeymap widget state)) $
+            \((_, group), (desc, _)) -> do
+              print (MySDLKey.keyGroupName group, desc)
           let draw = Widget.draw widget state
           Draw.render font display (fromInteger 0) draw
           SDL.flip display

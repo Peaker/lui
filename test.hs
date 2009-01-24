@@ -68,9 +68,9 @@ mainLoop widget initState = do
       lift $
         if handledEvent || shouldDraw
         then do
-          forM_ (Map.assocs (Widget.getKeymap widget state)) $
-            \((_, group), (desc, _)) -> do
-              print (MySDLKey.keyGroupName group, desc)
+          -- forM_ (Map.assocs (Widget.getKeymap widget state)) $
+          --   \((_, group), (desc, _)) -> do
+          --     print (MySDLKey.keyGroupName group, desc)
           let draw = Widget.draw widget state
           Draw.render font display (fromInteger 0) draw
           SDL.flip display

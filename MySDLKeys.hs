@@ -31,13 +31,13 @@ allGroups =
 combineGroups :: String -> [KeyGroup] -> KeyGroup
 combineGroups name groups = KeyGroup name (Set.unions . map keyGroupKeys $ groups)
 
-keysSetOfUnicode :: [(Key, String)] -> Set.Set Key
-keysSetOfUnicode = Set.fromList . map fst
+keysSetOfUnicode :: Map.Map Key String -> Set.Set Key
+keysSetOfUnicode = Set.fromList . Map.keys
 
 printableGroup, digitsGroup, lettersGroup,
   upperCaseGroup, lowerCaseGroup, arrowsGroup :: KeyGroup
-printableGroup = combineGroups "Printable" [digitsGroup, lettersGroup]
 lettersGroup = combineGroups "Letters" [upperCaseGroup, lowerCaseGroup]
+printableGroup = KeyGroup "Printable" . keysSetOfUnicode $ keysUnicode
 digitsGroup = KeyGroup "Digits" . keysSetOfUnicode $ digitsUnicode
 upperCaseGroup = KeyGroup "Upper-case letters" . keysSetOfUnicode $ upperCaseUnicode
 lowerCaseGroup = KeyGroup "Lower-case letters" . keysSetOfUnicode $ lowerCaseUnicode
@@ -47,8 +47,8 @@ arrowsGroup = KeyGroup "Arrows" $
                            ,Key noMods SDL.SDLK_UP
                            ,Key noMods SDL.SDLK_DOWN]
 
-lowerCaseUnicode, upperCaseUnicode, digitsUnicode :: [(Key, String)]
-lowerCaseUnicode =
+lowerCaseUnicode, upperCaseUnicode, digitsUnicode :: Map.Map Key String
+lowerCaseUnicode = Map.fromList $
     [(Key noMods SDL.SDLK_a, "a")
     ,(Key noMods SDL.SDLK_b, "b")
     ,(Key noMods SDL.SDLK_c, "c")
@@ -76,7 +76,7 @@ lowerCaseUnicode =
     ,(Key noMods SDL.SDLK_y, "y")
     ,(Key noMods SDL.SDLK_z, "z")
     ]
-upperCaseUnicode =
+upperCaseUnicode = Map.fromList $
     [(Key shift SDL.SDLK_a, "A")
     ,(Key shift SDL.SDLK_b, "B")
     ,(Key shift SDL.SDLK_c, "C")
@@ -104,7 +104,7 @@ upperCaseUnicode =
     ,(Key shift SDL.SDLK_y, "Y")
     ,(Key shift SDL.SDLK_z, "Z")
     ]
-digitsUnicode =
+digitsUnicode = Map.fromList $
     [(Key noMods SDL.SDLK_0, "0")
     ,(Key noMods SDL.SDLK_1, "1")
     ,(Key noMods SDL.SDLK_2, "2")
@@ -128,10 +128,11 @@ digitsUnicode =
     ]
 
 keysUnicode :: Map.Map Key String
-keysUnicode = Map.fromList $ concat
+keysUnicode = Map.unions
               [lowerCaseUnicode
               ,upperCaseUnicode
               ,digitsUnicode,
+               Map.fromList
                [(Key noMods SDL.SDLK_SPACE, " ")
                ,(Key noMods SDL.SDLK_EXCLAIM, "!")
                ,(Key noMods SDL.SDLK_QUOTEDBL, "\"")

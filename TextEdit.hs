@@ -101,7 +101,7 @@ cursorColor :: MySDL.Color
 cursorColor = (255, 0, 0)
 
 instance Widget.Widget TextEdit TextEditState where
-    getKeymap _ s = Map.map (second ($s)) textEditKeysMap
+    getKeymap _ s = (Map.map . second) ($s) textEditKeysMap
     draw te (TextEditState text cursor) = do
         Vector2 w h <- Draw.textSize (take cursor text)
         let cursorSize = Vector2 cursorWidth h

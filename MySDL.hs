@@ -105,8 +105,8 @@ inRect :: Endo (Two (Vector2 Int)) -> Endo SDL.Rect
 inRect f = vectorsToRect . f . rectToVectors
 
 rectPos, rectSize :: Endo (Vector2 Int) -> Endo SDL.Rect
-rectPos f = (inRect . first) f
-rectSize f = (inRect . second) f
+rectPos = inRect . first
+rectSize = inRect . second
 
 rectX, rectY, rectW, rectH :: Endo Int -> Endo SDL.Rect
 rectX = rectPos . vector2first

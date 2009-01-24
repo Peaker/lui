@@ -72,11 +72,11 @@ actMoveNext = ("Move to next character", moveCursor (+1))
 actHome = ("Move to beginning of text", goHome)
 actEnd = ("Move to end of text", goEnd)
 
-normKey, ctrlKey :: SDLKey -> (Widget.KeyStatus, MySDLKey.Mods, SDLKey)
-normKey key = (Widget.KeyDown, MySDLKey.noMods, key)
-ctrlKey key = (Widget.KeyDown, MySDLKey.ctrl, key)
+normKey, ctrlKey :: SDLKey -> (Widget.KeyStatus, MySDLKey.Key)
+normKey key = (Widget.KeyDown, MySDLKey.Key MySDLKey.noMods key)
+ctrlKey key = (Widget.KeyDown, MySDLKey.Key MySDLKey.ctrl key)
 
-textEditKeysMap :: Map.Map (Widget.KeyStatus, MySDLKey.Mods, SDLKey) TextEditAction
+textEditKeysMap :: Map.Map (Widget.KeyStatus, MySDLKey.Key) TextEditAction
 textEditKeysMap = Map.fromList $
   (normKey SDL.SDLK_BACKSPACE, actBackspace) :
   (ctrlKey SDL.SDLK_h, actBackspace) :
@@ -94,13 +94,14 @@ textEditKeysMap = Map.fromList $
   (ctrlKey SDL.SDLK_e, actEnd) :
 
   catMaybes [
-   insertableKeyHandler key mods
-   `fmap` MySDLKey.strOf mods key
-   | key <- MySDL.allValues
+   insertableKeyHandler key
+   `fmap` MySDLKey.strOf key
+   | k <- MySDL.allValues
    , mods <- [MySDLKey.noMods, MySDLKey.shift]
+   , let key = MySDLKey.Key mods k
   ]
-    where insertableKeyHandler key mods str =
-              ((Widget.KeyDown, mods, key), (("Insert " ++ str), insert str))
+    where insertableKeyHandler key str =
+              ((Widget.KeyDown, key), (("Insert " ++ str), insert str))
 
 cursorWidth :: Int
 cursorWidth = 2

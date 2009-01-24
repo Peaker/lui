@@ -26,8 +26,8 @@ handleKeyAction :: Widget.Widget a s =>
                    a -> Widget.KeyStatus -> SDL.Keysym -> s -> Maybe s
 handleKeyAction widget keyStatus keySym state = do
   let keyMap = Widget.getKeymap widget state
-      mods = MySDLKey.modsOf (SDL.symModifiers keySym)
-  fmap snd $ Map.lookup (keyStatus, mods, SDL.symKey keySym) keyMap
+      key = MySDLKey.keyOfEvent keySym
+  fmap snd $ Map.lookup (keyStatus, key) keyMap
 
 maybeModify :: State.MonadState s m => (s -> Maybe s) -> m Bool
 maybeModify f = do
@@ -67,7 +67,7 @@ mainLoop widget initState = do
           Draw.render font display (fromInteger 0) draw
           SDL.flip display
         else
-          SDL.delay 10
+          SDL.delay 20
 
 main :: IO ()
 main = do

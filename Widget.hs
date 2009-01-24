@@ -7,7 +7,6 @@ module Widget where
 
 import qualified MySDLKey
 import qualified Data.Map as Map
-import Graphics.UI.SDL.Keysym(SDLKey)
 import Draw(Draw)
 
 data KeyStatus = KeyDown | KeyUp
@@ -15,6 +14,6 @@ data KeyStatus = KeyDown | KeyUp
 
 class Widget w s | w -> s where
     getKeymap :: w -> s -> Map.Map
-                             (KeyStatus, MySDLKey.Mods, SDLKey)
+                             (KeyStatus, MySDLKey.Key)
                              (String, s)
     draw :: w -> s -> Draw ()

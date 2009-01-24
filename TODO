@@ -1,6 +1,8 @@
-* Draw monad instead of IO SDL.Surface
-* All widgets are going to have an IORef State, so have the Widget
-  contain this.
-* Widgets need an update function?
+* Key groups
+* Print to console the allowed keys
+* Animations:
+  * Draw -> Animate?
+    * Can use ID's on all drawings, and have it animate stuff moving around
 * Widgets need to return the size, separately from drawing, and then
   draw into that size.
+* Do widgets need an update function, beyond input events?

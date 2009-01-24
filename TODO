@@ -1,5 +1,3 @@
-* Key groups
-* Print to console the allowed keys
 * Animations:
   * Draw -> Animate?
     * Can use ID's on all drawings, and have it animate stuff moving around

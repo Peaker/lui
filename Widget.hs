@@ -18,10 +18,10 @@ data KeyStatus = KeyDown | KeyUp
 type Size = Vector2 Int
 type KeyAction = (KeyStatus, MySDLKey.KeyGroup)
 type Handler s = (String, MySDLKey.Key -> s)
-type Handlers s = Map.Map KeyAction (Handler s)
+type ActionHandlers s = Map.Map KeyAction (Handler s)
 
 class Widget w s | w -> s where
-    getKeymap :: w -> s -> Handlers s
+    getKeymap :: w -> s -> ActionHandlers s
     draw :: w -> s -> Draw Size
     size :: w -> s -> Compute Size
 

@@ -5,15 +5,20 @@
 module Widgets.Grid where
 
 import qualified Widget
+import qualified MySDLKey
+import MySDLKey(asKeyGroup, noMods)
+import qualified MySDLKeys
 import qualified Draw
 import qualified Data.Array as Array
+import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
 import Vector2(Vector2(..)
               , vector2fst, vector2snd)
 import Data.Array((!))
-import Control.Monad(forM_, forM)
 import Data.List(transpose)
-import Func((~>))
+import Control.Monad(forM_, forM)
+import Control.Arrow(first, second, (***))
+import Func((~>), result)
 
 data Item = Item
     {
@@ -61,14 +66,62 @@ rowColumnSizes grid state = do
       columnWidths = map maximum . transpose $ rowsWidths
   return (rowHeights, columnWidths)
 
+putInBounds :: Ord a => (a, a) -> a -> a
+putInBounds (low, high) = max low . min high
 
--- goRight :: State -> State
--- goRight (State cursor _) = State text (length text)
+xBounds, yBounds :: Array.Array (Int,Int) Item -> (Int, Int)
+xBounds items = (minX, maxX)
+    where
+      ((minX, _), (maxX, _)) = Array.bounds items
+yBounds items = (minY, maxY)
+    where
+      ((_, minY), (_, maxY)) = Array.bounds items
+putInXBounds, putInYBounds :: Array.Array (Int,Int) Item -> Int -> Int
+putInXBounds = putInBounds . xBounds
+putInYBounds = putInBounds . yBounds
+
+moveX, moveY :: (Int -> Int) -> State -> State
+moveX delta (State oldCursor items) = State newCursor items
+    where 
+      newCursor = first (putInXBounds items . delta) oldCursor
+moveY delta (State oldCursor items) = State newCursor items
+    where 
+      newCursor = second (putInYBounds items . delta) oldCursor
+
+actMoveLeft, actMoveRight, actMoveUp, actMoveDown :: (String, State -> State)
+actMoveLeft  = ("Move left",  moveX (subtract 1))
+actMoveRight = ("Move right", moveX (+1))
+actMoveUp    = ("Move up",    moveY (subtract 1))
+actMoveDown  = ("Move down",  moveY (+1))
+
+keysMap :: State -> Widget.ActionHandlers State
+keysMap state =
+    Map.fromList . map (((,) Widget.KeyDown) *** second ($state)) $ actions
+
+actions :: [(MySDLKeys.KeyGroup,
+             (String, State -> MySDLKey.Key -> State))]
+actions =
+    map (asKeyGroup noMods *** ignoreKey)
+    [(SDL.SDLK_LEFT, actMoveLeft)
+    ,(SDL.SDLK_RIGHT, actMoveRight)
+    ,(SDL.SDLK_UP, actMoveUp)
+    ,(SDL.SDLK_DOWN, actMoveDown)]
+    -- TODO: ignoreKey should be shared somehow?
+    where
+      -- ignoreKey adds an ignored (MySDLKey.Key ->) to the
+      -- result State in the handlers
+      ignoreKey = (second . result) const
 
 inFrac :: (Integral a, RealFrac b) => (b -> b) -> a -> a
 inFrac = fromIntegral ~> floor
 
 instance Widget.Widget Grid State where
+    getKeymap _ = keysMap
+
+    size grid state = do
+      (rowHeights, columnWidths) <- rowColumnSizes grid state
+      return $ Vector2.Vector2 (sum columnWidths) (sum rowHeights)
+
     draw grid state = do
       (rowHeights, columnWidths) <- Draw.computeToDraw $ rowColumnSizes grid state
       let rowPositions = scanl (+) 0 rowHeights
@@ -92,7 +145,3 @@ instance Widget.Widget Grid State where
                     return ()
                 onWidget Widget.draw
       return $ Vector2 (last columnPositions) (last rowPositions)
-    size grid state = do
-      (rowHeights, columnWidths) <- rowColumnSizes grid state
-      return $ Vector2.Vector2 (sum columnWidths) (sum rowHeights)
-    getKeymap = undefined

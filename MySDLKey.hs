@@ -2,7 +2,7 @@
 
 module MySDLKey(keyOfEvent
                , Key(..), KeyGroup(..)
-               , singletonKeyGroup, inKeyGroup, keyName
+               , singletonKeyGroup, asKeyGroup, keyName
                , Mods(..), noMods, shift, ctrl, alt)
 where
 
@@ -23,8 +23,8 @@ data KeyGroup = KeyGroup {
 singletonKeyGroup :: Key -> KeyGroup
 singletonKeyGroup key = KeyGroup (keyName key) (Set.singleton key)
 
-inKeyGroup :: Mods -> SDL.SDLKey -> KeyGroup
-inKeyGroup = (result . result) singletonKeyGroup Key
+asKeyGroup :: Mods -> SDL.SDLKey -> KeyGroup
+asKeyGroup = (result . result) singletonKeyGroup Key
 
 modsName :: Mods -> String
 modsName mods =

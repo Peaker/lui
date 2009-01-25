@@ -4,10 +4,10 @@
 
 module Widgets.TextEdit where
 
-import qualified MySDLKey
-import MySDLKey(inKeyGroup, noMods, ctrl)
-import qualified MySDLKeys
 import qualified Widget
+import qualified MySDLKey
+import MySDLKey(asKeyGroup, noMods, ctrl)
+import qualified MySDLKeys
 import qualified Graphics.UI.SDL as SDL
 import qualified Draw
 import qualified Data.Map as Map
@@ -78,29 +78,33 @@ actMoveNext = ("Move to next character",     moveCursor (+1))
 actHome = ("Move to beginning of text",      goHome)
 actEnd = ("Move to end of text",             goEnd)
 
-keysMap :: State -> Widget.Handlers State
+keysMap :: State -> Widget.ActionHandlers State
 keysMap state =
     Map.fromList . map (((,) Widget.KeyDown) *** second ($state)) $ actions
 
 actions :: [(MySDLKeys.KeyGroup,
-                     (String, State -> MySDLKey.Key -> State))]
+             (String, State -> MySDLKey.Key -> State))]
 actions =
     (MySDLKeys.printableGroup, ("Insert", insert)) :
-    -- map . second . second . result gets to the result State
-    -- of each of the following actions.  We apply const on it, so we
-    -- get: MySDLKey.Key -> State instead:
-    (map . second . second . result) const
-    [(inKeyGroup noMods SDL.SDLK_BACKSPACE, actBackspace)
-    ,(inKeyGroup ctrl   SDL.SDLK_h, actBackspace)
-    ,(inKeyGroup noMods SDL.SDLK_DELETE, actDelete)
-    ,(inKeyGroup ctrl   SDL.SDLK_d, actDelete)
-    ,(inKeyGroup noMods SDL.SDLK_LEFT, actMovePrev)
-    ,(inKeyGroup noMods SDL.SDLK_RIGHT, actMoveNext)
-    ,(inKeyGroup noMods SDL.SDLK_HOME, actHome)
-    ,(inKeyGroup ctrl   SDL.SDLK_a, actHome)
-    ,(inKeyGroup noMods SDL.SDLK_END, actEnd)
-    ,(inKeyGroup ctrl   SDL.SDLK_e, actEnd)
+
+    map (asKeyGroup noMods *** ignoreKey)
+    [(SDL.SDLK_BACKSPACE, actBackspace)
+    ,(SDL.SDLK_DELETE, actDelete)
+    ,(SDL.SDLK_LEFT, actMovePrev)
+    ,(SDL.SDLK_RIGHT, actMoveNext)
+    ,(SDL.SDLK_HOME, actHome)
+    ,(SDL.SDLK_END, actEnd)] ++
+
+    map (asKeyGroup ctrl *** ignoreKey)
+    [(SDL.SDLK_h, actBackspace)
+    ,(SDL.SDLK_d, actDelete)
+    ,(SDL.SDLK_a, actHome)
+    ,(SDL.SDLK_e, actEnd)
     ]
+    where
+      -- ignoreKey adds an ignored (MySDLKey.Key ->) to the
+      -- result State in the handlers
+      ignoreKey = (second . result) const
 
 cursorWidth :: Int
 cursorWidth = 2
@@ -110,6 +114,9 @@ cursorColor = SDL.Color 255 0 0
 
 instance Widget.Widget TextEdit State where
     getKeymap _ = keysMap
+
+    size _ (State text _) = Draw.textSize text
+
     draw te (State text cursor) = do
       Vector2 w h <- Draw.computeToDraw . Draw.textSize $ take cursor text
       let cursorSize = Vector2 cursorWidth h
@@ -117,4 +124,3 @@ instance Widget.Widget TextEdit State where
       size <- Draw.text (textEditColor te) text
       Draw.move cursorPos $ Draw.rect cursorColor cursorSize
       return size
-    size _ (State text _) = Draw.textSize text

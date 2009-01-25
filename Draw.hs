@@ -2,7 +2,16 @@
   -XGeneralizedNewtypeDeriving
   #-}
 
-module Draw(Draw, text, rect, move, render, textSize) where
+module Draw(
+           -- The monads
+            Draw, Compute
+           -- Compute primitives
+           , textSize
+           -- Draw primitives
+           , computeToDraw
+           , text, rect, move
+           -- Monad runners
+           , render, computeResult) where
 
 import Vector2(Vector2(..))
 import Control.Monad.Trans(MonadIO, lift, liftIO)
@@ -17,41 +26,52 @@ type Size = Vector2 Int
 fRunReaderT :: r -> ReaderT r m a -> m a
 fRunReaderT = flip runReaderT
 
--- Monad Transformers require a bit of boiler-plate...
-newtype Draw a = Draw (ReaderT SDL.Surface (ReaderT Position (ReaderT TTF.Font IO)) a)
+newtype Compute a = Compute { unCompute :: ReaderT TTF.Font IO a }
     deriving (Monad, MonadIO)
-liftFont :: ReaderT TTF.Font IO a -> Draw a
-liftFont = Draw . lift . lift
-liftPosition :: ReaderT Position (ReaderT TTF.Font IO) a -> Draw a
+liftFont :: ReaderT TTF.Font IO a -> Compute a
+liftFont = Compute
+
+-- Monad Transformers require a bit of boiler-plate...
+newtype Draw a = Draw { unDraw :: ReaderT SDL.Surface (ReaderT Position Compute) a }
+    deriving (Monad, MonadIO)
+liftPosition :: ReaderT Position Compute a -> Draw a
 liftPosition = Draw . lift
-liftSurface :: ReaderT SDL.Surface
-               (ReaderT Position
-                (ReaderT TTF.Font IO)) a
-               -> Draw a
+liftSurface :: ReaderT SDL.Surface (ReaderT Position Compute) a -> Draw a
 liftSurface = Draw
 
-render :: TTF.Font -> SDL.Surface -> Position -> Draw a -> IO a
-render font surface pos (Draw act) = fRunReaderT font . fRunReaderT pos . fRunReaderT surface $ act
+computeToDraw :: Compute a -> Draw a
+computeToDraw = Draw . lift . lift
 
-textSize :: String -> Draw Size
+computeResult :: TTF.Font -> Compute a -> IO a
+computeResult font = fRunReaderT font . unCompute
+
+render :: TTF.Font -> SDL.Surface -> Position -> Draw a -> IO a
+render font surface pos = computeResult font .
+                          fRunReaderT pos .
+                          fRunReaderT surface .
+                          unDraw
+
+textSize :: String -> Compute Size
 textSize str = do
   font <- liftFont ask
   liftIO $ MySDL.textSize font str
 
-text :: SDL.Color -> String -> Draw ()
+text :: SDL.Color -> String -> Draw Size
 text color str = do
-  font <- liftFont ask
+  font <- computeToDraw . liftFont $ ask
   textSurface <- liftIO $ MySDL.renderText font str color
   surface <- liftSurface ask
   position <- liftPosition ask
   liftIO $ MySDL.blit surface position textSurface
+  computeToDraw . textSize $ str
   
-rect :: MySDL.Color -> Size -> Draw ()
+rect :: SDL.Color -> Size -> Draw Size
 rect color size = do
   surface <- liftSurface $ ask
   position <- liftPosition ask
   let r = MySDL.makeRect position size
   liftIO $ MySDL.fillRect surface r color
+  return size
 
 move :: Position -> Draw a -> Draw a
 move delta (Draw act) = do

@@ -2,12 +2,13 @@
 
 module MySDLKey(keyOfEvent
                , Key(..), KeyGroup(..)
-               ,singletonKeyGroup,keyName
+               , singletonKeyGroup, inKeyGroup, keyName
                , Mods(..), noMods, shift, ctrl, alt)
 where
 
 import qualified Graphics.UI.SDL as SDL
 import qualified Data.Set as Set
+import Func(result)
 
 data Mods = MkMods { isShift, isCtrl, isAlt :: Bool }
   deriving (Eq, Ord, Show, Read)
@@ -21,6 +22,9 @@ data KeyGroup = KeyGroup {
 
 singletonKeyGroup :: Key -> KeyGroup
 singletonKeyGroup key = KeyGroup (keyName key) (Set.singleton key)
+
+inKeyGroup :: Mods -> SDL.SDLKey -> KeyGroup
+inKeyGroup = (result . result) singletonKeyGroup Key
 
 modsName :: Mods -> String
 modsName mods =

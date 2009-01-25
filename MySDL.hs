@@ -2,11 +2,10 @@
 
 module MySDL where
 
-import Data.Word(Word8)
-import qualified MyMonad
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.TTF as TTF
 import qualified IO
+import MyMonad(whileM)
 import Vector2(Vector2(..), vector2first, vector2second)
 import Control.Exception(throwIO)
 import Control.Arrow(first, second)
@@ -28,7 +27,7 @@ blit dest pos src = do
   SDL.blitSurface src Nothing dest (Just . makePosRect $ pos)
   return ()
 
-fillRect :: SDL.Surface -> SDL.Rect -> Color -> IO ()
+fillRect :: SDL.Surface -> SDL.Rect -> SDL.Color -> IO ()
 fillRect surface rect color = do
   pixel <- MySDL.sdlPixel surface color
   SDL.fillRect surface (Just $ rect) pixel
@@ -70,14 +69,11 @@ withSDL = SDL.withInit [SDL.InitEverything] .
           bracket__ initKeyRepeat doNothing .
           bracket__ (ioBoolToError "TTF init failure" TTF.init) TTF.quit
 
-type Color = (Word8, Word8, Word8)
-sdlColor :: Color -> SDL.Color
-sdlColor (r, g, b) = (SDL.Color r g b)
-sdlPixel :: SDL.Surface -> Color -> IO SDL.Pixel
-sdlPixel surface (r, g, b) = SDL.mapRGB (SDL.surfaceGetPixelFormat surface) r g b
+sdlPixel :: SDL.Surface -> SDL.Color -> IO SDL.Pixel
+sdlPixel surface (SDL.Color r g b) = SDL.mapRGB (SDL.surfaceGetPixelFormat surface) r g b
 
 getEvents :: IO [SDL.Event]
-getEvents = MyMonad.takeWhileM (return . (/=SDL.NoEvent)) SDL.pollEvent
+getEvents = MyMonad.whileM (/=SDL.NoEvent) SDL.pollEvent
 
 surfaceSize :: SDL.Surface -> Vector2 Int
 surfaceSize surface = Vector2 (SDL.surfaceGetWidth surface)

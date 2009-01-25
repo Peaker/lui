@@ -1,6 +1,8 @@
 {-# OPTIONS -Wall -O2 #-}
 
-module Vector2(Vector2(Vector2), vector2first, vector2second) where
+module Vector2(Vector2(Vector2)
+              , vector2first, vector2second
+              , vector2fst, vector2snd) where
 
 import Control.Applicative(Applicative(..), liftA2)
 
@@ -12,6 +14,9 @@ data Vector2 a = Vector2 !a !a
 
 type Endo a = a -> a
 
+vector2fst, vector2snd :: Vector2 a -> a
+vector2fst (Vector2 x _) = x
+vector2snd (Vector2 _ y) = y
 vector2first, vector2second :: Endo a -> Endo (Vector2 a)
 vector2first f (Vector2 x y) = Vector2 (f x) y
 vector2second f (Vector2 x y) = Vector2 x (f y)

@@ -10,8 +10,10 @@ import qualified Draw
 import qualified Control.Exception as Exc
 import qualified Control.Monad.State as State
 import qualified Widgets.TextEdit as TextEdit
+import qualified Widgets.Grid as Grid
 import qualified Widget
 import qualified Data.Map as Map
+import qualified Data.Array as Array
 import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
@@ -54,10 +56,10 @@ handleEvents widget events =
                        handleKeyAction widget Widget.KeyUp k
         _ -> return False
 
-mainLoop :: Widget.Widget a s => a -> s -> IO ()
-mainLoop widget initState = do
+mainLoop :: Widget.AnyWidgetState -> IO ()
+mainLoop (Widget.AnyWidgetState widget initState) = do
   display <- SDL.setVideoMode 800 600 16 [SDL.DoubleBuf]
-  blackPixel <- MySDL.sdlPixel display (0, 0, 0)
+  blackPixel <- MySDL.sdlPixel display $ SDL.Color 0 0 0
   font <- MySDL.defaultFont 30
   flip State.evalStateT initState $
     forM_ (True:repeat False) $ \shouldDraw -> do
@@ -80,10 +82,16 @@ mainLoop widget initState = do
 main :: IO ()
 main = do
   MySDL.withSDL $ do
-    let col = MySDL.sdlColor (255, 255, 255)
-        textEdit = TextEdit.TextEdit col
-        textEditState = TextEdit.TextEditState "Hello" 5
-    flip Exc.catch errHandler (mainLoop textEdit textEditState)
+    let textEditColor = SDL.Color 255 255 255
+        cursorBGColor = SDL.Color 20 20 255
+        grid = Grid.new cursorBGColor (0, 0) $
+               Array.listArray ((0,0),(1,1))
+               [Grid.Item (0.5, 1) $
+                TextEdit.new textEditColor ("Hello " ++ show (x, y)) (x+y*2)
+                | x <- [0..1]
+                , y <- [0..1]]
+
+    flip Exc.catch errHandler (mainLoop grid)
     where
       errHandler :: QuitRequest -> IO ()
       errHandler = const . putStrLn $ "Quit requested"

@@ -1,9 +1,8 @@
 module MyMonad where
     import Control.Monad(liftM)
-    takeWhileM :: Monad m => (a -> m Bool) -> m a -> m [a]
-    takeWhileM cond element = do
+    whileM :: Monad m => (a -> Bool) -> m a -> m [a]
+    whileM cond element = do
       value <- element
-      shouldTake <- cond value
-      if shouldTake
-        then liftM (value:) (takeWhileM cond element)
+      if cond value
+        then liftM (value:) (whileM cond element)
         else return []

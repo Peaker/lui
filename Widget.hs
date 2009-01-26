@@ -22,8 +22,8 @@ type ActionHandlers s = Map.Map KeyAction (Handler s)
 
 class Widget w s | w -> s where
     getKeymap :: w -> s -> ActionHandlers s
-    draw :: w -> s -> Draw Size
-    size :: w -> s -> Compute Size
+    draw      :: w -> s -> Draw Size
+    size      :: w -> s -> Compute Size
 
 data AnyWidgetState = forall w s. Widget w s =>
                       AnyWidgetState w s

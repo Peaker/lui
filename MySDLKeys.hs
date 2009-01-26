@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wall -O2 #-}
+
 module MySDLKeys
     (KeyGroup(..),allGroups,groupsOfKey,keysUnicode
     ,printableGroup,digitsGroup,lettersGroup

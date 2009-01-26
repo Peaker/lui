@@ -1,3 +1,6 @@
+{-# OPTIONS_GHC -Wall -O2
+  #-}
+
 module MyMonad where
     import Control.Monad(liftM)
     whileM :: Monad m => (a -> Bool) -> m a -> m [a]

@@ -1,3 +1,31 @@
+* draw can remain focus-neutral. If the parent wants, it can draw
+  the right child's focus when it wants to.
+
+* Grid should not be a Widget, but a ChildContainer
+
+  * ChildContainer makes you specify functions that:
+
+    * prechildren draw, postchildren draw -- these will get a
+      haveFocus Bool, which the ChildContainer implementation will
+      hand them.
+
+    * 
+
+  * Can have a FocusWidget that can hold a widget that tells it who the inner
+    widget is, and it will handle return/escape as either:
+    * Switch to the inner widget completely
+    * Switch focus to inner widget, but still draw outer widget
+
+    * Doing this by delegating the handlers and draw is easy, but if you want to 
+
+  * How can it draw the focus correctly?
+    * FocusWidget needs to tell the outer widget draw itself with/without focus
+
+    * If Grid is responsible for the drawing of the sub-widgets, and it doesn't
+      know whether its in focus or not -- how can it tell them to draw focused or not?
+
+    * If someone else does the drawing, then its ugly
+
 * Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
 * Animations:
   * Draw -> Animate?

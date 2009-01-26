@@ -5,6 +5,7 @@
 module Widgets.Grid where
 
 import qualified Widget
+import qualified FocusWidget
 import qualified MySDLKey
 import MySDLKey(asKeyGroup, noMods)
 import qualified MySDLKeys
@@ -145,3 +146,6 @@ instance Widget.Widget Grid State where
                     return ()
                 onWidget Widget.draw
       return $ Vector2 (last columnPositions) (last rowPositions)
+
+instance FocusWidget.HasChildren Grid State where
+    currentWidget = selectedWidget

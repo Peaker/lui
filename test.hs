@@ -61,7 +61,7 @@ mainLoop (Widget.AnyWidgetState widget initState) = do
   display <- SDL.setVideoMode 800 600 16 [SDL.DoubleBuf]
   blackPixel <- MySDL.sdlPixel display $ SDL.Color 0 0 0
   font <- MySDL.defaultFont 30
-  flip State.evalStateT initState $
+  (`State.evalStateT` initState) $
     forM_ (True:repeat False) $ \shouldDraw -> do
       lift $ SDL.fillRect display Nothing blackPixel
       events <- lift $ MySDL.getEvents

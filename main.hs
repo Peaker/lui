@@ -87,14 +87,15 @@ main = do
     let textEditingColor = SDL.Color 30 20 100
         textEditColor = SDL.Color 255 255 255
         textEditCursorColor = SDL.Color 255 0 0
+        textEditCursorWidth = 2
         focusColor = SDL.Color 0 0 150
         grid = Grid.newDelegated focusColor False (0, 0) (2, 2) $
                Map.fromList
                [((x, y),
                  Grid.Item (0.5, 1) $
                  TextEdit.newDelegated
-                         focusColor False
-                         textEditingColor textEditCursorColor (x+y*2)
+                         focusColor False textEditingColor
+                         textEditCursorColor textEditCursorWidth (x+y*2)
                          textEditColor ("Hello " ++ show (x, y)))
                 | x <- [0..1]
                 , y <- [0..1]]

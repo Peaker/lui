@@ -8,7 +8,6 @@ import qualified Widget
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified MySDLKey
 import MySDLKey(asKeyGroup, noMods)
-import qualified MySDLKeys
 import qualified Draw
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
@@ -93,22 +92,19 @@ actMoveUp    = ("Move up",    moveY (subtract 1))
 actMoveDown  = ("Move down",  moveY (+1))
 
 keysMap :: State -> Widget.ActionHandlers State
-keysMap state =
-    Map.fromList . map (((,) Widget.KeyDown) *** second ($state)) $ actions
-
-actions :: [(MySDLKeys.KeyGroup,
-             (String, State -> MySDLKey.Key -> State))]
-actions =
-    map (asKeyGroup noMods *** ignoreKey)
-    [(SDL.SDLK_LEFT, actMoveLeft)
-    ,(SDL.SDLK_RIGHT, actMoveRight)
-    ,(SDL.SDLK_UP, actMoveUp)
-    ,(SDL.SDLK_DOWN, actMoveDown)]
-    -- TODO: ignoreKey should be shared somehow?
+keysMap state = Map.fromList $
+    let (x,y) = stateCursor state
+        (sx,sy) = stateSize state
+    in map (((,) Widget.KeyDown . asKeyGroup noMods) ***
+            second (const . ($state))) $ concat $
+           [
+            cond (x > 0)    (SDL.SDLK_LEFT,  actMoveLeft)
+           ,cond (x < sx-1) (SDL.SDLK_RIGHT, actMoveRight)
+           ,cond (y > 0)    (SDL.SDLK_UP,    actMoveUp)
+           ,cond (y < sy-1) (SDL.SDLK_DOWN,  actMoveDown)
+           ]
     where
-      -- ignoreKey adds an ignored (MySDLKey.Key ->) to the
-      -- result State in the handlers
-      ignoreKey = (second . result) const
+      cond p i = if p then [i] else []
 
 inFrac :: (Integral a, RealFrac b) => (b -> b) -> a -> a
 inFrac = fromIntegral ~> floor

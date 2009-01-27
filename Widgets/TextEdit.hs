@@ -12,10 +12,9 @@ import qualified Graphics.UI.SDL as SDL
 import qualified Draw
 import qualified Data.Map as Map
 import qualified Widgets.FocusDelegator as FocusDelegator
-import Func(result)
 import Data.Map((!))
 import Graphics.UI.SDL.Keysym(SDLKey)
-import Control.Arrow(second, (***))
+import Control.Arrow(first, second)
 import Vector2(Vector2(..))
 
 isSorted :: (Ord a) => [a] -> Bool
@@ -31,27 +30,29 @@ data TextEdit = TextEdit {
       textEditEditingBGColor :: SDL.Color
     , textEditColor :: SDL.Color
     , textEditCursorColor :: SDL.Color
+    , textEditCursorWidth :: Int
 }
   deriving Show
 
 type NewTextView = SDL.Color -> String -> Widget.AnyWidgetState
-type NewTextEdit = SDL.Color -> SDL.Color -> Int -> NewTextView
+type NewTextEdit = SDL.Color -> SDL.Color -> Int -> Int -> NewTextView
 
 -- newView must never get the focus...
 newView :: NewTextView
-newView = new undefined undefined undefined
+newView = new undefined undefined undefined undefined
 
 new :: NewTextEdit
-new editingBGColor cursorColor cursor textColor str =
-    Widget.AnyWidgetState (TextEdit editingBGColor textColor cursorColor)
+new editingBGColor cursorColor cursorWidth cursor textColor str =
+    Widget.AnyWidgetState (TextEdit editingBGColor textColor
+                                    cursorColor cursorWidth)
                           (State str cursor)
 
 newDelegated :: SDL.Color -> Bool -> NewTextEdit
 newDelegated notEditingBGColor startEditing
-             textColor str editingBGColor cursorColor cursor =
+             textColor str editingBGColor cursorColor cursorWidth cursor =
     FocusDelegator.new "Start editing" "Stop editing"
                        notEditingBGColor startEditing $
-                       new textColor str editingBGColor cursorColor cursor
+                       new textColor str editingBGColor cursorColor cursorWidth cursor
 
 insert :: State -> MySDLKey.Key -> State
 insert (State oldText oldCursor) key =
@@ -99,36 +100,41 @@ actMoveNext = ("Move to next character",     moveCursor (+1))
 actHome = ("Move to beginning of text",      goHome)
 actEnd = ("Move to end of text",             goEnd)
 
-actions :: [(MySDLKeys.KeyGroup,
-             (String, State -> MySDLKey.Key -> State))]
-actions =
-    (MySDLKeys.printableGroup, ("Insert", insert)) :
-
-    map (asKeyGroup noMods *** ignoreKey)
-    [(SDL.SDLK_BACKSPACE, actBackspace)
-    ,(SDL.SDLK_DELETE, actDelete)
-    ,(SDL.SDLK_LEFT, actMovePrev)
-    ,(SDL.SDLK_RIGHT, actMoveNext)
-    ,(SDL.SDLK_HOME, actHome)
-    ,(SDL.SDLK_END, actEnd)] ++
-
-    map (asKeyGroup ctrl *** ignoreKey)
-    [(SDL.SDLK_h, actBackspace)
-    ,(SDL.SDLK_d, actDelete)
-    ,(SDL.SDLK_a, actHome)
-    ,(SDL.SDLK_e, actEnd)
-    ]
-    where
-      -- ignoreKey adds an ignored (MySDLKey.Key ->) to the
-      -- result State in the handlers
-      ignoreKey = (second . result) const
-
 keysMap :: State -> Widget.ActionHandlers State
-keysMap state =
-    Map.fromList . map (((,) Widget.KeyDown) *** second ($state)) $ actions
+keysMap state = Map.fromList . (map . first) ((,) Widget.KeyDown) $
+    (MySDLKeys.printableGroup, ("Insert", insert state)) :
+    (map . second . second) (const . ($state)) (normalActions state ++ ctrlActions state)
 
-cursorWidth :: Int
-cursorWidth = 2
+cond :: Bool -> [a] -> [a]
+cond p i = if p then i else []
+
+normalActions :: State -> [(MySDLKey.KeyGroup, (String, State -> State))]
+normalActions state =
+    let cursor = stateCursor state
+        text = stateText state
+    in (map . first) (asKeyGroup noMods) . concat $
+           [cond (cursor > 0)
+                     [(SDL.SDLK_BACKSPACE, actBackspace)
+                     ,(SDL.SDLK_LEFT, actMovePrev)
+                     ,(SDL.SDLK_HOME, actHome)]
+           ,cond (cursor < (length text - 1))
+                     [(SDL.SDLK_DELETE, actDelete)
+                     ,(SDL.SDLK_RIGHT, actMoveNext)
+                     ,(SDL.SDLK_END, actEnd)]
+           ]
+
+ctrlActions :: State -> [(MySDLKey.KeyGroup, (String, State -> State))]
+ctrlActions state =
+    let cursor = stateCursor state
+        text = stateText state
+    in (map . first) (asKeyGroup ctrl) . concat $
+           [cond (cursor > 0)
+                     [(SDL.SDLK_h, actBackspace)
+                     ,(SDL.SDLK_a, actHome)]
+           ,cond (cursor < (length text - 1))
+                     [(SDL.SDLK_d, actDelete)
+                     ,(SDL.SDLK_e, actEnd)]
+           ]
 
 instance Widget.Widget TextEdit State where
     getKeymap _ = keysMap
@@ -140,7 +146,7 @@ instance Widget.Widget TextEdit State where
         then do
           textSize <- Draw.computeToDraw . Draw.textSize $ text
           Vector2 w h <- Draw.computeToDraw . Draw.textSize $ take cursor text
-          let cursorSize = Vector2 cursorWidth h
+          let cursorSize = Vector2 (textEditCursorWidth textEdit) h
               cursorPos = Vector2 w 0
           Draw.rect (textEditEditingBGColor textEdit) textSize
           Draw.text (textEditColor textEdit) text

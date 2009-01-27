@@ -12,9 +12,9 @@ import qualified Draw
 import qualified Control.Exception as Exc
 import qualified Control.Monad.State as State
 import qualified Widget
--- import qualified Widgets.TextEdit as TextEdit
--- import qualified Widgets.Grid as Grid
-import qualified Widgets.Table as Table
+import qualified Widgets.TextEdit as TextEdit
+import qualified Widgets.Grid as Grid
+-- import qualified Widgets.Table as Table
 import qualified Data.Map as Map
 import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_, msum)
@@ -84,30 +84,30 @@ mainLoop (Widget.AnyWidgetState widget initState) = do
 main :: IO ()
 main = do
   MySDL.withSDL $ do
-    let -- textEditingColor = SDL.Color 30 20 100
-        -- textEditColor = SDL.Color 255 255 255
-        -- textEditCursorColor = SDL.Color 255 0 0
-        -- focusColor = SDL.Color 0 0 150
-        green = SDL.Color 50 150 50
-        blue = SDL.Color 50 50 200
-        table = Table.new [[Table.ColorString green "Hello",
-                            Table.ColorString blue "World"],
-                           [Table.ColorString green "Moshiko",
-                            Table.ColorString blue "Dani"]]
-        -- grid = Grid.newDelegated focusColor False (0, 0) (2, 2) $
-        --        Map.fromList
-        --        [((x, y),
-        --          Grid.Item (0.5, 1) $
-        --          TextEdit.newDelegated
-        --                  focusColor False
-        --                  textEditingColor textEditCursorColor (x+y*2)
-        --                  textEditColor ("Hello " ++ show (x, y)))
-        --         | x <- [0..1]
-        --         , y <- [0..1]]
+    let textEditingColor = SDL.Color 30 20 100
+        textEditColor = SDL.Color 255 255 255
+        textEditCursorColor = SDL.Color 255 0 0
+        focusColor = SDL.Color 0 0 150
+        grid = Grid.newDelegated focusColor False (0, 0) (2, 2) $
+               Map.fromList
+               [((x, y),
+                 Grid.Item (0.5, 1) $
+                 TextEdit.newDelegated
+                         focusColor False
+                         textEditingColor textEditCursorColor (x+y*2)
+                         textEditColor ("Hello " ++ show (x, y)))
+                | x <- [0..1]
+                , y <- [0..1]]
+        -- green = SDL.Color 50 150 50
+        -- blue = SDL.Color 50 50 200
+        -- table = Table.new [[Table.ColorString green "Hello",
+        --                     Table.ColorString blue "World"],
+        --                    [Table.ColorString green "Moshiko",
+        --                     Table.ColorString blue "Dani"]]
         -- textEdit = TextEdit.newDelegated focusColor False
         --                                  textEditingColor textEditCursorColor 5
         --                                  textEditColor "Hello world"
-        widget = table
+        widget = grid
 
     flip Exc.catch errHandler (mainLoop widget)
     where

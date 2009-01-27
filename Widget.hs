@@ -24,6 +24,7 @@ data DrawInfo = DrawInfo
     {
       diHasFocus :: Bool
     }
+  deriving (Eq, Ord, Show, Read)
 
 class Widget w s | w -> s where
     getKeymap :: w -> s -> ActionHandlers s

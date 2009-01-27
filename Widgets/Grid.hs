@@ -149,6 +149,6 @@ instance Widget.Widget Grid State where
                                  Widget.size childDrawInfo
                   let pos = Vector2 (xpos + inFrac (*ax) (width-w))
                                     (ypos + inFrac (*ay) (height-h))
-                  Draw.move pos . onWidget $ Widget.draw drawInfo
+                  Draw.move pos . onWidget $ Widget.draw childDrawInfo
                   return ()
       return $ Vector2 (sum columnWidths) (sum rowHeights)

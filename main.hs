@@ -11,9 +11,7 @@ import qualified Control.Exception as Exc
 import qualified Control.Monad.State as State
 import qualified Widget
 import qualified Widgets.TextEdit as TextEdit
-import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified Widgets.Grid as Grid
-import qualified Data.Array as Array
 import qualified Data.Map as Map
 import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_, msum)
@@ -85,16 +83,18 @@ main = do
   MySDL.withSDL $ do
     let textEditingColor = SDL.Color 30 20 100
         textEditColor = SDL.Color 255 255 255
+        textEditCursorColor = SDL.Color 255 0 0
         focusColor = SDL.Color 0 0 150
-        -- grid = Grid.new (0, 0) $
-        --        Array.listArray ((0,0),(1,1))
-        --        [Grid.Item (0.5, 1) $
-        --         TextEdit.new textEditColor ("Hello " ++ show (x, y)) (x+y*2)
-        --         | x <- [0..1]
-        --         , y <- [0..1]]
-        textEdit = TextEdit.newDelegated focusColor False textEditingColor
-                   textEditColor "Hello world" 5
-        widget = textEdit
+        grid = Grid.newDelegated focusColor False (0, 0) (2, 2) $
+               Map.fromList
+               [((x, y),
+                 Grid.Item (0.5, 1) $
+                 TextEdit.newDelegated focusColor False textEditingColor textEditColor textEditCursorColor ("Hello " ++ show (x, y)) (x+y*2))
+                | x <- [0..1]
+                , y <- [0..1]]
+        -- textEdit = TextEdit.newDelegated focusColor False textEditingColor
+        --            textEditColor "Hello world" 5
+        widget = grid
 
     flip Exc.catch errHandler (mainLoop widget)
     where

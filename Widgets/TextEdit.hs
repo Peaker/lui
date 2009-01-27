@@ -25,22 +25,29 @@ data State = State {
       stateText :: String
     , stateCursor :: Int
 }
+  deriving Show
 
 data TextEdit = TextEdit {
       textEditEditingBGColor :: SDL.Color
     , textEditColor :: SDL.Color
+    , textEditCursorColor :: SDL.Color
 }
+  deriving Show
 
-new :: SDL.Color -> SDL.Color -> String -> Int -> Widget.AnyWidgetState
-new editingBGColor textColor str cursor = Widget.AnyWidgetState
-                                  (TextEdit editingBGColor textColor) (State str cursor)
+type NewTextEdit = SDL.Color -> SDL.Color -> SDL.Color -> String -> Int ->
+                   Widget.AnyWidgetState
 
-newDelegated :: SDL.Color -> Bool -> SDL.Color -> SDL.Color -> String -> Int ->
-                Widget.AnyWidgetState
-newDelegated notEditingBGColor startEditing editingBGColor textColor str cursor =
+new :: NewTextEdit
+new editingBGColor textColor cursorColor str cursor =
+    Widget.AnyWidgetState (TextEdit editingBGColor textColor cursorColor)
+                          (State str cursor)
+
+newDelegated :: SDL.Color -> Bool -> NewTextEdit
+newDelegated notEditingBGColor startEditing
+             editingBGColor textColor cursorColor str cursor =
     FocusDelegator.new "Start editing" "Stop editing"
                        notEditingBGColor startEditing $
-                       new editingBGColor textColor str cursor
+                       new editingBGColor textColor cursorColor str cursor
 
 insert :: State -> MySDLKey.Key -> State
 insert (State oldText oldCursor) key =
@@ -119,9 +126,6 @@ keysMap state =
 cursorWidth :: Int
 cursorWidth = 2
 
-cursorColor :: SDL.Color
-cursorColor = SDL.Color 255 0 0
-
 instance Widget.Widget TextEdit State where
     getKeymap _ = keysMap
 
@@ -136,7 +140,7 @@ instance Widget.Widget TextEdit State where
         then do
           Draw.rect (textEditEditingBGColor textEdit) textSize
           Draw.text (textEditColor textEdit) text
-          Draw.move cursorPos $ Draw.rect cursorColor cursorSize
+          Draw.move cursorPos $ Draw.rect (textEditCursorColor textEdit) cursorSize
           return textSize
         else
           Draw.text (textEditColor textEdit) text

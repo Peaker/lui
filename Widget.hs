@@ -32,5 +32,6 @@ class Widget w s | w -> s where
 
 data AnyWidgetState = forall w s. Widget w s =>
                       AnyWidgetState w s
+
 onAnyWidgetState :: AnyWidgetState -> (forall w s. Widget w s => w -> s -> a) -> a
 onAnyWidgetState (AnyWidgetState w s) func = func w s

@@ -12,8 +12,18 @@ import Control.Arrow(first, second)
 import Control.Applicative(liftA2)
 
 import qualified Graphics.UI.SDL.Utilities as Utils
+
 allValues :: (Bounded a, Utils.Enum a v) => [a]
 allValues = Utils.enumFromTo minBound maxBound
+
+instance Show SDL.Color where
+    show (SDL.Color r g b) = concat [
+                              "(SDL.Color"
+                             ,' ':show r
+                             ,' ':show g
+                             ,' ':show b
+                             ,")"
+                             ]
 
 type ColorDepth = Int
 createRGBSurface :: Vector2 Int -> IO SDL.Surface

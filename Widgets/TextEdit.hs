@@ -34,20 +34,24 @@ data TextEdit = TextEdit {
 }
   deriving Show
 
-type NewTextEdit = SDL.Color -> SDL.Color -> SDL.Color -> String -> Int ->
-                   Widget.AnyWidgetState
+type NewTextView = SDL.Color -> String -> Widget.AnyWidgetState
+type NewTextEdit = SDL.Color -> SDL.Color -> Int -> NewTextView
+
+-- newView must never get the focus...
+newView :: NewTextView
+newView = new undefined undefined undefined
 
 new :: NewTextEdit
-new editingBGColor textColor cursorColor str cursor =
+new editingBGColor cursorColor cursor textColor str =
     Widget.AnyWidgetState (TextEdit editingBGColor textColor cursorColor)
                           (State str cursor)
 
 newDelegated :: SDL.Color -> Bool -> NewTextEdit
 newDelegated notEditingBGColor startEditing
-             editingBGColor textColor cursorColor str cursor =
+             textColor str editingBGColor cursorColor cursor =
     FocusDelegator.new "Start editing" "Stop editing"
                        notEditingBGColor startEditing $
-                       new editingBGColor textColor cursorColor str cursor
+                       new textColor str editingBGColor cursorColor cursor
 
 insert :: State -> MySDLKey.Key -> State
 insert (State oldText oldCursor) key =
@@ -132,12 +136,12 @@ instance Widget.Widget TextEdit State where
     size _ _ (State text _) = Draw.textSize text
 
     draw drawInfo textEdit (State text cursor) = do
-      Vector2 w h <- Draw.computeToDraw . Draw.textSize $ take cursor text
-      textSize <- Draw.computeToDraw . Draw.textSize $ text
-      let cursorSize = Vector2 cursorWidth h
-          cursorPos = Vector2 w 0
       if Widget.diHasFocus drawInfo
         then do
+          textSize <- Draw.computeToDraw . Draw.textSize $ text
+          Vector2 w h <- Draw.computeToDraw . Draw.textSize $ take cursor text
+          let cursorSize = Vector2 cursorWidth h
+              cursorPos = Vector2 w 0
           Draw.rect (textEditEditingBGColor textEdit) textSize
           Draw.text (textEditColor textEdit) text
           Draw.move cursorPos $ Draw.rect (textEditCursorColor textEdit) cursorSize

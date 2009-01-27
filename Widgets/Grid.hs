@@ -14,7 +14,6 @@ import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
 import Vector2(Vector2(..)
               , vector2fst, vector2snd)
-import Data.Map((!))
 import Data.List(transpose)
 import Control.Monad(forM_, forM)
 import Control.Arrow(first, second, (***))
@@ -53,25 +52,25 @@ newDelegated gridFocusColor startInItem cursor size items =
     FocusDelegator.new "Go in" "Go out" gridFocusColor startInItem $
                        new cursor size items
 
-selectedItem :: Grid -> State -> Item
-selectedItem _ (State cursor _ items) = items ! cursor
+selectedItem :: Grid -> State -> Maybe Item
+selectedItem _ (State cursor _ items) = cursor `Map.lookup` items
 
-selectedWidget :: Grid -> State -> Widget.AnyWidgetState
-selectedWidget grid state = itemWidgetState $ selectedItem grid state
-
-gridRows :: Grid -> State -> [[(Cursor, Item)]]
+gridRows :: Grid -> State -> [[(Cursor, Maybe Item)]]
 gridRows _ (State _ (sizex, sizey) items) =
-    [[((x,y), items ! (x,y)) | x <- [0..sizex-1]] | y <- [0..sizey-1]]
+    [[((x,y), (x,y) `Map.lookup` items) | x <- [0..sizex-1]] | y <- [0..sizey-1]]
 
-gridDrawInfo :: Grid -> State -> Cursor -> Widget.DrawInfo
-gridDrawInfo _ (State cursor _ _) itemIndex =
-    Widget.DrawInfo (cursor==itemIndex)
+gridDrawInfo :: Grid -> State -> Cursor -> Widget.DrawInfo -> Widget.DrawInfo
+gridDrawInfo _ (State cursor _ _) itemIndex (Widget.DrawInfo drawInfo) =
+    Widget.DrawInfo (drawInfo && cursor==itemIndex)
 
-rowColumnSizes :: Grid -> State -> Draw.Compute ([Int], [Int])
-rowColumnSizes grid state = do
-  rowsSizes <- forM (gridRows grid state) . mapM $ \(itemIndex, item) ->
-                   Widget.onAnyWidgetState (itemWidgetState item) $
-                   Widget.size $ gridDrawInfo grid state itemIndex
+rowColumnSizes :: Grid -> State -> Widget.DrawInfo -> Draw.Compute ([Int], [Int])
+rowColumnSizes grid state drawInfo = do
+  rowsSizes <- forM (gridRows grid state) . mapM $ \(itemIndex, mItem) ->
+                   case mItem of
+                     Nothing -> return $ Vector2 0 0
+                     Just item ->
+                         Widget.onAnyWidgetState (itemWidgetState item) $
+                         Widget.size $ gridDrawInfo grid state itemIndex drawInfo
 
   let rowsHeights = (map . map) vector2snd rowsSizes
       rowsWidths = (map . map) vector2fst rowsSizes
@@ -117,7 +116,8 @@ inFrac = fromIntegral ~> floor
 instance Widget.Widget Grid State where
     getKeymap grid state@(State cursor size items) =
         case selectedItem grid state of
-          Item alignments (Widget.AnyWidgetState child oldChildState) ->
+          Nothing -> keysMap state
+          Just (Item alignments (Widget.AnyWidgetState child oldChildState)) ->
               (Map.map . second . result)
               (\newChildState -> State cursor size $
                                  Map.insert cursor (Item alignments $ Widget.AnyWidgetState child newChildState) items)
@@ -126,24 +126,29 @@ instance Widget.Widget Grid State where
               keysMap state
 
 
-    size _ grid state = do
-      (rowHeights, columnWidths) <- rowColumnSizes grid state
-      return $ Vector2.Vector2 (sum columnWidths) (sum rowHeights)
+    size drawInfo grid state = do
+      (rowHeights, columnWidths) <- rowColumnSizes grid state drawInfo
+      return $ Vector2 (sum columnWidths) (sum rowHeights)
 
-    draw _ grid state = do
-      (rowHeights, columnWidths) <- Draw.computeToDraw $ rowColumnSizes grid state
+    draw drawInfo grid state = do
+      (rowHeights, columnWidths) <- Draw.computeToDraw $ rowColumnSizes grid state drawInfo
       let posSizes sizes = let positions = scanl (+) 0 sizes
                            in zip positions sizes
           rows = gridRows grid state
       forM_ (zip (posSizes rowHeights) rows) $
         \((ypos, height), row) -> do
           forM_ (zip (posSizes columnWidths) row) $
-            \((xpos, width), (itemIndex,item)) -> do
-              let Item (ax, ay) widget = item
-                  drawInfo = gridDrawInfo grid state itemIndex
-                  onWidget = (widget `Widget.onAnyWidgetState`)
-              Vector2 w h <- Draw.computeToDraw $ onWidget (Widget.size drawInfo)
-              let pos = Vector2 (xpos + inFrac (*ax) (width-w))
-                                (ypos + inFrac (*ay) (height-h))
-              Draw.move pos $ onWidget (Widget.draw drawInfo)
+            \((xpos, width), (itemIndex, mItem)) ->
+              case mItem of
+                Nothing -> return ()
+                Just item -> do
+                  let Item (ax, ay) widget = item
+                      childDrawInfo = gridDrawInfo grid state itemIndex drawInfo
+                      onWidget = (widget `Widget.onAnyWidgetState`)
+                  Vector2 w h <- Draw.computeToDraw . onWidget $
+                                 Widget.size childDrawInfo
+                  let pos = Vector2 (xpos + inFrac (*ax) (width-w))
+                                    (ypos + inFrac (*ay) (height-h))
+                  Draw.move pos . onWidget $ Widget.draw drawInfo
+                  return ()
       return $ Vector2 (sum columnWidths) (sum rowHeights)

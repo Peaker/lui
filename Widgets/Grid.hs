@@ -17,6 +17,7 @@ import Data.List(transpose)
 import Control.Monad(forM_, forM)
 import Control.Arrow(first, second, (***))
 import Func((~>), result)
+import Data.Maybe(fromMaybe)
 
 data Item = Item
     {
@@ -110,16 +111,24 @@ inFrac :: (Integral a, RealFrac b) => (b -> b) -> a -> a
 inFrac = fromIntegral ~> floor
 
 instance Widget.Widget Grid State where
-    getKeymap grid state@(State cursor items) =
-        case selectedItem grid state of
-          Nothing -> keysMap grid state
-          Just (Item alignments (Widget.AnyWidgetState child oldChildState)) ->
-              (Map.map . second . result)
-              (\newChildState -> State cursor $
-                                 Map.insert cursor (Item alignments $ Widget.AnyWidgetState child newChildState) items)
-              (Widget.getKeymap child oldChildState)
-              `Map.union`
-              keysMap grid state
+    getKeymap grid state@(State cursor items) = Just $
+        let childKeys =
+                case selectedItem grid state of
+                  Nothing -> Map.empty
+                  Just (Item alignments (Widget.AnyWidgetState child oldChildState)) ->
+                      fromMaybe Map.empty $
+                        (Map.map . second . result)
+                        (wrapChildState child alignments)
+                        `fmap`
+                        (Widget.getKeymap child oldChildState)
+        in childKeys `Map.union` keysMap grid state
+        where
+          wrapChildState child alignments newChildState =
+              State cursor $
+              Map.insert cursor
+                (Item alignments $
+                 Widget.AnyWidgetState child newChildState)
+              items
 
 
     size drawInfo grid state = do

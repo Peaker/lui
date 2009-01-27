@@ -27,7 +27,7 @@ data DrawInfo = DrawInfo
   deriving (Eq, Ord, Show, Read)
 
 class Widget w s | w -> s where
-    getKeymap :: w -> s -> ActionHandlers s
+    getKeymap :: w -> s -> Maybe (ActionHandlers s)
     draw      :: DrawInfo -> w -> s -> Draw Size
     size      :: DrawInfo -> w -> s -> Compute Size
 

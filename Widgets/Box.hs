@@ -86,7 +86,7 @@ gridStateToBoxState (Box orientation)
           Item (fromTuple . swap $ alignments) widgetState
 
 instance Widget.Widget Box State where
-    getKeymap box state = (Map.map . second . result) (gridStateToBoxState box) $
+    getKeymap box state = (Map.map . second . result) (gridStateToBoxState box) `fmap`
                           boxToGridCall box state Widget.getKeymap
     draw drawInfo box state = boxToGridCall box state $ Widget.draw drawInfo
     size drawInfo box state = boxToGridCall box state $ Widget.size drawInfo

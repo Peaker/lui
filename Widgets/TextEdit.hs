@@ -137,7 +137,7 @@ ctrlActions state =
            ]
 
 instance Widget.Widget TextEdit State where
-    getKeymap _ = keysMap
+    getKeymap _ = Just . keysMap
 
     size _ _ (State text _) = Draw.textSize text
 

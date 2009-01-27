@@ -15,8 +15,9 @@ import qualified Widget
 import qualified Widgets.TextEdit as TextEdit
 import qualified Widgets.Grid as Grid
 import qualified Widgets.Box as Box
--- import qualified Widgets.Table as Table
+import qualified Widgets.Space as Space
 import qualified Data.Map as Map
+import Vector2(Vector2(..))
 import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
@@ -31,11 +32,11 @@ instance Exc.Exception QuitRequest where
 handleKeyAction :: Widget.Widget a s =>
                    a -> Widget.KeyStatus -> SDL.Keysym -> s -> Maybe s
 handleKeyAction widget keyStatus keySym state =
-  let keyMap = Widget.getKeymap widget state
-      key = MySDLKey.keyOfEvent keySym
+  let key = MySDLKey.keyOfEvent keySym
       keyGroups = MySDLKeys.groupsOfKey key
-      mKeyHandler = msum $ flip map keyGroups lookupGroup
-      lookupGroup keyGroup = Map.lookup (keyStatus, keyGroup) keyMap
+      mKeyHandler = msum $ map lookupGroup keyGroups
+      lookupGroup keyGroup = Map.lookup (keyStatus, keyGroup) =<<
+                             Widget.getKeymap widget state
       runHandler (_, func) = func key
   in fmap runHandler mKeyHandler
 
@@ -104,10 +105,11 @@ main = do
                                          textEditingColor textEditCursorColor
                                          textEditCursorWidth 5
                                          textEditColor "Hello world"
-        vbox = Box.new Box.Vertical 0 [Box.Item 1 grid,
-                                       Box.Item 0.5 textEdit]
-        hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 vbox,
-                                         Box.Item 0.1 textEdit]
+        vbox = Box.new Box.Vertical 0 [Box.Item 1 grid
+                                      ,Box.Item 0.5 (Space.new (Vector2 50 50))
+                                      ,Box.Item 0.5 textEdit]
+        hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 vbox
+                                        ,Box.Item 0.1 textEdit]
         widget = hbox
 
     flip Exc.catch errHandler (mainLoop widget)

@@ -89,7 +89,7 @@ main = do
         textEditCursorColor = SDL.Color 255 0 0
         textEditCursorWidth = 2
         focusColor = SDL.Color 0 0 150
-        grid = Grid.newDelegated focusColor False (0, 0) (2, 2) $
+        grid = Grid.newDelegated focusColor False (2, 2) (0, 0) $
                Map.fromList
                [((x, y),
                  Grid.Item (0.5, 1) $

@@ -1,27 +1,8 @@
-* FocusDelegator
+* Is it a good idea to have "new" return existential widgets? How do you "edit"
+  w and s values then?
 
 * Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
-
-* draw can remain focus-neutral. If the parent wants, it can draw
-  the right child's focus when it wants to.
-
-* Grid should not be a Widget.
-  Grid.new returns a WidgetManager.
-  WidgetManager has a container field that points to the Grid inside it.
-
-instance Widget Grid where
-  draw (Grid cm) = cmDraw cm
-
-  * Every user of a WidgetContainer has to implement (e.g Grid):
-    * draw function -- manually calls children, manually computes drawinfo for children
-    * focused keymap -- Handlers for when it has direct focus
-    * parenting keymap -- Handlers for when it has parenting focus
-    * children and positions
-    * currently selected child
 
 * Animations:
   * Draw -> Animate?
     * Can use ID's on all drawings, and have it animate stuff moving around
-* Widgets need to return the size, separately from drawing, and then
-  draw into that size.
-* Do widgets need an update function, beyond input events?

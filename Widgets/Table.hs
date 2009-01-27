@@ -30,7 +30,7 @@ new :: NewTable
 new rows = Widget.AnyWidgetState (Table rows) State
 
 makeGrid :: NewTable
-makeGrid rows = Grid.new (0, 0) (maximum . map length $ rows, length rows) $
+makeGrid rows = Grid.new (maximum . map length $ rows, length rows) (0, 0) $
                 Map.fromList [((x, y),
                                Grid.Item (0.5, 0.5) $ TextEdit.newView color str)
                               | (y, row) <- zip [0..] rows

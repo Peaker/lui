@@ -32,34 +32,34 @@ type Cursor = (Int, Int)
 
 data Grid = Grid
     {
+      gridSize :: Cursor
     }
 
 data State = State
     {
       stateCursor :: Cursor
-    , stateSize :: Cursor
     , stateItems :: Map.Map Cursor Item
     }
 
 type NewGrid = Cursor -> Cursor -> Map.Map Cursor Item -> Widget.AnyWidgetState
 
 new :: NewGrid
-new cursor size items = Widget.AnyWidgetState Grid $ State cursor size items
+new size cursor items = Widget.AnyWidgetState (Grid size) $ State cursor items
 
 newDelegated :: SDL.Color -> Bool -> NewGrid
-newDelegated gridFocusColor startInItem cursor size items =
+newDelegated gridFocusColor startInItem size cursor items =
     FocusDelegator.new "Go in" "Go out" gridFocusColor startInItem $
-                       new cursor size items
+                       new size cursor items
 
 selectedItem :: Grid -> State -> Maybe Item
-selectedItem _ (State cursor _ items) = cursor `Map.lookup` items
+selectedItem _ (State cursor items) = cursor `Map.lookup` items
 
 gridRows :: Grid -> State -> [[(Cursor, Maybe Item)]]
-gridRows _ (State _ (sizex, sizey) items) =
+gridRows (Grid (sizex, sizey)) (State _ items) =
     [[((x,y), (x,y) `Map.lookup` items) | x <- [0..sizex-1]] | y <- [0..sizey-1]]
 
 gridDrawInfo :: Grid -> State -> Cursor -> Widget.DrawInfo -> Widget.DrawInfo
-gridDrawInfo _ (State cursor _ _) itemIndex (Widget.DrawInfo drawInfo) =
+gridDrawInfo _ (State cursor _) itemIndex (Widget.DrawInfo drawInfo) =
     Widget.DrawInfo (drawInfo && cursor==itemIndex)
 
 rowColumnSizes :: Grid -> State -> Widget.DrawInfo -> Draw.Compute ([Int], [Int])
@@ -77,26 +77,26 @@ rowColumnSizes grid state drawInfo = do
       columnWidths = map maximum . transpose $ rowsWidths
   return (rowHeights, columnWidths)
 
-moveX, moveY :: (Int -> Int) -> State -> State
-moveX delta (State oldCursor size@(sizex, _) items) = State newCursor size items
+moveX, moveY :: (Int -> Int) -> Grid -> State -> State
+moveX delta (Grid (sizex, _)) (State oldCursor items) = State newCursor items
     where 
       newCursor = first (max 0 . min (sizex-1) . delta) oldCursor
-moveY delta (State oldCursor size@(_, sizey) items) = State newCursor size items
+moveY delta (Grid (_, sizey)) (State oldCursor items) = State newCursor items
     where 
       newCursor = second (max 0 . min (sizey-1) . delta) oldCursor
 
-actMoveLeft, actMoveRight, actMoveUp, actMoveDown :: (String, State -> State)
+actMoveLeft, actMoveRight, actMoveUp, actMoveDown :: (String, Grid -> State -> State)
 actMoveLeft  = ("Move left",  moveX (subtract 1))
 actMoveRight = ("Move right", moveX (+1))
 actMoveUp    = ("Move up",    moveY (subtract 1))
 actMoveDown  = ("Move down",  moveY (+1))
 
-keysMap :: State -> Widget.ActionHandlers State
-keysMap state = Map.fromList $
+keysMap :: Grid -> State -> Widget.ActionHandlers State
+keysMap grid state = Map.fromList $
     let (x,y) = stateCursor state
-        (sx,sy) = stateSize state
+        (sx,sy) = gridSize grid
     in map (((,) Widget.KeyDown . asKeyGroup noMods) ***
-            second (const . ($state))) $ concat $
+            second (const . ($state) . ($grid))) $ concat $
            [
             cond (x > 0)    (SDL.SDLK_LEFT,  actMoveLeft)
            ,cond (x < sx-1) (SDL.SDLK_RIGHT, actMoveRight)
@@ -110,16 +110,16 @@ inFrac :: (Integral a, RealFrac b) => (b -> b) -> a -> a
 inFrac = fromIntegral ~> floor
 
 instance Widget.Widget Grid State where
-    getKeymap grid state@(State cursor size items) =
+    getKeymap grid state@(State cursor items) =
         case selectedItem grid state of
-          Nothing -> keysMap state
+          Nothing -> keysMap grid state
           Just (Item alignments (Widget.AnyWidgetState child oldChildState)) ->
               (Map.map . second . result)
-              (\newChildState -> State cursor size $
+              (\newChildState -> State cursor $
                                  Map.insert cursor (Item alignments $ Widget.AnyWidgetState child newChildState) items)
               (Widget.getKeymap child oldChildState)
               `Map.union`
-              keysMap state
+              keysMap grid state
 
 
     size drawInfo grid state = do

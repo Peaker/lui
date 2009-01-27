@@ -16,10 +16,10 @@ data TextView = TextView {
 data State = State {
 }
 
-type NewTextView = SDL.Color -> String -> Widget.AnyWidgetState
+type NewTextView = SDL.Color -> String -> Widget.WidgetState TextView State
 new :: NewTextView
 new textColor str =
-    Widget.AnyWidgetState (TextView textColor str) State
+    Widget.WidgetState (TextView textColor str) State
 
 instance Widget.Widget TextView State where
     getKeymap _ _ = Nothing

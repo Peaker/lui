@@ -36,16 +36,17 @@ data State = State
     , stateItems :: [Item]
     }
 
-type NewBox = Orientation -> Cursor -> [Item] ->
-              Widget.AnyWidgetState
+type New w s = Orientation -> Cursor -> [Item] ->
+               Widget.WidgetState w s
 
-new :: NewBox
-new orientation cursor items = Widget.AnyWidgetState (Box orientation)
-                                                     (State cursor items)
+new :: New Box State
+new orientation cursor items = Widget.WidgetState (Box orientation)
+                                                  (State cursor items)
 
-newDelegated :: SDL.Color -> Bool -> NewBox
+newDelegated :: SDL.Color -> Bool ->
+                New FocusDelegator.FocusDelegator FocusDelegator.State
 newDelegated boxFocusColor startInItem orientation cursor items =
-    FocusDelegator.new "Go in" "Go out" boxFocusColor startInItem $
+    FocusDelegator.new "Go in" "Go out" boxFocusColor startInItem . Widget.upCast $
                        new orientation cursor items
 
 toOrientationTuple :: Orientation -> a -> a -> (a, a)

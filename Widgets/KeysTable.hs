@@ -24,8 +24,8 @@ grid keysColor descColor (Widget.AnyWidgetState widget state) =
     where
       keyMap = fromMaybe Map.empty $ Widget.getKeymap widget state
       items = Map.fromList . concat $
-              [[((0, y), gItem keyGroupTextView),
-                ((1, y), gItem descTextView)]
+              [[((0, y), gItem . Widget.upCast $ keyGroupTextView),
+                ((1, y), gItem . Widget.upCast $ descTextView)]
                | (y, (keyGroup, desc)) <-
                    zip [0..] . sort . (map . first) snd . (map . second) fst $
                        Map.assocs keyMap,

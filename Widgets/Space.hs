@@ -6,10 +6,7 @@ module Widgets.Space where
 
 import qualified Widget
 
-type NewSpace = Widget.Size -> Widget.AnyWidgetState
-
-new :: NewSpace
-new size = Widget.AnyWidgetState (Space size) State
+type NewSpace = Widget.Size -> Widget.WidgetState Space State
 
 data Space = Space
     {
@@ -19,6 +16,9 @@ data Space = Space
 data State = State
     {
     }
+
+new :: NewSpace
+new size = Widget.WidgetState (Space size) State
 
 instance Widget.Widget Space State where
     getKeymap _ _ = Nothing

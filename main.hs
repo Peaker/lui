@@ -94,11 +94,13 @@ main = do
         textViewColor = SDL.Color 255 100 255
         textEditCursorColor = SDL.Color 255 0 0
         textEditCursorWidth = 2
+        keysColor = SDL.Color 255 0 0
+        descColor = SDL.Color 0 0 255
         focusColor = SDL.Color 0 0 150
         grid = Grid.newDelegated focusColor False (2, 2) (0, 0) $
                Map.fromList
                [((x, y),
-                 Grid.Item (0.5, 1) $
+                 Grid.Item (0.5, 1) . Widget.upCast $
                  TextEdit.newDelegated
                          focusColor False textEditingColor
                          textEditCursorColor textEditCursorWidth (x+y*2)
@@ -110,16 +112,17 @@ main = do
                                          textEditCursorWidth 5
                                          textEditColor "Hello world"
         textView = TextView.new textViewColor "This is just a view"
-        vbox = Box.new Box.Vertical 0 [Box.Item 1 grid
-                                      ,Box.Item 0.5 (Space.new (Vector2 50 50))
-                                      ,Box.Item 0.5 textEdit
-                                      ,Box.Item 0.5 textView]
-        --keysTable = KeysTable.grid widget
-        hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 vbox
-                                        ,Box.Item 0.1 textView]
+        vbox = Box.new Box.Vertical 0
+               [Box.Item 1   . Widget.upCast $ grid
+               ,Box.Item 0.5 . Widget.upCast $ (Space.new (Vector2 50 50))
+               ,Box.Item 0.5 . Widget.upCast $ textEdit
+               ,Box.Item 0.5 . Widget.upCast $ textView]
+        keysTable = KeysTable.grid keysColor descColor . Widget.upCast $ widget
+        hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 . Widget.upCast $ vbox
+                                        ,Box.Item 0.1 . Widget.upCast $ textView]
         widget = hbox
 
-    flip Exc.catch errHandler (mainLoop widget)
+    flip Exc.catch errHandler (mainLoop . Widget.upCast $ widget)
     where
       errHandler :: QuitRequest -> IO ()
       errHandler = const . putStrLn $ "Quit requested"

@@ -30,20 +30,21 @@ data State = State {
     , stateCursor :: Int
 }
 
-type NewTextEdit = SDL.Color -> SDL.Color -> Int -> Int ->
-                   SDL.Color -> String -> Widget.AnyWidgetState
+type New w s = SDL.Color -> SDL.Color -> Int -> Int ->
+               SDL.Color -> String -> Widget.WidgetState w s
 
-new :: NewTextEdit
+new :: New TextEdit State
 new editingBGColor cursorColor cursorWidth cursor textColor str =
-    Widget.AnyWidgetState (TextEdit editingBGColor textColor
-                                    cursorColor cursorWidth)
-                          (State str cursor)
+    Widget.WidgetState (TextEdit editingBGColor textColor
+                                 cursorColor cursorWidth)
+                       (State str cursor)
 
-newDelegated :: SDL.Color -> Bool -> NewTextEdit
+newDelegated :: SDL.Color -> Bool ->
+                New FocusDelegator.FocusDelegator FocusDelegator.State
 newDelegated notEditingBGColor startEditing
              textColor str editingBGColor cursorColor cursorWidth cursor =
     FocusDelegator.new "Start editing" "Stop editing"
-                       notEditingBGColor startEditing $
+                       notEditingBGColor startEditing . Widget.upCast $
                        new textColor str editingBGColor cursorColor cursorWidth cursor
 
 insert :: State -> MySDLKey.Key -> State

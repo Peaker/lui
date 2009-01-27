@@ -26,10 +26,11 @@ data State = State {
 }
 
 new :: String -> String ->
-       SDL.Color -> Bool -> Widget.AnyWidgetState -> Widget.AnyWidgetState
+       SDL.Color -> Bool -> Widget.AnyWidgetState ->
+       Widget.WidgetState FocusDelegator State
 new startStr stopStr focusColor initDelegateFocus widget =
-    Widget.AnyWidgetState (FocusDelegator focusColor startStr stopStr)
-                          (State initDelegateFocus widget)
+    Widget.WidgetState (FocusDelegator focusColor startStr stopStr)
+                       (State initDelegateFocus widget)
 
 buildKeymap :: SDL.SDLKey -> String -> Bool -> State -> Widget.ActionHandlers State
 buildKeymap key desc newDelegating (State _ widget) =

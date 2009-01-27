@@ -14,6 +14,7 @@ import qualified Control.Monad.State as State
 import qualified Widget
 import qualified Widgets.TextEdit as TextEdit
 import qualified Widgets.Grid as Grid
+import qualified Widgets.Box as Box
 -- import qualified Widgets.Table as Table
 import qualified Data.Map as Map
 import Data.Typeable(Typeable)
@@ -99,16 +100,15 @@ main = do
                          textEditColor ("Hello " ++ show (x, y)))
                 | x <- [0..1]
                 , y <- [0..1]]
-        -- green = SDL.Color 50 150 50
-        -- blue = SDL.Color 50 50 200
-        -- table = Table.new [[Table.ColorString green "Hello",
-        --                     Table.ColorString blue "World"],
-        --                    [Table.ColorString green "Moshiko",
-        --                     Table.ColorString blue "Dani"]]
-        -- textEdit = TextEdit.newDelegated focusColor False
-        --                                  textEditingColor textEditCursorColor 5
-        --                                  textEditColor "Hello world"
-        widget = grid
+        textEdit = TextEdit.newDelegated focusColor False
+                                         textEditingColor textEditCursorColor
+                                         textEditCursorWidth 5
+                                         textEditColor "Hello world"
+        vbox = Box.new Box.Vertical 0 [Box.Item 1 grid,
+                                       Box.Item 0.5 textEdit]
+        hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 vbox,
+                                         Box.Item 0.1 textEdit]
+        widget = hbox
 
     flip Exc.catch errHandler (mainLoop widget)
     where

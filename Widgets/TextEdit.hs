@@ -117,7 +117,7 @@ normalActions state =
                      [(SDL.SDLK_BACKSPACE, actBackspace)
                      ,(SDL.SDLK_LEFT, actMovePrev)
                      ,(SDL.SDLK_HOME, actHome)]
-           ,cond (cursor < (length text - 1))
+           ,cond (cursor < length text)
                      [(SDL.SDLK_DELETE, actDelete)
                      ,(SDL.SDLK_RIGHT, actMoveNext)
                      ,(SDL.SDLK_END, actEnd)]
@@ -131,7 +131,7 @@ ctrlActions state =
            [cond (cursor > 0)
                      [(SDL.SDLK_h, actBackspace)
                      ,(SDL.SDLK_a, actHome)]
-           ,cond (cursor < (length text - 1))
+           ,cond (cursor < length text)
                      [(SDL.SDLK_d, actDelete)
                      ,(SDL.SDLK_e, actEnd)]
            ]

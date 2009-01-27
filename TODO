@@ -1,5 +1,7 @@
 * Is it a good idea to have "new" return existential widgets? How do you "edit"
   w and s values then?
+* Is it a good idea to use the AnyWidgetState existential all over the place, and
+  lose type information?
 
 * Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
 

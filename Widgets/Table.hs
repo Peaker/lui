@@ -14,6 +14,7 @@ import qualified Data.Map as Map
 
 data Table = Table
     {
+      stateRows :: Rows
     }
 
 data ColorString = ColorString SDL.Color String
@@ -21,13 +22,12 @@ type Rows = [[ColorString]]
 
 data State = State
     {
-      stateRows :: Rows
     }
 
 type NewTable = Rows -> Widget.AnyWidgetState
 
 new :: NewTable
-new rows = Widget.AnyWidgetState Table (State rows)
+new rows = Widget.AnyWidgetState (Table rows) State
 
 makeGrid :: NewTable
 makeGrid rows = Grid.new (0, 0) (maximum . map length $ rows, length rows) $
@@ -40,11 +40,11 @@ noFocus :: Widget.DrawInfo
 noFocus = Widget.DrawInfo False
 
 callOnGrid :: (forall w s. Widget.Widget w s => Widget.DrawInfo -> w -> s -> a) ->
-              State -> a
-callOnGrid func (State rows) =
+              Table -> State -> a
+callOnGrid func (Table rows) _ =
     makeGrid rows `Widget.onAnyWidgetState` func noFocus
 
 instance Widget.Widget Table State where
     getKeymap _ _ = Map.empty
-    draw _ _ = callOnGrid Widget.draw
-    size _ _ = callOnGrid Widget.size
+    draw _ = callOnGrid Widget.draw
+    size _ = callOnGrid Widget.size

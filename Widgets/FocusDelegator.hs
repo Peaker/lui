@@ -12,7 +12,6 @@ import qualified Draw
 import qualified Data.Map as Map
 import Control.Arrow(second)
 import Func(result)
-import Data.Maybe(fromMaybe)
 
 data FocusDelegator = FocusDelegator {
       delegatorFocusColor :: SDL.Color
@@ -47,15 +46,15 @@ delegatingKeyMap    stopStr  = buildKeymap SDL.SDLK_ESCAPE stopStr False
 instance Widget.Widget FocusDelegator State where
     getKeymap (FocusDelegator _ startStr stopStr)
               state@(State delegating (Widget.AnyWidgetState child oldChildState)) =
-      Just $
-      case delegating of
-        False -> nonDelegatingKeyMap startStr state
-        True -> let childKeys = fromMaybe Map.empty $
-                                  (Map.map . second . result)
-                                  (State delegating . Widget.AnyWidgetState child)
-                                  `fmap`
-                                  Widget.getKeymap child oldChildState
-                in childKeys `Map.union` delegatingKeyMap stopStr state
+      flip fmap (Widget.getKeymap child oldChildState) $ \childKeys ->
+          case delegating of
+            False ->
+                nonDelegatingKeyMap startStr state
+            True ->
+                (Map.map . second . result)
+                (State delegating . Widget.AnyWidgetState child) childKeys
+                `Map.union`
+                delegatingKeyMap stopStr state
 
     size drawInfo _ (State _ widget)  =
         Widget.onAnyWidgetState widget $ Widget.size drawInfo

@@ -119,7 +119,7 @@ main = do
                ,Box.Item 0.5 . Widget.upCast $ textView]
         keysTable = KeysTable.grid keysColor descColor . Widget.upCast $ widget
         hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 . Widget.upCast $ vbox
-                                        ,Box.Item 0.1 . Widget.upCast $ textView]
+                                        ,Box.Item 0.1 . Widget.upCast $ keysTable]
         widget = hbox
 
     flip Exc.catch errHandler (mainLoop . Widget.upCast $ widget)

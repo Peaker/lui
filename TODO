@@ -1,3 +1,5 @@
+* Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
+
 * draw can remain focus-neutral. If the parent wants, it can draw
   the right child's focus when it wants to.
 
@@ -15,7 +17,6 @@ instance Widget Grid where
     * children and positions
     * currently selected child
 
-* Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
 * Animations:
   * Draw -> Animate?
     * Can use ID's on all drawings, and have it animate stuff moving around

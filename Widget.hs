@@ -26,10 +26,10 @@ data DrawInfo = DrawInfo
 
 class Widget w s | w -> s where
     getKeymap :: w -> s -> ActionHandlers s
-    draw      :: w -> s -> Draw Size
-    size      :: w -> s -> Compute Size
+    draw      :: DrawInfo -> w -> s -> Draw Size
+    size      :: DrawInfo -> w -> s -> Compute Size
 
 data AnyWidgetState = forall w s. Widget w s =>
                       AnyWidgetState w s
-onAnyWidgetState :: (forall w s. Widget w s => w -> s -> a) -> AnyWidgetState -> a
-onAnyWidgetState func (AnyWidgetState w s) = func w s
+onAnyWidgetState :: AnyWidgetState -> (forall w s. Widget w s => w -> s -> a) -> a
+onAnyWidgetState (AnyWidgetState w s) func = func w s

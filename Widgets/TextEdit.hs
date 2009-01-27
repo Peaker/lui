@@ -115,12 +115,17 @@ cursorColor = SDL.Color 255 0 0
 instance Widget.Widget TextEdit State where
     getKeymap _ = keysMap
 
-    size _ (State text _) = Draw.textSize text
+    size _ _ (State text _) = Draw.textSize text
 
-    draw te (State text cursor) = do
+    draw drawInfo textEdit (State text cursor) = do
       Vector2 w h <- Draw.computeToDraw . Draw.textSize $ take cursor text
       let cursorSize = Vector2 cursorWidth h
           cursorPos = Vector2 w 0
-      size <- Draw.text (textEditColor te) text
-      Draw.move cursorPos $ Draw.rect cursorColor cursorSize
+      size <- Draw.text (textEditColor textEdit) text
+      if Widget.diHasFocus drawInfo
+        then do
+          Draw.move cursorPos $ Draw.rect cursorColor cursorSize
+          return ()
+        else
+          return ()
       return size

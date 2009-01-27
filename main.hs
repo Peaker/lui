@@ -21,6 +21,7 @@ import Vector2(Vector2(..))
 import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
+import Data.Maybe(fromMaybe)
 
 speed :: Num a => a
 speed = 30
@@ -74,9 +75,9 @@ mainLoop (Widget.AnyWidgetState widget initState) = do
       lift $
         if handledEvent || shouldDraw
         then do
-          -- forM_ (Map.assocs (Widget.getKeymap widget state)) $
-          --   \((_, group), (desc, _)) -> do
-          --     print (MySDLKey.keyGroupName group, desc)
+          forM_ (Map.assocs $ fromMaybe Map.empty $ Widget.getKeymap widget state) $
+            \((_, group), (desc, _)) -> do
+              print (MySDLKey.keyGroupName group, desc)
           let draw = Widget.draw (Widget.DrawInfo True) widget state
           Draw.render font display (fromInteger 0) draw
           SDL.flip display

@@ -11,6 +11,7 @@ import qualified Graphics.UI.SDL as SDL
 import qualified Data.Map as Map
 import Control.Arrow(second)
 import Func(result)
+import Tuple(swap)
 import Data.List(sortBy)
 import Data.Ord(comparing)
 
@@ -46,9 +47,6 @@ newDelegated :: SDL.Color -> Bool -> NewBox
 newDelegated boxFocusColor startInItem orientation cursor items =
     FocusDelegator.new "Go in" "Go out" boxFocusColor startInItem $
                        new orientation cursor items
-
-swap :: (a, b) -> (b, a)
-swap (x, y) = (y, x)
 
 toOrientationTuple :: Orientation -> a -> a -> (a, a)
 toOrientationTuple Vertical = (,)

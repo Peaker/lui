@@ -17,7 +17,9 @@ import Data.List(transpose)
 import Control.Monad(forM_, forM)
 import Control.Arrow(first, second, (***))
 import Func((~>), result)
-import Data.Maybe(fromMaybe)
+import Data.Maybe(isJust, fromMaybe)
+import List(isSorted)
+import Tuple(swap)
 
 data Item = Item
     {
@@ -78,34 +80,55 @@ rowColumnSizes grid state drawInfo = do
       columnWidths = map maximum . transpose $ rowsWidths
   return (rowHeights, columnWidths)
 
-moveX, moveY :: (Int -> Int) -> Grid -> State -> State
-moveX delta (Grid (sizex, _)) (State oldCursor items) = State newCursor items
-    where 
-      newCursor = first (max 0 . min (sizex-1) . delta) oldCursor
-moveY delta (Grid (_, sizey)) (State oldCursor items) = State newCursor items
-    where 
-      newCursor = second (max 0 . min (sizey-1) . delta) oldCursor
+stateCursorApply :: (Cursor -> Cursor) -> State -> State
+stateCursorApply func (State oldCursor items) = State (func oldCursor) items
 
-actMoveLeft, actMoveRight, actMoveUp, actMoveDown :: (String, Grid -> State -> State)
-actMoveLeft  = ("Move left",  moveX (subtract 1))
-actMoveRight = ("Move right", moveX (+1))
-actMoveUp    = ("Move up",    moveY (subtract 1))
-actMoveDown  = ("Move down",  moveY (+1))
+stateMoveTo :: (Int, Int) -> State -> State
+stateMoveTo newCursor = stateCursorApply (const newCursor)
+
+moveX, moveY :: (Int -> Int) -> Grid -> Cursor -> Cursor
+moveX delta (Grid (sizex, _)) oldCursor =
+    first (max 0 . min (sizex-1) . delta) oldCursor
+moveY delta (Grid (_, sizey)) oldCursor =
+    second (max 0 . min (sizey-1) . delta) oldCursor
+
+itemSelectable :: Item -> Bool
+itemSelectable (Item _ (Widget.AnyWidgetState widget state)) =
+    isJust $ Widget.getKeymap widget state
+
+getSelectables :: ((Int, Int) -> (Int, Int)) ->
+                  Grid -> State -> (Int -> Int) ->
+                  [(Int, Int)]
+getSelectables toSwap (Grid size) (State oldCursor items) cursorFunc =
+    let (sizeA,_) = toSwap size
+        (oldA,b) = toSwap oldCursor
+        nexts = takeWhile (\a -> isSorted [0, a, sizeA-1]) .
+                drop 1 . iterate cursorFunc $ oldA
+        coor a = toSwap (a, b)
+        itemAt a = (coor a, items Map.! coor a)
+    in map fst . filter (itemSelectable . snd) . map itemAt $ nexts
+
+getSelectablesX, getSelectablesY :: Grid -> State -> (Int -> Int) ->
+                                    [(Int, Int)]
+getSelectablesX = getSelectables id
+getSelectablesY = getSelectables swap
 
 keysMap :: Grid -> State -> Widget.ActionHandlers State
-keysMap grid state = Map.fromList $
-    let (x,y) = stateCursor state
-        (sx,sy) = gridSize grid
-    in map (((,) Widget.KeyDown . asKeyGroup noMods) ***
-            second (const . ($state) . ($grid))) $ concat $
-           [
-            cond (x > 0)    (SDL.SDLK_LEFT,  actMoveLeft)
-           ,cond (x < sx-1) (SDL.SDLK_RIGHT, actMoveRight)
-           ,cond (y > 0)    (SDL.SDLK_UP,    actMoveUp)
-           ,cond (y < sy-1) (SDL.SDLK_DOWN,  actMoveDown)
+keysMap grid state =
+    Map.fromList $
+       map (((,) Widget.KeyDown . asKeyGroup noMods) ***
+            second const) . concat $
+           [let opts = axis grid state direction
+            in cond opts (key, (desc, head opts `stateMoveTo` state))
+            | (key, axis, direction, desc) <-
+                [(SDL.SDLK_LEFT,  getSelectablesX, (subtract 1), "Move left")
+                ,(SDL.SDLK_RIGHT, getSelectablesX, (+1), "Move right")
+                ,(SDL.SDLK_UP,    getSelectablesY, (subtract 1), "Move up")
+                ,(SDL.SDLK_DOWN,  getSelectablesY, (+1), "Move down")
+                ]
            ]
     where
-      cond p i = if p then [i] else []
+      cond p i = if not . null $ p then [i] else []
 
 inFrac :: (Integral a, RealFrac b) => (b -> b) -> a -> a
 inFrac = fromIntegral ~> floor

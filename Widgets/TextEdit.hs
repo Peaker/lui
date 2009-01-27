@@ -16,9 +16,7 @@ import Data.Map((!))
 import Graphics.UI.SDL.Keysym(SDLKey)
 import Control.Arrow(first, second)
 import Vector2(Vector2(..))
-
-isSorted :: (Ord a) => [a] -> Bool
-isSorted xs = and $ zipWith (<=) xs (tail xs)
+import List(isSorted)
 
 data State = State {
       stateText :: String

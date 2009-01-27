@@ -21,7 +21,8 @@ type Handler s = (String, MySDLKey.Key -> s)
 type ActionHandlers s = Map.Map KeyAction (Handler s)
 
 data DrawInfo = DrawInfo
-    { diHasFocus :: Bool
+    {
+      diHasFocus :: Bool
     }
 
 class Widget w s | w -> s where

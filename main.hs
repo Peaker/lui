@@ -9,11 +9,12 @@ import qualified MySDLKeys
 import qualified Draw
 import qualified Control.Exception as Exc
 import qualified Control.Monad.State as State
-import qualified Widgets.TextEdit as TextEdit
-import qualified Widgets.Grid as Grid
 import qualified Widget
-import qualified Data.Map as Map
+import qualified Widgets.TextEdit as TextEdit
+import qualified Widgets.FocusDelegator as FocusDelegator
+import qualified Widgets.Grid as Grid
 import qualified Data.Array as Array
+import qualified Data.Map as Map
 import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
@@ -82,16 +83,20 @@ mainLoop (Widget.AnyWidgetState widget initState) = do
 main :: IO ()
 main = do
   MySDL.withSDL $ do
-    let textEditColor = SDL.Color 255 255 255
-        cursorBGColor = SDL.Color 20 20 255
-        grid = Grid.new cursorBGColor (0, 0) $
-               Array.listArray ((0,0),(1,1))
-               [Grid.Item (0.5, 1) $
-                TextEdit.new textEditColor ("Hello " ++ show (x, y)) (x+y*2)
-                | x <- [0..1]
-                , y <- [0..1]]
+    let textEditingColor = SDL.Color 30 20 100
+        textEditColor = SDL.Color 255 255 255
+        focusColor = SDL.Color 0 0 150
+        -- grid = Grid.new (0, 0) $
+        --        Array.listArray ((0,0),(1,1))
+        --        [Grid.Item (0.5, 1) $
+        --         TextEdit.new textEditColor ("Hello " ++ show (x, y)) (x+y*2)
+        --         | x <- [0..1]
+        --         , y <- [0..1]]
+        textEdit = TextEdit.newDelegated focusColor False textEditingColor
+                   textEditColor "Hello world" 5
+        widget = textEdit
 
-    flip Exc.catch errHandler (mainLoop grid)
+    flip Exc.catch errHandler (mainLoop widget)
     where
       errHandler :: QuitRequest -> IO ()
       errHandler = const . putStrLn $ "Quit requested"

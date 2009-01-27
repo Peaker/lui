@@ -15,8 +15,8 @@ data Mods = MkMods { isShift, isCtrl, isAlt :: Bool }
 data Key = Key Mods SDL.SDLKey
   deriving (Eq, Ord, Show)
 data KeyGroup = KeyGroup {
-      keyGroupName :: String,
-      keyGroupKeys :: Set.Set Key
+      keyGroupName :: String
+    , keyGroupKeys :: Set.Set Key
 }
   deriving (Eq, Ord, Show)
 

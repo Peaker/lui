@@ -25,9 +25,9 @@ data Item = Item
       -- alignments are a number between 0..1 that
       -- represents where in the grid item's left..right
       -- and top..down the item should be in
-      itemAlignments :: (Double, Double),
+      itemAlignments :: (Double, Double)
 
-      itemWidgetState :: Widget.AnyWidgetState
+    , itemWidgetState :: Widget.AnyWidgetState
     }
 
 data Grid = Grid
@@ -39,8 +39,8 @@ type Cursor = (Int, Int)
 
 data State = State
     {
-      stateCursor :: Cursor,
-      stateItems :: Array.Array Cursor Item
+      stateCursor :: Cursor
+    , stateItems :: Array.Array Cursor Item
     }
 
 new :: SDL.Color -> Cursor -> Array.Array Cursor Item -> Widget.AnyWidgetState

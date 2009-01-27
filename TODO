@@ -1,3 +1,5 @@
+* FocusDelegator
+
 * Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
 
 * draw can remain focus-neutral. If the parent wants, it can draw

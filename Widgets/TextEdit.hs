@@ -11,6 +11,7 @@ import qualified MySDLKeys
 import qualified Graphics.UI.SDL as SDL
 import qualified Draw
 import qualified Data.Map as Map
+import qualified Widgets.FocusDelegator as FocusDelegator
 import Func(result)
 import Data.Map((!))
 import Graphics.UI.SDL.Keysym(SDLKey)
@@ -21,16 +22,25 @@ isSorted :: (Ord a) => [a] -> Bool
 isSorted xs = and $ zipWith (<=) xs (tail xs)
 
 data State = State {
-  stateText :: String,
-  stateCursor :: Int
+      stateText :: String
+    , stateCursor :: Int
 }
 
 data TextEdit = TextEdit {
-  textEditColor :: SDL.Color
+      textEditEditingBGColor :: SDL.Color
+    , textEditColor :: SDL.Color
 }
 
-new :: SDL.Color -> String -> Int -> Widget.AnyWidgetState
-new col str cursor = Widget.AnyWidgetState (TextEdit col) (State str cursor)
+new :: SDL.Color -> SDL.Color -> String -> Int -> Widget.AnyWidgetState
+new editingBGColor textColor str cursor = Widget.AnyWidgetState
+                                  (TextEdit editingBGColor textColor) (State str cursor)
+
+newDelegated :: SDL.Color -> Bool -> SDL.Color -> SDL.Color -> String -> Int ->
+                Widget.AnyWidgetState
+newDelegated notEditingBGColor startEditing editingBGColor textColor str cursor =
+    FocusDelegator.new "Start editing" "Stop editing"
+                       notEditingBGColor startEditing $
+                       new editingBGColor textColor str cursor
 
 insert :: State -> MySDLKey.Key -> State
 insert (State oldText oldCursor) key =
@@ -78,10 +88,6 @@ actMoveNext = ("Move to next character",     moveCursor (+1))
 actHome = ("Move to beginning of text",      goHome)
 actEnd = ("Move to end of text",             goEnd)
 
-keysMap :: State -> Widget.ActionHandlers State
-keysMap state =
-    Map.fromList . map (((,) Widget.KeyDown) *** second ($state)) $ actions
-
 actions :: [(MySDLKeys.KeyGroup,
              (String, State -> MySDLKey.Key -> State))]
 actions =
@@ -106,6 +112,10 @@ actions =
       -- result State in the handlers
       ignoreKey = (second . result) const
 
+keysMap :: State -> Widget.ActionHandlers State
+keysMap state =
+    Map.fromList . map (((,) Widget.KeyDown) *** second ($state)) $ actions
+
 cursorWidth :: Int
 cursorWidth = 2
 
@@ -119,13 +129,14 @@ instance Widget.Widget TextEdit State where
 
     draw drawInfo textEdit (State text cursor) = do
       Vector2 w h <- Draw.computeToDraw . Draw.textSize $ take cursor text
+      textSize <- Draw.computeToDraw . Draw.textSize $ text
       let cursorSize = Vector2 cursorWidth h
           cursorPos = Vector2 w 0
-      size <- Draw.text (textEditColor textEdit) text
       if Widget.diHasFocus drawInfo
         then do
+          Draw.rect (textEditEditingBGColor textEdit) textSize
+          Draw.text (textEditColor textEdit) text
           Draw.move cursorPos $ Draw.rect cursorColor cursorSize
-          return ()
+          return textSize
         else
-          return ()
-      return size
+          Draw.text (textEditColor textEdit) text

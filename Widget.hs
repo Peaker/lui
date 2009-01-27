@@ -31,8 +31,10 @@ class Widget w s | w -> s where
     draw      :: DrawInfo -> w -> s -> Draw Size
     size      :: DrawInfo -> w -> s -> Compute Size
 
-data AnyWidgetState = forall w s. Widget w s =>
-                      AnyWidgetState w s
+data WidgetState w s = Widget w s => WidgetState w s
+onWidgetState :: Widget w s => WidgetState w s -> (w -> s -> a) -> a
+onWidgetState (WidgetState w s) func = func w s
 
+data AnyWidgetState = forall w s. Widget w s => AnyWidgetState w s
 onAnyWidgetState :: AnyWidgetState -> (forall w s. Widget w s => w -> s -> a) -> a
 onAnyWidgetState (AnyWidgetState w s) func = func w s

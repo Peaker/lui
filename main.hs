@@ -17,6 +17,7 @@ import qualified Widgets.TextView as TextView
 import qualified Widgets.Grid as Grid
 import qualified Widgets.Box as Box
 import qualified Widgets.Space as Space
+import qualified Widgets.KeysTable as KeysTable
 import qualified Data.Map as Map
 import Vector2(Vector2(..))
 import Data.Typeable(Typeable)
@@ -108,13 +109,14 @@ main = do
                                          textEditingColor textEditCursorColor
                                          textEditCursorWidth 5
                                          textEditColor "Hello world"
-        textView = TextView.new textViewColor "This is just a view, you cannot select this!"
+        textView = TextView.new textViewColor "This is just a view"
         vbox = Box.new Box.Vertical 0 [Box.Item 1 grid
                                       ,Box.Item 0.5 (Space.new (Vector2 50 50))
                                       ,Box.Item 0.5 textEdit
                                       ,Box.Item 0.5 textView]
+        --keysTable = KeysTable.grid widget
         hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 vbox
-                                        ,Box.Item 0.1 textEdit]
+                                        ,Box.Item 0.1 textView]
         widget = hbox
 
     flip Exc.catch errHandler (mainLoop widget)

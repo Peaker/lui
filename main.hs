@@ -13,6 +13,7 @@ import qualified Control.Exception as Exc
 import qualified Control.Monad.State as State
 import qualified Widget
 import qualified Widgets.TextEdit as TextEdit
+import qualified Widgets.TextView as TextView
 import qualified Widgets.Grid as Grid
 import qualified Widgets.Box as Box
 import qualified Widgets.Space as Space
@@ -21,7 +22,7 @@ import Vector2(Vector2(..))
 import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
-import Data.Maybe(fromMaybe)
+--import Data.Maybe(fromMaybe)
 
 speed :: Num a => a
 speed = 30
@@ -75,9 +76,9 @@ mainLoop (Widget.AnyWidgetState widget initState) = do
       lift $
         if handledEvent || shouldDraw
         then do
-          forM_ (Map.assocs $ fromMaybe Map.empty $ Widget.getKeymap widget state) $
-            \((_, group), (desc, _)) -> do
-              print (MySDLKey.keyGroupName group, desc)
+          -- forM_ (Map.assocs $ fromMaybe Map.empty $ Widget.getKeymap widget state) $
+          --   \((_, group), (desc, _)) -> do
+          --     print (MySDLKey.keyGroupName group, desc)
           let draw = Widget.draw (Widget.DrawInfo True) widget state
           Draw.render font display (fromInteger 0) draw
           SDL.flip display
@@ -89,6 +90,7 @@ main = do
   MySDL.withSDL $ do
     let textEditingColor = SDL.Color 30 20 100
         textEditColor = SDL.Color 255 255 255
+        textViewColor = SDL.Color 255 100 255
         textEditCursorColor = SDL.Color 255 0 0
         textEditCursorWidth = 2
         focusColor = SDL.Color 0 0 150
@@ -106,9 +108,11 @@ main = do
                                          textEditingColor textEditCursorColor
                                          textEditCursorWidth 5
                                          textEditColor "Hello world"
+        textView = TextView.new textViewColor "This is just a view, you cannot select this!"
         vbox = Box.new Box.Vertical 0 [Box.Item 1 grid
                                       ,Box.Item 0.5 (Space.new (Vector2 50 50))
-                                      ,Box.Item 0.5 textEdit]
+                                      ,Box.Item 0.5 textEdit
+                                      ,Box.Item 0.5 textView]
         hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 vbox
                                         ,Box.Item 0.1 textEdit]
         widget = hbox

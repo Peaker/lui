@@ -18,26 +18,20 @@ import Control.Arrow(first, second)
 import Vector2(Vector2(..))
 import List(isSorted)
 
-data State = State {
-      stateText :: String
-    , stateCursor :: Int
-}
-  deriving Show
-
 data TextEdit = TextEdit {
       textEditEditingBGColor :: SDL.Color
     , textEditColor :: SDL.Color
     , textEditCursorColor :: SDL.Color
     , textEditCursorWidth :: Int
 }
-  deriving Show
 
-type NewTextView = SDL.Color -> String -> Widget.AnyWidgetState
-type NewTextEdit = SDL.Color -> SDL.Color -> Int -> Int -> NewTextView
+data State = State {
+      stateText :: String
+    , stateCursor :: Int
+}
 
--- newView must never get the focus...
-newView :: NewTextView
-newView = new undefined undefined undefined undefined
+type NewTextEdit = SDL.Color -> SDL.Color -> Int -> Int ->
+                   SDL.Color -> String -> Widget.AnyWidgetState
 
 new :: NewTextEdit
 new editingBGColor cursorColor cursorWidth cursor textColor str =

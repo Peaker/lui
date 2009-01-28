@@ -7,9 +7,10 @@ import qualified Graphics.UI.SDL.TTF as TTF
 import qualified IO
 import MyMonad(whileM)
 import Vector2(Vector2(..), vector2first, vector2second)
-import Control.Exception(throwIO)
 import Control.Arrow(first, second)
 import Control.Applicative(liftA2)
+-- Commented out for 6.8's lack of the new Exception
+-- import Control.Exception(throwIO)
 
 import qualified Graphics.UI.SDL.Utilities as Utils
 
@@ -66,7 +67,9 @@ ioBoolToError errStr act = do
   isSuccess <- act
   if isSuccess
     then return ()
-    else throwIO . userError $ errStr
+    else error errStr
+-- Commented out for 6.8's lack of the new Exception
+--       throwIO . userError $ errStr
 
 initKeyRepeat :: IO ()
 initKeyRepeat = ioBoolToError "enableKeyRepeat failed" $ SDL.enableKeyRepeat 150 10

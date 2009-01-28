@@ -24,9 +24,9 @@ data State = State {
     , stateWidget :: Widget.AnyWidgetState
 }
 
-new :: String -> String ->
-       SDL.Color -> Bool -> Widget.AnyWidgetState ->
-       Widget.WidgetState FocusDelegator State
+type New w s = String -> String -> SDL.Color -> Bool -> Widget.AnyWidgetState -> Widget.WidgetState w s
+
+new :: New FocusDelegator State
 new startStr stopStr focusColor initDelegateFocus widget =
     Widget.WidgetState (FocusDelegator focusColor startStr stopStr)
                        (State initDelegateFocus widget)

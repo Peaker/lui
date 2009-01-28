@@ -16,6 +16,7 @@ import qualified Widgets.TextEdit as TextEdit
 import qualified Widgets.TextView as TextView
 import qualified Widgets.Grid as Grid
 import qualified Widgets.Box as Box
+import qualified Widgets.Unfocusable as Unfocusable
 import qualified Widgets.Space as Space
 import qualified Widgets.KeysTable as KeysTable
 import qualified Data.Map as Map
@@ -119,7 +120,7 @@ main = do
                ,Box.Item 0.5 . Widget.upCast $ textView]
         keysTable = KeysTable.grid keysColor descColor . Widget.upCast $ widget
         hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 . Widget.upCast $ vbox
-                                        ,Box.Item 0.1 . Widget.upCast $ keysTable]
+                                        ,Box.Item 0.1 . Widget.upCast . Unfocusable.new . Widget.upCast $ keysTable]
         widget = hbox
 
     flip Exc.catch errHandler (mainLoop . Widget.upCast $ widget)

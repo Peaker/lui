@@ -9,7 +9,6 @@ import qualified MySDL
 import qualified MySDLKey
 import qualified MySDLKeys
 import qualified Draw
-import qualified Control.Exception as Exc
 import qualified Control.Monad.State as State
 import qualified Widget
 import qualified Widgets.TextEdit as TextEdit
@@ -21,17 +20,20 @@ import qualified Widgets.Space as Space
 import qualified Widgets.KeysTable as KeysTable
 import qualified Data.Map as Map
 import Vector2(Vector2(..))
-import Data.Typeable(Typeable)
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
 --import Data.Maybe(fromMaybe)
+-- Commented out for 6.8's lack of the new Exception
+-- import qualified Control.Exception as Exc
+-- import Data.Typeable(Typeable)
 
 speed :: Num a => a
 speed = 30
 
-data QuitRequest = QuitRequest
-  deriving (Typeable, Show)
-instance Exc.Exception QuitRequest where
+-- Commented out for 6.8's lack of the new Exception
+-- data QuitRequest = QuitRequest
+--   deriving (Typeable, Show)
+-- instance Exc.Exception QuitRequest where
 
 handleKeyAction :: Widget.Widget a s =>
                    a -> Widget.KeyStatus -> SDL.Keysym -> s -> Maybe s
@@ -57,7 +59,7 @@ handleEvents :: Widget.Widget a s => a -> [SDL.Event] -> State.StateT s IO Bool
 handleEvents widget events =
   fmap or $ forM events $ \event ->
       case event of
-        SDL.Quit -> lift $ Exc.throwIO QuitRequest
+        SDL.Quit -> error "Quit" -- 6.8 exceptions :-(  lift $ Exc.throwIO QuitRequest
         SDL.KeyDown k -> maybeModify $
                          handleKeyAction widget Widget.KeyDown k
         SDL.KeyUp k -> maybeModify $
@@ -123,7 +125,11 @@ main = do
                                         ,Box.Item 0.1 . Widget.upCast . Unfocusable.new . Widget.upCast $ keysTable]
         widget = hbox
 
-    flip Exc.catch errHandler (mainLoop . Widget.upCast $ widget)
-    where
-      errHandler :: QuitRequest -> IO ()
-      errHandler = const . putStrLn $ "Quit requested"
+    let runWidget = mainLoop . Widget.upCast $ widget
+
+    -- Commented out for 6.8's lack of the new Exception
+    -- flip Exc.catch errHandler runWidget
+    -- where
+    --   errHandler :: QuitRequest -> IO ()
+    --   errHandler = const . putStrLn $ "Quit requested"
+    runWidget

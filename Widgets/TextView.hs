@@ -16,8 +16,10 @@ data TextView = TextView {
 data State = State {
 }
 
-type NewTextView = SDL.Color -> String -> Widget.WidgetState TextView State
-new :: NewTextView
+type TextViewState = Widget.WidgetState TextView State
+type New w = SDL.Color -> String -> w
+
+new :: New TextViewState
 new textColor str =
     Widget.WidgetState (TextView textColor str) State
 

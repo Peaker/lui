@@ -6,8 +6,6 @@ module Widgets.Space where
 
 import qualified Widget
 
-type NewSpace = Widget.Size -> Widget.WidgetState Space State
-
 data Space = Space
     {
       spaceSize :: Widget.Size
@@ -17,7 +15,10 @@ data State = State
     {
     }
 
-new :: NewSpace
+type SpaceState = Widget.WidgetState Space State
+type New w = Widget.Size -> w
+
+new :: New SpaceState
 new size = Widget.WidgetState (Space size) State
 
 instance Widget.Widget Space State where

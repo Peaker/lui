@@ -121,8 +121,9 @@ main = do
                ,Box.Item 0.5 . Widget.upCast $ textEdit
                ,Box.Item 0.5 . Widget.upCast $ textView]
         keysTable = KeysTable.grid keysColor descColor . Widget.upCast $ widget
-        hbox = Box.new Box.Horizontal 0 [Box.Item 0.5 . Widget.upCast $ vbox
-                                        ,Box.Item 0.1 . Widget.upCast . Unfocusable.new . Widget.upCast $ keysTable]
+        hbox = Box.new Box.Horizontal 0
+               [Box.Item 0.5 . Widget.upCast $ vbox
+               ,Box.Item 0.1 . Widget.upCast . Unfocusable.new $ keysTable]
         widget = hbox
 
     let runWidget = mainLoop . Widget.upCast $ widget

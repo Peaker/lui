@@ -44,16 +44,16 @@ data State = State
     , stateItems :: Map.Map Cursor Item
     }
 
-type New w s = Cursor -> Cursor -> Map.Map Cursor Item ->
-               Widget.WidgetState w s
+type GridState = Widget.WidgetState Grid State
+type New w = Cursor -> Cursor -> Map.Map Cursor Item -> w
 
-new :: New Grid State
+new :: New GridState
 new size cursor items = Widget.WidgetState (Grid size) $ State cursor items
 
 newDelegated :: SDL.Color -> Bool ->
-                New FocusDelegator.FocusDelegator FocusDelegator.State
+                New (FocusDelegator.FocusDelegatorState Grid State)
 newDelegated gridFocusColor startInItem size cursor items =
-    FocusDelegator.new "Go in" "Go out" gridFocusColor startInItem . Widget.upCast $
+    FocusDelegator.new "Go in" "Go out" gridFocusColor startInItem $
                        new size cursor items
 
 selectedItem :: Grid -> State -> Maybe Item

@@ -5,89 +5,58 @@
 module Widgets.Box where
 
 import qualified Widget
+import Widget(Widget(..))
 import qualified Widgets.Grid as Grid
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified Graphics.UI.SDL as SDL
 import qualified Data.Map as Map
-import Control.Arrow(second)
-import Func(result)
 import Tuple(swap)
-import Data.List(sortBy)
-import Data.Ord(comparing)
+import Accessor(accessor, (^>), afirst, asecond)
 
 data Orientation = Horizontal | Vertical
 
-data Item = Item
+data Item model = Item
     {
-      itemAlignment :: Double
-    , itemWidgetState :: Widget.AnyWidgetState
+      itemChildWidget :: Widget model
+
+    -- See comment about Grid.Item alignments
+    , itemAlignment :: Double
     }
 
 type Cursor = Int
 
-data Box = Box
+data Mutable = Mutable
     {
-      boxOrientation :: Orientation
+      mutableCursor :: Cursor
     }
 
-data State = State
-    {
-      stateCursor :: Cursor
-    , stateItems :: [Item]
-    }
+-- This type exists for symmetry/similarity with Grid's Items
+type Items model = [Item model]
 
-type BoxState = Widget.WidgetState Box State
+type New model mutable = Orientation -> Items model -> Widget.New model mutable
 
-type New w = Orientation -> Cursor -> [Item] -> w
-               
-
-new :: New BoxState
-new orientation cursor items = Widget.WidgetState (Box orientation)
-                                                  (State cursor items)
-
-newDelegated :: SDL.Color -> Bool ->
-                New (FocusDelegator.FocusDelegatorState Box State)
-newDelegated boxFocusColor startInItem orientation cursor items =
-    FocusDelegator.new "Go in" "Go out" boxFocusColor startInItem $
-                       new orientation cursor items
-
-toOrientationTuple :: Orientation -> a -> a -> (a, a)
-toOrientationTuple Vertical = (,)
-toOrientationTuple Horizontal = curry swap
-fromOrientationTuple :: Orientation -> (a, a) -> a
-fromOrientationTuple Vertical = snd
-fromOrientationTuple Horizontal = fst
-
-boxToGridCall :: Box -> State -> (Grid.Grid -> Grid.State -> a) -> a
-boxToGridCall (Box orientation) (State cursor items) func =
-    func grid gridState
+new :: New model Mutable
+new orientation items boxAccessor =
+    Grid.new gridSize
+             gridItems $
+             boxAccessor ^> boxGridConvertor
     where
-      -- Requires a type signature because of the monomorphism
-      -- restriction
-      size = length items
-      toTuple :: a -> a -> (a, a)
-      toTuple = toOrientationTuple orientation
-      grid = Grid.Grid $ toTuple 1 size
-      gridItems = Map.fromList . map mapItem . zip [0..] $ items
-      mapItem (index, Item alignment widgetState) =
-          (toTuple 0 index,
-           Grid.Item (swap $ toTuple 0 alignment) widgetState)
-      gridState = Grid.State (toTuple 0 cursor) gridItems
+      gridSize = (maybeSwap (1, length items))
+      gridItems = (Map.fromList $
+                   [(maybeSwap (0, i),
+                     Grid.Item childWidget . maybeSwap $ (0, alignment))
+                    | (i, Item childWidget alignment) <- zip [0..] items])
+      maybeSwap = case orientation of
+                    Vertical -> id
+                    Horizontal -> swap
+      boxGridConvertor = accessor mutableToGridMutable $
+                         const . gridMutableToMutable
+      mutableToGridMutable = Grid.Mutable . maybeSwap . (,) 0 . mutableCursor
+      gridMutableToMutable = Mutable . snd . maybeSwap . Grid.mutableCursor
 
-gridStateToBoxState :: Box -> Grid.State -> State
-gridStateToBoxState (Box orientation)
-                    (Grid.State cursor items) =
-    State (fromTuple cursor)
-          (map (mapItem . snd) . sortBy (comparing fst) . Map.toList $ items)
-    where
-      -- Requires a type signature because of the monomorphism
-      -- restriction
-      fromTuple = fromOrientationTuple orientation
-      mapItem (Grid.Item alignments widgetState) =
-          Item (fromTuple . swap $ alignments) widgetState
-
-instance Widget.Widget Box State where
-    getKeymap box state = (Map.map . second . result) (gridStateToBoxState box) `fmap`
-                          boxToGridCall box state Widget.getKeymap
-    draw drawInfo box state = boxToGridCall box state $ Widget.draw drawInfo
-    size drawInfo box state = boxToGridCall box state $ Widget.size drawInfo
+newDelegated :: SDL.Color ->
+                New model (FocusDelegator.Mutable, Mutable)
+newDelegated focusColor orientation items boxAccessor =
+    let box = new orientation items $ boxAccessor ^> asecond
+    in FocusDelegator.new "Go in" "Go out" focusColor box $
+       boxAccessor ^> afirst

@@ -5,23 +5,16 @@
 module Widgets.Space where
 
 import qualified Widget
+import Widget(Widget(..))
+import Draw(Size)
 
-data Space = Space
+type New model = Size -> Widget model
+
+new :: New model
+new size =
+    Widget
     {
-      spaceSize :: Widget.Size
+      widgetGetKeymap = \_ -> Nothing
+    , widgetDraw = \_ _ -> return size
+    , widgetSize = \_ _ -> return size
     }
-
-data State = State
-    {
-    }
-
-type SpaceState = Widget.WidgetState Space State
-type New w = Widget.Size -> w
-
-new :: New SpaceState
-new size = Widget.WidgetState (Space size) State
-
-instance Widget.Widget Space State where
-    getKeymap _ _ = Nothing
-    draw _ (Space size) _ = return size
-    size _ (Space size) _ = return size

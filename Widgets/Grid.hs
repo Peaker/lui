@@ -26,12 +26,12 @@ import Accessor((^.), (^:), (^>), afirst, asecond)
 
 data Item model = Item
     {
+      itemWidget :: Widget model
+
       -- alignments are a number between 0..1 that
       -- represents where in the grid item's left..right
       -- and top..down the item should be in
-      itemAlignments :: (Double, Double)
-
-    , itemWidget :: Widget model
+    , itemAlignments :: (Double, Double)
     }
 
 type Items model = Map.Map Cursor (Item model)
@@ -83,7 +83,7 @@ moveY delta (_, sizey) oldCursor =
     second (max 0 . min (sizey-1) . delta) oldCursor
 
 itemSelectable :: model -> Item model -> Bool
-itemSelectable model (Item _ widget) =
+itemSelectable model (Item widget _) =
     isJust $ widgetGetKeymap widget model
 
 getSelectables :: ((Int, Int) -> (Int, Int)) ->
@@ -123,13 +123,13 @@ keysMap size model mutable items =
 inFrac :: (Integral a, RealFrac b) => (b -> b) -> a -> a
 inFrac = fromIntegral ~> floor
 
-type New model mutable =
-    Cursor -> Items model -> Widget.New model mutable
-
 posSizes :: [Int] -> [(Int, Int)]
 posSizes sizes =
     let positions = scanl (+) 0 sizes
     in zip positions sizes
+
+type New model mutable =
+    Cursor -> Items model -> Widget.New model mutable
 
 new :: New model Mutable
 new size items accessor =
@@ -147,7 +147,7 @@ new size items accessor =
                 case mItem of
                   Nothing -> return ()
                   Just item -> do
-                    let Item (ax, ay) childWidget = item
+                    let Item childWidget (ax, ay) = item
                         childDrawInfo = gridDrawInfo mutable itemIndex drawInfo
                     Vector2 w h <- Draw.computeToDraw $
                                    widgetSize childWidget childDrawInfo model
@@ -165,7 +165,7 @@ new size items accessor =
     , widgetGetKeymap = \model -> Just $
       let mutable = model ^. accessor
           childKeys = fromMaybe Map.empty $ do
-            Item _ childWidget <- selectedItem mutable items
+            Item childWidget _ <- selectedItem mutable items
             widgetGetKeymap childWidget model
           applyToModel newMutable = (accessor ^: const newMutable) model
       in childKeys `Map.union`

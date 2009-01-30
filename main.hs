@@ -16,14 +16,14 @@ import Widget(Widget(..))
 
 import qualified Widgets.TextEdit as TextEdit
 import qualified Widgets.FocusDelegator as FocusDelegator
--- import qualified Widgets.TextView as TextView
+import qualified Widgets.TextView as TextView
 import qualified Widgets.Grid as Grid
--- import qualified Widgets.Box as Box
+import qualified Widgets.Box as Box
 -- import qualified Widgets.Unfocusable as Unfocusable
--- import qualified Widgets.Space as Space
+import qualified Widgets.Space as Space
 -- import qualified Widgets.KeysTable as KeysTable
 import qualified Data.Map as Map
--- import Vector2(Vector2(..))
+import Vector2(Vector2(..))
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
 import Accessor(afirst, asecond, aMapValue, (^>))
@@ -101,21 +101,23 @@ main = do
   MySDL.withSDL $ do
     let textEditingColor = SDL.Color 30 20 100
         textEditColor = SDL.Color 255 255 255
-        --textViewColor = SDL.Color 255 100 255
+        textViewColor = SDL.Color 255 100 255
         textEditCursorColor = SDL.Color 255 0 0
         textEditCursorWidth = 2
         -- keysColor = SDL.Color 255 0 0
         -- descColor = SDL.Color 0 0 255
         focusColor = SDL.Color 0 0 150
 
-        dTextEditModel = (FocusDelegator.Mutable False,
-                          TextEdit.Mutable "Hello world" 5)
-        dGridModel = (FocusDelegator.Mutable False,
-                      Grid.Mutable (0, 0))
-        model = (Map.fromList [((x, y), dTextEditModel)
-                               | x <- [0..1]
-                              , y <- [0..1]]
-                ,dGridModel)
+        dTextEditModel = (FocusDelegator.Mutable False
+                         ,TextEdit.Mutable "Hello world" 5)
+        dTextEditModels = Map.fromList [((x, y), dTextEditModel)
+                                        | x <- [0..1]
+                                       , y <- [0..1]]
+        dGridModel = (FocusDelegator.Mutable False
+                     ,Grid.Mutable (0, 0))
+        dBoxModel = (FocusDelegator.Mutable False
+                    ,Box.Mutable 0)
+        model = (dBoxModel,(dTextEditModels,dGridModel))
 
         textEdit cursor =
             TextEdit.newDelegated
@@ -124,24 +126,24 @@ main = do
                     textEditCursorColor
                     textEditCursorWidth
                     textEditColor $
-                    afirst ^> aMapValue cursor
-        grid = Grid.newDelegated focusColor (2, 2) items asecond
+                    asecond ^> afirst ^> aMapValue cursor
+        grid = Grid.newDelegated focusColor (2, 2) items (asecond ^> asecond)
         items = Map.fromList
-                [((x, y), Grid.Item (0.5, 1) $ textEdit (x, y))
+                [((x, y), Grid.Item (textEdit (x, y)) (0.5, 1))
                  | x <- [0..1], y <- [0..1]]
 
-        -- textView = TextView.new textViewColor "This is just a view"
-        -- vbox = Box.new Box.Vertical 0
-        --        [Box.Item 1   . Widget.upCast $ grid
-        --        ,Box.Item 0.5 . Widget.upCast $ (Space.new (Vector2 50 50))
-        --        ,Box.Item 0.5 . Widget.upCast $ textEdit
-        --        ,Box.Item 0.5 . Widget.upCast $ textView]
+        textView = TextView.new textViewColor "This is just a view"
+        vbox = Box.newDelegated focusColor Box.Vertical vboxItems afirst
+        vboxItems = [Box.Item grid 1
+                    ,Box.Item (Space.new $ Vector2 50 50) 0.5
+                    ,Box.Item (textEdit (0, 1)) 0.5
+                    ,Box.Item textView 0.5]
         -- keysTable = KeysTable.grid keysColor descColor . Widget.upCast $ widget
         -- hbox = Box.new Box.Horizontal 0
         --        [Box.Item 0.5 . Widget.upCast $ vbox
         --        ,Box.Item 0.1 . Widget.upCast . Unfocusable.new $ keysTable]
 
-    let runWidget = mainLoop grid model
+    let runWidget = mainLoop vbox model
         --runWidget = mainLoop . Widget.upCast $ hbox
 
     -- Commented out for 6.8's lack of the new Exception

@@ -2,16 +2,21 @@
   -XGeneralizedNewtypeDeriving
   #-}
 
-module Draw(
+module Draw(Position
+           ,Size
            -- The monads
-            Draw, Compute
+           ,Draw
+           ,Compute
            -- Monad runners
-           , render, computeResult
+           ,render
+           ,computeResult
            -- Compute primitives
-           , textSize
+           ,textSize
            -- Draw primitives
-           , computeToDraw
-           , text, rect, move
+           ,computeToDraw
+           ,text
+           ,rect
+           ,move
            ) where
 
 import Vector2(Vector2(..))

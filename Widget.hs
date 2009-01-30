@@ -1,21 +1,18 @@
 {-# OPTIONS_GHC -Wall -O2
     -XMultiParamTypeClasses
     -XFunctionalDependencies
-    -XExistentialQuantification
-    -XRank2Types
   #-}
 
 module Widget where
 
 import qualified MySDLKey
 import qualified Data.Map as Map
-import Vector2(Vector2)
-import Draw(Draw, Compute)
+import Draw(Draw, Compute, Size)
+import Accessor(Accessor)
 
 data KeyStatus = KeyDown | KeyUp
   deriving (Eq, Ord, Show, Read)
 
-type Size = Vector2 Int
 type KeyAction = (KeyStatus, MySDLKey.KeyGroup)
 type Handler s = (String, MySDLKey.Key -> s)
 type ActionHandlers s = Map.Map KeyAction (Handler s)
@@ -26,18 +23,12 @@ data DrawInfo = DrawInfo
     }
   deriving (Eq, Ord, Show, Read)
 
-class Widget w s | w -> s where
-    getKeymap :: w -> s -> Maybe (ActionHandlers s)
-    draw      :: DrawInfo -> w -> s -> Draw Size
-    size      :: DrawInfo -> w -> s -> Compute Size
+data Widget model = Widget
+    {
+      widgetDraw :: DrawInfo -> model -> Draw Size
+    , widgetSize :: DrawInfo -> model -> Compute Size
+    , widgetGetKeymap :: model -> Maybe (ActionHandlers model)
+    }
 
-data WidgetState w s = Widget w s => WidgetState w s
-onWidgetState :: Widget w s => WidgetState w s -> (w -> s -> a) -> a
-onWidgetState (WidgetState w s) func = func w s
-
-upCast :: Widget w s => WidgetState w s -> AnyWidgetState
-upCast (WidgetState w s) = AnyWidgetState w s
-
-data AnyWidgetState = forall w s. Widget w s => AnyWidgetState w s
-onAnyWidgetState :: AnyWidgetState -> (forall w s. Widget w s => w -> s -> a) -> a
-onAnyWidgetState (AnyWidgetState w s) func = func w s
+type New model mutable =
+    Accessor model mutable -> Widget model

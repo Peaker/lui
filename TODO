@@ -1,19 +1,18 @@
+* Grid/Box contain differently-typed widgets in them, so the only way
+  to not lose type information, is to have some sort of tuple (type
+  product).
+  
+
+* Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
+
 * When a widget is shown a state, should it be able to fix it, what if
   its inconsistent? For example, a widget inside state becomes
   unselectable
-
-* Everything contains everything via existentials, so how can you in
-  fact get access to the state?
 
 * Grid:
   * should be able to jump to a selectable child if children become unselectable,
     it controls children status changes because it handles them...
   * should allow jumping to a child even if path via straight lines is not possible
-
-* Is it a good idea to use the AnyWidgetState existential all over the place, and
-  lose type information?
-
-* Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
 
 * Animations:
   * Draw -> Animate?

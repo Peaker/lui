@@ -6,11 +6,14 @@ module Accessor(Accessor,accessor
                ,(^.),(^:)
                -- composition
                ,(<^),(^>)
+               -- Accessors
+               ,self,null
                ,afirst,asecond
                ,anth
                ,aMapValue
                ,aMapValueDefault) where
 
+import Prelude hiding (null)
 import Control.Arrow(first, second)
 import List(nth)
 import qualified Data.Map as Map
@@ -27,6 +30,12 @@ accessor :: (whole -> part) ->
             (part -> whole -> whole) ->
             Accessor whole part
 accessor = Accessor
+
+self :: Accessor a a
+self = accessor id const
+
+null :: Accessor a ()
+null = accessor (const ()) (const id)
 
 (^.) :: whole -> Accessor whole part -> part
 (^.) = flip accessorGet

@@ -15,14 +15,14 @@ import qualified Draw
 import qualified Graphics.UI.SDL as SDL
 
 import qualified Data.Map as Map
--- import qualified Widgets.FocusDelegator as FocusDelegator
+import qualified Widgets.FocusDelegator as FocusDelegator
 import Data.Map((!))
 import Graphics.UI.SDL.Keysym(SDLKey)
 import Control.Arrow(first, second)
 import Func(result)
 import Vector2(Vector2(..))
 import List(isSorted)
-import Accessor((^.), (^:))
+import Accessor((^.), (^:), (^>), afirst, asecond)
 
 data Mutable = Mutable {
       mutableText :: String
@@ -116,7 +116,7 @@ type New model mutable =
     SDL.Color -> Widget.New model mutable
 
 new :: New model Mutable
-new editingBGColor cursorColor cursorWidth textColor accessor =
+new bgColor cursorColor cursorWidth textColor accessor =
   Widget
   {
     widgetDraw = \drawInfo model -> do
@@ -127,7 +127,7 @@ new editingBGColor cursorColor cursorWidth textColor accessor =
         Vector2 w h <- Draw.computeToDraw . Draw.textSize $ take cursor text
         let cursorSize = Vector2 cursorWidth h
             cursorPos = Vector2 w 0
-        Draw.rect editingBGColor textSize
+        Draw.rect bgColor textSize
         Draw.text textColor text
         Draw.move cursorPos $ Draw.rect cursorColor cursorSize
         return textSize
@@ -145,10 +145,10 @@ new editingBGColor cursorColor cursorWidth textColor accessor =
        (Map.map . second . result) newModel $ keysMap mutable
   }
 
--- newDelegated :: SDL.Color -> Bool ->
---                 New (FocusDelegator.FocusDelegatorMutable TextEdit Mutable)
--- newDelegated notEditingBGColor startEditing
---              textColor str editingBGColor cursorColor cursorWidth cursor =
---     FocusDelegator.new "Start editing" "Stop editing"
---                        notEditingBGColor startEditing $
---                        new textColor str editingBGColor cursorColor cursorWidth cursor
+newDelegated :: SDL.Color ->
+                New model (FocusDelegator.Mutable, Mutable)
+newDelegated focusColor editingColor cursorColor cursorWidth textColor accessor =
+    let textEdit = new editingColor cursorColor cursorWidth textColor
+                   (accessor ^> asecond)
+    in FocusDelegator.new "Start editing" "Stop editing" focusColor textEdit
+       (accessor ^> afirst)

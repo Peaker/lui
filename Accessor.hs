@@ -8,8 +8,12 @@ module Accessor(Accessor,accessor
                ,(<^),(^>)
                -- Accessors
                ,self,null,reader
+               ,write
+               -- Tuple
                ,afirst,asecond
+               -- List
                ,anth
+               -- Data.Map
                ,aMapValue
                ,aMapValueDefault) where
 
@@ -35,6 +39,9 @@ self = accessor id const
 
 reader :: r -> Accessor a r
 reader x = accessor (const x) (const id)
+
+write :: Accessor whole part -> part -> whole -> whole
+write = accessorSet
 
 (^.) :: whole -> Accessor whole part -> part
 (^.) = flip accessorGet

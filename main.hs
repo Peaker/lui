@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wall -O2
- -XDeriveDataTypeable
  #-}
 
 module Main where
@@ -12,7 +11,7 @@ import qualified Draw
 import qualified Control.Monad.State as State
 
 import qualified Widget
-import Widget(Widget(..))
+import Widget(Widget, WidgetFuncs(..))
 
 import qualified Widgets.TextEdit as TextEdit
 import qualified Widgets.FocusDelegator as FocusDelegator
@@ -41,47 +40,43 @@ speed = 30
 --   deriving (Typeable, Show)
 -- instance Exc.Exception QuitRequest where
 
-handleKeyAction :: Widget model ->
-                   Widget.KeyStatus -> SDL.Keysym -> model -> Maybe model
-handleKeyAction widget keyStatus keySym model =
+handleKeyAction :: WidgetFuncs model ->
+                   Widget.KeyStatus -> SDL.Keysym -> Maybe model
+handleKeyAction widgetFuncs keyStatus keySym =
   let key = MySDLKey.keyOfEvent keySym
       keyGroups = MySDLKeys.groupsOfKey key
       mKeyHandler = msum $ map lookupGroup keyGroups
       lookupGroup keyGroup = Map.lookup (keyStatus, keyGroup) =<<
-                             widgetGetKeymap widget model
+                             widgetGetKeymap widgetFuncs
       runHandler (_, func) = func key
   in fmap runHandler mKeyHandler
 
-maybeModify :: State.MonadState s m => (s -> Maybe s) -> m Bool
-maybeModify f = do
-  state <- State.get
-  maybe (return False) updateState (f state)
-  where
-    updateState s = do
-      State.put s
-      return True
-
 handleEvents :: [SDL.Event] -> Widget model -> State.StateT model IO Bool
 handleEvents events widget =
-  fmap or $ forM events $ \event ->
-      case event of
-        SDL.Quit -> error "Quit" -- 6.8 exceptions :-(  lift $ Exc.throwIO QuitRequest
-        SDL.KeyDown k -> maybeModify $
-                         handleKeyAction widget Widget.KeyDown k
-        SDL.KeyUp k -> maybeModify $
-                       handleKeyAction widget Widget.KeyUp k
-        _ -> return False
+  fmap or $ forM events $ \event -> do
+    model <- State.get
+    let mNewModel = case event of
+                      -- 6.8 exceptions :-(
+                      -- lift $ Exc.throwIO QuitRequest
+                      SDL.Quit -> error "Quit"
+                      SDL.KeyDown k -> handleKeyAction (widget model) Widget.KeyDown k
+                      SDL.KeyUp k -> handleKeyAction (widget model) Widget.KeyUp k
+                      _ -> Nothing
+    case mNewModel of
+      Nothing ->
+          return False
+      Just newState -> do
+          State.put newState
+          return True
 
-mainLoop :: (model -> Widget model) -> model -> IO ()
-mainLoop makeWidget initModel = do
+mainLoop :: Widget model -> model -> IO ()
+mainLoop widget initModel = do
   display <- SDL.setVideoMode 800 600 16 [SDL.DoubleBuf]
   blackPixel <- MySDL.sdlPixel display $ SDL.Color 0 0 0
   font <- MySDL.defaultFont 30
   (`State.evalStateT` initModel) $
     forM_ (True:repeat False) $ \shouldDraw -> do
       events <- lift $ MySDL.getEvents
-      modelForWidget <- State.get
-      let widget = makeWidget modelForWidget
       handledEvent <- handleEvents events widget
       model <- State.get
       lift $ do
@@ -91,14 +86,14 @@ mainLoop makeWidget initModel = do
             -- forM_ (Map.assocs $ fromMaybe Map.empty $ Widget.getKeymap widget model) $
             --   \((_, group), (desc, _)) -> do
             --     print (MySDLKey.keyGroupName group, desc)
-            let draw = widgetDraw widget (Widget.DrawInfo True) model
+            let draw = widgetDraw (widget model) (Widget.DrawInfo True)
             Draw.render font display (fromInteger 0) draw
             SDL.flip display
           else
             SDL.delay 20
 
 main :: IO ()
-main = do
+main =
   MySDL.withSDL $ do
     let textEditingColor = SDL.Color 30 20 100
         textEditColor = SDL.Color 255 255 255
@@ -121,32 +116,53 @@ main = do
 
         textEdit cursor =
             TextEdit.newDelegated
-                    focusColor
-                    textEditingColor
-                    textEditCursorColor
-                    textEditCursorWidth
-                    textEditColor $
-                    asecond ^> afirst ^> aMapValue cursor
-        grid = Grid.newDelegated focusColor (2, 2) items (asecond ^> asecond)
+            (const $
+             (focusColor,
+              TextEdit.Immutable
+                      textEditingColor
+                      textEditCursorColor
+                      textEditCursorWidth
+                      textEditColor)) $
+            asecond ^> afirst ^> aMapValue cursor
+        grid = Grid.newDelegated
+               (const $
+                (focusColor,
+                 Grid.Immutable
+                         (2, 2)
+                         items)) $
+               asecond ^> asecond
         items = Map.fromList
                 [((x, y), Grid.Item (textEdit (x, y)) (0.5, 1))
                  | x <- [0..1], y <- [0..1]]
 
-        textView = TextView.new textViewColor "This is just a view"
-        vbox = Box.newDelegated focusColor Box.Vertical vboxItems (afirst ^> asecond)
+        textView = TextView.new
+                   (const $
+                    TextView.Immutable
+                            textViewColor
+                            "This is just a view")
+        vbox = Box.newDelegated
+               (const $
+                (focusColor,
+                 Box.Immutable
+                    Box.Vertical
+                    vboxItems)) $
+               afirst ^> asecond
+        space = Space.new
+                (const . Space.Immutable $ Vector2 50 50)
         vboxItems = [Box.Item grid 1
-                    ,Box.Item (Space.new $ Vector2 50 50) 0.5
+                    ,Box.Item space 0.5
                     ,Box.Item (textEdit (0, 1)) 0.5
                     ,Box.Item textView 0.5]
-        keysTable handlers = KeysTable.new keysColor descColor handlers
-        makeHbox model =
-            let box = Box.new Box.Horizontal hboxItems (afirst ^> afirst)
-                hboxItems = [Box.Item vbox 0.5
-                            ,Box.Item (keysTable . fromMaybe Map.empty $
-                                       widgetGetKeymap box model) 0]
-            in box
+        keysTable = KeysTable.new
+                    (let handlers = fromMaybe Map.empty . widgetGetKeymap . hbox
+                     in KeysTable.Immutable keysColor descColor . handlers)
+        hbox = Box.new
+               (const $ Box.Immutable Box.Horizontal hboxItems) $
+               afirst ^> afirst
+        hboxItems = [Box.Item vbox 0.5
+                    ,Box.Item keysTable 0]
 
-    let runWidget = mainLoop makeHbox initModel
+        runWidget = mainLoop hbox initModel
 
     -- Commented out for 6.8's lack of the new Exception
     -- flip Exc.catch errHandler runWidget

@@ -1,11 +1,10 @@
 {-# OPTIONS_GHC -Wall -O2
-    -XMultiParamTypeClasses
   #-}
 
 module Widgets.Grid where
 
 import qualified Widget
-import Widget(Widget(..))
+import Widget(Widget, WidgetFuncs(..))
 
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified MySDLKey
@@ -22,7 +21,7 @@ import Func((~>), result)
 import Data.Maybe(isJust, fromMaybe)
 import List(isSorted)
 import Tuple(swap)
-import Accessor((^.), (^:), (^>), afirst, asecond)
+import Accessor((^.), (^>), write, afirst, asecond)
 
 data Item model = Item
     {
@@ -36,6 +35,12 @@ data Item model = Item
 
 type Items model = Map.Map Cursor (Item model)
 type Cursor = (Int, Int)
+
+data Immutable model = Immutable
+    {
+      immutableCursor :: Cursor
+    , immutableItems :: Items model
+    }
 
 data Mutable = Mutable
     {
@@ -53,16 +58,15 @@ gridDrawInfo :: Mutable -> Cursor -> Widget.DrawInfo -> Widget.DrawInfo
 gridDrawInfo (Mutable cursor) itemIndex (Widget.DrawInfo drawInfo) =
     Widget.DrawInfo (drawInfo && cursor==itemIndex)
 
-rowColumnSizes :: model -> Mutable -> Items model -> Cursor -> Widget.DrawInfo ->
-                  Draw.Compute ([Int], [Int])
-rowColumnSizes model mutable items size drawInfo = do
+getRowColumnSizes :: model -> Mutable -> Items model -> Cursor -> Widget.DrawInfo ->
+                     Draw.Compute ([Int], [Int])
+getRowColumnSizes model mutable items size drawInfo = do
   rowsSizes <- forM (gridRows size items) . mapM $ \(itemIndex, mItem) ->
                    case mItem of
                      Nothing -> return $ Vector2 0 0
                      Just item ->
-                         widgetSize (itemWidget item)
+                         widgetSize ((itemWidget item) model)
                                     (gridDrawInfo mutable itemIndex drawInfo)
-                                    model
 
   let rowsHeights = (map . map) vector2snd rowsSizes
       rowsWidths = (map . map) vector2fst rowsSizes
@@ -84,7 +88,7 @@ moveY delta (_, sizey) oldCursor =
 
 itemSelectable :: model -> Item model -> Bool
 itemSelectable model (Item widget _) =
-    isJust $ widgetGetKeymap widget model
+    isJust . widgetGetKeymap $ widget model
 
 getSelectables :: ((Int, Int) -> (Int, Int)) ->
                   Cursor -> model -> Mutable -> Items model -> (Int -> Int) ->
@@ -128,18 +132,16 @@ posSizes sizes =
     let positions = scanl (+) 0 sizes
     in zip positions sizes
 
-type New model mutable =
-    Cursor -> Items model -> Widget.New model mutable
-
-new :: New model Mutable
-new size items accessor =
-    Widget
+new :: Widget.New model (Immutable model) Mutable
+new immutableMaker acc model =
+    let Immutable size items = immutableMaker model
+        mutable = model ^. acc
+        rows = gridRows size items
+        rowColumnSizes drawInfo = getRowColumnSizes model mutable items size drawInfo
+    in WidgetFuncs
     {
-      widgetDraw = \drawInfo model -> do
-        let mutable = model ^. accessor
-            rows = gridRows size items
-        (rowHeights, columnWidths) <- Draw.computeToDraw $
-                                      rowColumnSizes model mutable items size drawInfo
+      widgetDraw = \drawInfo -> do
+        (rowHeights, columnWidths) <- Draw.computeToDraw . rowColumnSizes $ drawInfo
         forM_ (zip (posSizes rowHeights) rows) $
           \((ypos, height), row) -> do
             forM_ (zip (posSizes columnWidths) row) $
@@ -149,33 +151,34 @@ new size items accessor =
                   Just item -> do
                     let Item childWidget (ax, ay) = item
                         childDrawInfo = gridDrawInfo mutable itemIndex drawInfo
+                        childWidgetFuncs = childWidget model
                     Vector2 w h <- Draw.computeToDraw $
-                                   widgetSize childWidget childDrawInfo model
+                                   widgetSize childWidgetFuncs childDrawInfo
                     let pos = Vector2 (xpos + inFrac (*ax) (width-w))
                                       (ypos + inFrac (*ay) (height-h))
-                    Draw.move pos $ widgetDraw childWidget childDrawInfo model
+                    Draw.move pos $ widgetDraw childWidgetFuncs childDrawInfo
                     return ()
         return $ Vector2 (sum columnWidths) (sum rowHeights)
 
-    , widgetSize = \drawInfo model -> do
-      let mutable = model ^. accessor
-      (rowHeights, columnWidths) <- rowColumnSizes model mutable items size drawInfo
+    , widgetSize = \drawInfo -> do
+      (rowHeights, columnWidths) <- rowColumnSizes drawInfo
       return $ Vector2 (sum columnWidths) (sum rowHeights)
 
-    , widgetGetKeymap = \model -> Just $
-      let mutable = model ^. accessor
-          childKeys = fromMaybe Map.empty $ do
-            Item childWidget _ <- selectedItem mutable items
-            widgetGetKeymap childWidget model
-          applyToModel newMutable = (accessor ^: const newMutable) model
-      in childKeys `Map.union`
-         ((Map.map . second . result) applyToModel $
-          keysMap size model mutable items)
+    , widgetGetKeymap = Just $
+      let childKeys = fromMaybe Map.empty $ do
+                        Item childWidget _ <- selectedItem mutable items
+                        widgetGetKeymap $ childWidget model
+          applyToModel newMutable = acc `write` newMutable $ model
+      in childKeys `Map.union` ((Map.map . second . result) applyToModel $
+                                keysMap size model mutable items)
     }
 
-newDelegated :: SDL.Color ->
-                New model (FocusDelegator.Mutable, Mutable)
-newDelegated focusColor size items accessor =
-    let grid = new size items $ accessor ^> asecond
-    in FocusDelegator.new "Go in" "Go out" focusColor grid $
-       accessor ^> afirst
+newDelegated :: Widget.New model (SDL.Color, (Immutable model))
+                                 (FocusDelegator.Mutable, Mutable)
+newDelegated immutableMaker acc model =
+    let (focusColor, immutable) = immutableMaker model
+        grid = new (const immutable) $ acc ^> asecond
+    in FocusDelegator.new
+           (const $ FocusDelegator.Immutable "Go in" "Go out" grid focusColor)
+           (acc ^> afirst)
+           model

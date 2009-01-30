@@ -1,14 +1,13 @@
 {-# OPTIONS_GHC -Wall -O2
-    -XMultiParamTypeClasses
   #-}
 
 module Widgets.TextEdit where
 
+import qualified Widget
+import Widget(WidgetFuncs(..))
+
 import qualified MySDLKey
 import MySDLKey(asKeyGroup, noMods, ctrl)
-
-import qualified Widget
-import Widget(Widget(..))
 
 import qualified MySDLKeys
 import qualified Draw
@@ -22,12 +21,21 @@ import Control.Arrow(first, second)
 import Func(result)
 import Vector2(Vector2(..))
 import List(isSorted)
-import Accessor((^.), (^:), (^>), afirst, asecond)
+import Accessor((^.), (^>), write, afirst, asecond)
 
-data Mutable = Mutable {
+data Immutable = Immutable
+    {
+      immutableBgColor :: SDL.Color
+    , immutableCursorColor :: SDL.Color
+    , immutableCursorWidth :: Int
+    , immutableTextColor :: SDL.Color
+    }
+
+data Mutable = Mutable
+    {
       mutableText :: String
     , mutableCursor :: Int
-}
+    }
 
 insert :: Mutable -> MySDLKey.Key -> Mutable
 insert (Mutable oldText oldCursor) key =
@@ -111,16 +119,14 @@ ctrlActions mutable =
                      ,(SDL.SDLK_e, actEnd)]
            ]
 
-type New model mutable =
-    SDL.Color -> SDL.Color -> Int ->
-    SDL.Color -> Widget.New model mutable
-
-new :: New model Mutable
-new bgColor cursorColor cursorWidth textColor accessor =
-  Widget
+new :: Widget.New model Immutable Mutable
+new immutableMaker acc model =
+  let Immutable bgColor cursorColor cursorWidth textColor = immutableMaker model
+      mutable@(Mutable text cursor) = model ^. acc
+  in WidgetFuncs
   {
-    widgetDraw = \drawInfo model -> do
-    let Mutable text cursor = model ^. accessor
+    widgetDraw = \drawInfo -> do
+    
     if Widget.diHasFocus drawInfo
       then do
         textSize <- Draw.computeToDraw . Draw.textSize $ text
@@ -134,21 +140,18 @@ new bgColor cursorColor cursorWidth textColor accessor =
       else
         Draw.text textColor text
 
-  , widgetSize = \_ model ->
-    let (Mutable text _) = (model ^. accessor)
-    in Draw.textSize text
+  , widgetSize = \_ -> Draw.textSize text
 
-  , widgetGetKeymap = \model ->
-    let mutable = model ^. accessor
-        newModel newMutable = accessor ^: const newMutable $ model
+  , widgetGetKeymap =
+    let applyToModel newMutable = acc `write` newMutable $ model
     in Just $
-       (Map.map . second . result) newModel $ keysMap mutable
+       (Map.map . second . result) applyToModel $ keysMap mutable
   }
 
-newDelegated :: SDL.Color ->
-                New model (FocusDelegator.Mutable, Mutable)
-newDelegated focusColor editingColor cursorColor cursorWidth textColor accessor =
-    let textEdit = new editingColor cursorColor cursorWidth textColor $
-                   accessor ^> asecond
-    in FocusDelegator.new "Start editing" "Stop editing" focusColor textEdit $
-       accessor ^> afirst
+newDelegated :: Widget.New model (SDL.Color, Immutable) (FocusDelegator.Mutable, Mutable)
+newDelegated immutableMaker acc model =
+    let (focusColor, immutable) = immutableMaker model
+        textEdit = new (const immutable) $ acc ^> asecond
+        focusDelegatorImmutable = FocusDelegator.Immutable
+                                  "Start editing" "Stop editing" textEdit focusColor
+    in FocusDelegator.new (const $ focusDelegatorImmutable) (acc ^> afirst) model

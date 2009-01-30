@@ -1,6 +1,4 @@
 {-# OPTIONS_GHC -Wall -O2
-    -XMultiParamTypeClasses
-    -XFunctionalDependencies
   #-}
 
 module Widget where
@@ -23,12 +21,17 @@ data DrawInfo = DrawInfo
     }
   deriving (Eq, Ord, Show, Read)
 
-data Widget model = Widget
+-- TODO: Consider moving the model argument outside of the record
+data WidgetFuncs model = WidgetFuncs
     {
-      widgetDraw :: DrawInfo -> model -> Draw Size
-    , widgetSize :: DrawInfo -> model -> Compute Size
-    , widgetGetKeymap :: model -> Maybe (ActionHandlers model)
+      widgetDraw :: DrawInfo -> Draw Size
+    , widgetSize :: DrawInfo -> Compute Size
+    , widgetGetKeymap :: Maybe (ActionHandlers model)
     }
 
-type New model mutable =
-    Accessor model mutable -> Widget model
+type Widget model = model -> WidgetFuncs model
+
+type NewImmutable model immutable =
+    (model -> immutable) -> Widget model
+type New model immutable mutable =
+    (model -> immutable) -> Accessor model mutable -> Widget model

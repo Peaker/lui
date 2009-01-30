@@ -1,11 +1,10 @@
 {-# OPTIONS_GHC -Wall -O2
-    -XMultiParamTypeClasses
   #-}
 
 module Widgets.Box where
 
 import qualified Widget
-import Widget(Widget(..))
+import Widget(Widget)
 import qualified Widgets.Grid as Grid
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified Graphics.UI.SDL as SDL
@@ -25,6 +24,12 @@ data Item model = Item
 
 type Cursor = Int
 
+data Immutable model = Immutable
+    {
+      immutableOrientation :: Orientation
+    , immutableItems :: Items model
+    }
+
 data Mutable = Mutable
     {
       mutableCursor :: Cursor
@@ -33,14 +38,14 @@ data Mutable = Mutable
 -- This type exists for symmetry/similarity with Grid's Items
 type Items model = [Item model]
 
-type New model mutable = Orientation -> Items model -> Widget.New model mutable
-
-new :: New model Mutable
-new orientation items boxAccessor =
-    Grid.new gridSize
-             gridItems $
-             boxAccessor ^> boxGridConvertor
+new :: Widget.New model (Immutable model) Mutable
+new immutableMaker acc model =
+    Grid.new (const $ Grid.Immutable gridSize gridItems)
+             (acc ^> boxGridConvertor)
+             model
     where
+      Immutable orientation items = immutableMaker model
+          
       gridSize = (maybeSwap (1, length items))
       gridItems = (Map.fromList $
                    [(maybeSwap (0, i),
@@ -54,9 +59,13 @@ new orientation items boxAccessor =
       mutableToGridMutable = Grid.Mutable . maybeSwap . (,) 0 . mutableCursor
       gridMutableToMutable = Mutable . snd . maybeSwap . Grid.mutableCursor
 
-newDelegated :: SDL.Color ->
-                New model (FocusDelegator.Mutable, Mutable)
-newDelegated focusColor orientation items boxAccessor =
-    let box = new orientation items $ boxAccessor ^> asecond
-    in FocusDelegator.new "Go in" "Go out" focusColor box $
-       boxAccessor ^> afirst
+newDelegated :: Widget.New model (SDL.Color, (Immutable model))
+                                 (FocusDelegator.Mutable, Mutable)
+newDelegated immutableMaker acc model =
+    let (focusColor, immutable) = immutableMaker model
+        box = new (const immutable) (acc ^> asecond)
+        focusDelegatorImmutable = FocusDelegator.Immutable
+                                  "Go in" "Go out" box focusColor
+    in FocusDelegator.new
+           (const $ focusDelegatorImmutable)
+           (acc ^> afirst) model

@@ -1,11 +1,10 @@
 {-# OPTIONS_GHC -Wall -O2
-    -XMultiParamTypeClasses
   #-}
 
 module Widgets.FocusDelegator where
 
 import qualified Widget
-import Widget(Widget(..))
+import Widget(Widget, WidgetFuncs(..))
 import MySDLKey(asKeyGroup, noMods)
 import qualified MySDLKey
 import qualified Graphics.UI.SDL as SDL
@@ -13,12 +12,21 @@ import qualified Draw
 import qualified Data.Map as Map
 import Control.Arrow(second)
 import Func(result)
-import Accessor((^.), (^:))
+import Accessor((^.), write)
 import Data.Maybe(fromMaybe)
 
-data Mutable = Mutable {
+data Immutable model = Immutable
+    {
+      immutableStartStr :: String
+    , immutableStopStr :: String
+    , immutableChildWidget :: Widget model
+    , immutableFocusColor :: SDL.Color
+    }
+
+data Mutable = Mutable
+    {
       mutableDelegateFocus :: Bool
-}
+    }
 
 buildKeymap :: SDL.SDLKey -> String -> Bool -> Widget.ActionHandlers Mutable
 buildKeymap key desc newDelegating =
@@ -30,16 +38,16 @@ delegatingKeyMap, nonDelegatingKeyMap ::
 nonDelegatingKeyMap startStr = buildKeymap SDL.SDLK_RETURN startStr True
 delegatingKeyMap    stopStr  = buildKeymap SDL.SDLK_ESCAPE stopStr False
 
-type New model mutable = String -> String -> SDL.Color ->
-                         Widget model -> Widget.New model mutable
-
-new :: New model Mutable
-new startStr stopStr focusColor childWidget accessor =
-    Widget
+new :: Widget.New model (Immutable model) Mutable
+new immutableMaker acc model =
+    let Immutable startStr stopStr childWidget focusColor = immutableMaker model
+        Mutable delegating = model ^. acc
+        childWidgetFuncs = childWidget model
+    in WidgetFuncs
     {
-      widgetSize = \drawInfo model -> widgetSize childWidget drawInfo model
-    , widgetDraw = \drawInfo model -> do
-        let Mutable delegating = model ^. accessor
+      widgetSize = \drawInfo -> widgetSize childWidgetFuncs drawInfo
+    , widgetDraw = \drawInfo -> do
+        let 
             haveFocus = Widget.diHasFocus drawInfo
             delegatorHasFocus = haveFocus && not delegating
             childDrawInfo = Widget.DrawInfo
@@ -49,18 +57,17 @@ new startStr stopStr focusColor childWidget accessor =
         if delegatorHasFocus
           then do
             size <- Draw.computeToDraw $
-                    widgetSize childWidget childDrawInfo model
+                    widgetSize childWidgetFuncs childDrawInfo
             Draw.rect focusColor size
             return ()
           else
             return ()
-        widgetDraw childWidget childDrawInfo model
-    , widgetGetKeymap = \model ->
-        let Mutable delegating = model ^. accessor
-            mChildKeymap = widgetGetKeymap childWidget model
+        widgetDraw childWidgetFuncs childDrawInfo
+    , widgetGetKeymap =
+        let mChildKeymap = widgetGetKeymap childWidgetFuncs
             childKeymap = fromMaybe Map.empty mChildKeymap
-            onModel newMutable = (accessor ^: (const newMutable)) model
-            wrapKeymap = (Map.map . second . result) onModel
+            applyToModel newMutable = acc `write` newMutable $ model
+            wrapKeymap = (Map.map . second . result) applyToModel
         in case delegating of
              True ->
                  Just $

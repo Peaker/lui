@@ -1,8 +1,3 @@
-* Grid/Box contain differently-typed widgets in them, so the only way
-  to not lose type information, is to have some sort of tuple (type
-  product).
-  
-
 * Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
 
 * When a widget is shown a state, should it be able to fix it, what if
@@ -17,3 +12,6 @@
 * Animations:
   * Draw -> Animate?
     * Can use ID's on all drawings, and have it animate stuff moving around
+
+
+Possible bug?  We pass (const immutable-value-here) for the given model that we were given, but then the guy we pass it to may receive different models and still make this const value?

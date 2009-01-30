@@ -148,7 +148,7 @@ new bgColor cursorColor cursorWidth textColor accessor =
 newDelegated :: SDL.Color ->
                 New model (FocusDelegator.Mutable, Mutable)
 newDelegated focusColor editingColor cursorColor cursorWidth textColor accessor =
-    let textEdit = new editingColor cursorColor cursorWidth textColor
-                   (accessor ^> asecond)
-    in FocusDelegator.new "Start editing" "Stop editing" focusColor textEdit
-       (accessor ^> afirst)
+    let textEdit = new editingColor cursorColor cursorWidth textColor $
+                   accessor ^> asecond
+    in FocusDelegator.new "Start editing" "Stop editing" focusColor textEdit $
+       accessor ^> afirst

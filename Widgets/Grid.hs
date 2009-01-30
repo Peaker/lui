@@ -7,7 +7,7 @@ module Widgets.Grid where
 import qualified Widget
 import Widget(Widget(..))
 
--- import qualified Widgets.FocusDelegator as FocusDelegator
+import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified MySDLKey
 import MySDLKey(asKeyGroup, noMods)
 import qualified Draw
@@ -22,7 +22,7 @@ import Func((~>), result)
 import Data.Maybe(isJust, fromMaybe)
 import List(isSorted)
 import Tuple(swap)
-import Accessor((^.), (^:))
+import Accessor((^.), (^:), (^>), afirst, asecond)
 
 data Item model = Item
     {
@@ -173,8 +173,9 @@ new size items accessor =
           keysMap size model mutable items)
     }
 
--- newDelegated :: SDL.Color -> Bool ->
---                 New (FocusDelegator.FocusDelegatorMutable Immutable Mutable)
--- newDelegated gridFocusColor startInItem size cursor items =
---     FocusDelegator.new "Go in" "Go out" gridFocusColor startInItem $
---                        new size cursor items
+newDelegated :: SDL.Color ->
+                New model (FocusDelegator.Mutable, Mutable)
+newDelegated focusColor size items accessor =
+    let grid = new size items $ accessor ^> asecond
+    in FocusDelegator.new "Go in" "Go out" focusColor grid $
+       accessor ^> afirst

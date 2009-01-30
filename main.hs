@@ -17,7 +17,7 @@ import Widget(Widget(..))
 import qualified Widgets.TextEdit as TextEdit
 import qualified Widgets.FocusDelegator as FocusDelegator
 -- import qualified Widgets.TextView as TextView
--- import qualified Widgets.Grid as Grid
+import qualified Widgets.Grid as Grid
 -- import qualified Widgets.Box as Box
 -- import qualified Widgets.Unfocusable as Unfocusable
 -- import qualified Widgets.Space as Space
@@ -26,8 +26,7 @@ import qualified Data.Map as Map
 -- import Vector2(Vector2(..))
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
-import Accessor(self)
---    afirst, asecond, aMapValue, (^>)
+import Accessor(afirst, asecond, aMapValue, (^>))
 
 --import Data.Maybe(fromMaybe)
 
@@ -108,29 +107,28 @@ main = do
         -- keysColor = SDL.Color 255 0 0
         -- descColor = SDL.Color 0 0 255
         focusColor = SDL.Color 0 0 150
-        -- model = (Map.fromList [((x, y), textEditModel)
-        --                        | x <- [0..1]
-        --                       , y <- [0..1]]
-        --         ,gridModel)
 
         dTextEditModel = (FocusDelegator.Mutable False,
                           TextEdit.Mutable "Hello world" 5)
-        textEdit =
+        dGridModel = (FocusDelegator.Mutable False,
+                      Grid.Mutable (0, 0))
+        model = (Map.fromList [((x, y), dTextEditModel)
+                               | x <- [0..1]
+                              , y <- [0..1]]
+                ,dGridModel)
+
+        textEdit cursor =
             TextEdit.newDelegated
                     focusColor
                     textEditingColor
                     textEditCursorColor
                     textEditCursorWidth
-                    textEditColor
-                    self
-        -- gridModel = Grid.Mutable (0, 0)
-        -- grid = Grid.new (2, 2) items asecond
-        -- items = Map.fromList
-        --         [((x, y),
-        --           Grid.Item (0.5, 1) $
-        --           textEdit (x, y))
-        --          | x <- [0..1]
-        --         , y <- [0..1]]
+                    textEditColor $
+                    afirst ^> aMapValue cursor
+        grid = Grid.newDelegated focusColor (2, 2) items asecond
+        items = Map.fromList
+                [((x, y), Grid.Item (0.5, 1) $ textEdit (x, y))
+                 | x <- [0..1], y <- [0..1]]
 
         -- textView = TextView.new textViewColor "This is just a view"
         -- vbox = Box.new Box.Vertical 0
@@ -143,7 +141,7 @@ main = do
         --        [Box.Item 0.5 . Widget.upCast $ vbox
         --        ,Box.Item 0.1 . Widget.upCast . Unfocusable.new $ keysTable]
 
-    let runWidget = mainLoop textEdit dTextEditModel
+    let runWidget = mainLoop grid model
         --runWidget = mainLoop . Widget.upCast $ hbox
 
     -- Commented out for 6.8's lack of the new Exception

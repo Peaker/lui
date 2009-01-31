@@ -73,7 +73,6 @@ mainLoop :: Widget model -> model -> IO ()
 mainLoop widget initModel = do
   display <- SDL.setVideoMode 800 600 16 [SDL.DoubleBuf]
   blackPixel <- MySDL.sdlPixel display $ SDL.Color 0 0 0
-  font <- MySDL.defaultFont 30
   (`State.evalStateT` initModel) $
     forM_ (True:repeat False) $ \shouldDraw -> do
       events <- lift $ MySDL.getEvents
@@ -87,7 +86,7 @@ mainLoop widget initModel = do
             --   \((_, group), (desc, _)) -> do
             --     print (MySDLKey.keyGroupName group, desc)
             let draw = widgetDraw (widget model) (Widget.DrawInfo True)
-            Draw.render font display (fromInteger 0) draw
+            Draw.render display (Vector2 0 0) draw
             SDL.flip display
           else
             SDL.delay 20
@@ -95,6 +94,9 @@ mainLoop widget initModel = do
 main :: IO ()
 main =
   MySDL.withSDL $ do
+    font <- MySDL.defaultFont 30
+    keysFont <- MySDL.defaultFont 20
+    descFont <- MySDL.defaultFont 15
     let textEditingColor = SDL.Color 30 20 100
         textEditColor = SDL.Color 255 255 255
         textViewColor = SDL.Color 255 100 255
@@ -122,6 +124,7 @@ main =
                       textEditingColor
                       textEditCursorColor
                       textEditCursorWidth
+                      font
                       textEditColor)) $
             asecond ^> afirst ^> aMapValue cursor
         grid = Grid.newDelegated
@@ -139,6 +142,7 @@ main =
                    (const $
                     TextView.Immutable
                             textViewColor
+                            font
                             "This is just a view")
         vbox = Box.newDelegated
                (const $
@@ -155,7 +159,9 @@ main =
                     ,Box.Item textView 0.5]
         keysTable = KeysTable.new
                     (let handlers = fromMaybe Map.empty . widgetGetKeymap . hbox
-                     in KeysTable.Immutable keysColor descColor . handlers)
+                     in KeysTable.Immutable keysColor keysFont
+                                            descColor descFont
+                        . handlers)
         hbox = Box.new
                (const $ Box.Immutable Box.Horizontal hboxItems) $
                afirst ^> afirst

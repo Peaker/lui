@@ -28,6 +28,7 @@ data Immutable = Immutable
       immutableBgColor :: SDL.Color
     , immutableCursorColor :: SDL.Color
     , immutableCursorWidth :: Int
+    , immutableFont :: Draw.Font
     , immutableTextColor :: SDL.Color
     }
 
@@ -121,7 +122,7 @@ ctrlActions mutable =
 
 new :: Widget.New model Immutable Mutable
 new immutableMaker acc model =
-  let Immutable bgColor cursorColor cursorWidth textColor = immutableMaker model
+  let Immutable bgColor cursorColor cursorWidth font textColor = immutableMaker model
       mutable@(Mutable text cursor) = model ^. acc
   in WidgetFuncs
   {
@@ -129,18 +130,18 @@ new immutableMaker acc model =
     
     if Widget.diHasFocus drawInfo
       then do
-        textSize <- Draw.computeToDraw . Draw.textSize $ text
-        Vector2 w h <- Draw.computeToDraw . Draw.textSize $ take cursor text
+        textSize <- Draw.computeToDraw . Draw.textSize font $ text
+        Vector2 w h <- Draw.computeToDraw . Draw.textSize font $ take cursor text
         let cursorSize = Vector2 cursorWidth h
             cursorPos = Vector2 w 0
         Draw.rect bgColor textSize
-        Draw.text textColor text
+        Draw.text textColor font text
         Draw.move cursorPos $ Draw.rect cursorColor cursorSize
         return textSize
       else
-        Draw.text textColor text
+        Draw.text textColor font text
 
-  , widgetSize = \_ -> Draw.textSize text
+  , widgetSize = \_ -> Draw.textSize font text
 
   , widgetGetKeymap =
     let applyToModel newMutable = acc `write` newMutable $ model

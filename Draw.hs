@@ -2,8 +2,7 @@
   -XGeneralizedNewtypeDeriving
   #-}
 
-module Draw(Position
-           ,Size
+module Draw(Position,Size,Font
            -- The monads
            ,Draw
            ,Compute
@@ -28,13 +27,12 @@ import qualified MySDL
 
 type Position = Vector2 Int
 type Size = Vector2 Int
+type Font = TTF.Font
 
-newtype Compute a = Compute { unCompute :: ReaderT TTF.Font IO a }
+newtype Compute a = Compute { unCompute :: IO a }
     deriving Monad
-liftFont :: ReaderT TTF.Font IO a -> Compute a
-liftFont = Compute
 liftIO :: IO a -> Compute a
-liftIO = Compute . lift
+liftIO = Compute
 
 -- Monad Transformers require a bit of boiler-plate...
 newtype Draw a = Draw { unDraw :: ReaderT SDL.Surface (ReaderT Position Compute) a }
@@ -47,29 +45,27 @@ liftSurface = Draw
 computeToDraw :: Compute a -> Draw a
 computeToDraw = Draw . lift . lift
 
-computeResult :: TTF.Font -> Compute a -> IO a
-computeResult font = flip runReaderT font . unCompute
+computeResult :: Compute a -> IO a
+computeResult = unCompute
 
-render :: TTF.Font -> SDL.Surface -> Position -> Draw a -> IO a
-render font surface pos = computeResult font .
-                          flip runReaderT pos .
-                          flip runReaderT surface .
-                          unDraw
+render :: SDL.Surface -> Position -> Draw a -> IO a
+render surface pos = computeResult .
+                     flip runReaderT pos .
+                     flip runReaderT surface .
+                     unDraw
 
-textSize :: String -> Compute Size
-textSize str = do
-  font <- liftFont ask
+textSize :: Font -> String -> Compute Size
+textSize font str = do
   liftIO $ MySDL.textSize font str
 
-text :: SDL.Color -> String -> Draw Size
-text color str = do
+text :: SDL.Color -> Font -> String -> Draw Size
+text color font str = do
   surface <- liftSurface ask
   position <- liftPosition ask
   computeToDraw $ do
-    font <- liftFont $ ask
     textSurface <- liftIO $ MySDL.renderText font str color
     liftIO $ MySDL.blit surface position textSurface
-    textSize $ str
+    textSize font str
   
 rect :: SDL.Color -> Size -> Draw Size
 rect color size = do

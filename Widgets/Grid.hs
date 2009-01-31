@@ -22,6 +22,7 @@ import Data.Maybe(isJust, fromMaybe)
 import List(isSorted)
 import Tuple(swap)
 import Accessor((^.), (^>), write, afirst, asecond)
+import Data.Maybe(isNothing)
 
 data Item model = Item
     {
@@ -164,13 +165,18 @@ new immutableMaker acc model =
       (rowHeights, columnWidths) <- rowColumnSizes drawInfo
       return $ Vector2 (sum columnWidths) (sum rowHeights)
 
-    , widgetGetKeymap = Just $
-      let childKeys = fromMaybe Map.empty $ do
-                        Item childWidget _ <- selectedItem mutable items
-                        widgetGetKeymap $ childWidget model
-          applyToModel newMutable = acc `write` newMutable $ model
-      in childKeys `Map.union` ((Map.map . second . result) applyToModel $
-                                keysMap size model mutable items)
+    , widgetGetKeymap =
+      if all isNothing .
+         map (widgetGetKeymap . ($model) . itemWidget) .
+         Map.elems $ items
+      then Nothing
+      else Just $
+        let childKeys = fromMaybe Map.empty $ do
+                          Item childWidget _ <- selectedItem mutable items
+                          widgetGetKeymap $ childWidget model
+            applyToModel newMutable = acc `write` newMutable $ model
+        in childKeys `Map.union` ((Map.map . second . result) applyToModel $
+                                  keysMap size model mutable items)
     }
 
 newDelegated :: Widget.New model (SDL.Color, (Immutable model))

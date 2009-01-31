@@ -26,7 +26,7 @@ data Immutable a = Immutable
     }
 
 gItem :: Widget model -> Grid.Item model
-gItem = flip Grid.Item (0.5, 0.5)
+gItem = flip Grid.Item (0, 0.5)
 
 keyBindings :: Widget.ActionHandlers a -> [(MySDLKey.KeyGroup, String)]
 keyBindings = sort .

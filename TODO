@@ -1,5 +1,17 @@
+* ProxyWidget
+* Box with delete
+
 * Abstract away SDL keyboard keys, events, flip and delay
   * Implement a GLUT-based version
+
+* Plan editor:
+  * The model can be an AST
+    * Keys associated with manipulating the AST model
+    * Accessors to model can convert AST to the widget form
+
+  * Revision control (Diff management?)
+    * Model accessors can put extra information in model about how to save only the
+      changes
 
 * Animations:
   * Draw -> Animate?

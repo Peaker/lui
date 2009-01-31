@@ -96,8 +96,9 @@ main :: IO ()
 main =
   HaskGame.withInit $ do
     font <- Font.defaultFont 30
-    keysFont <- Font.defaultFont 20
-    descFont <- Font.defaultFont 15
+    textViewFont <- Font.defaultFont 15
+    keysFont <- Font.defaultFont 25
+    descFont <- Font.defaultFont 25
     let textEditingColor = Color.Color 30 20 100
         textEditColor = Color.Color 255 255 255
         textViewColor = Color.Color 255 100 255
@@ -105,6 +106,7 @@ main =
         textEditCursorWidth = 2
         keysColor = Color.Color 255 0 0
         descColor = Color.Color 0 0 255
+        keysTableXSpace = 10
         focusColor = Color.Color 0 0 150
 
         startOutside = FocusDelegator.Mutable False
@@ -143,7 +145,7 @@ main =
                    (const $
                     TextView.Immutable
                             textViewColor
-                            font
+                            textViewFont
                             "This is just a view")
         vbox = Box.newDelegated
                (const $
@@ -152,21 +154,23 @@ main =
                     Box.Vertical
                     vboxItems)) $
                afirst ^> asecond
-        space = Space.new
-                (const . Space.Immutable $ Vector2 50 50)
+        space x y = Space.new
+                    (const . Space.Immutable $ Vector2 x y)
         vboxItems = [Box.Item grid 1
-                    ,Box.Item space 0.5
+                    ,Box.Item (space 0 100) 0.5
                     ,Box.Item (textEdit (0, 1)) 0.5
                     ,Box.Item textView 0.5]
         keysTable = KeysTable.new
                     (let handlers = fromMaybe Map.empty . widgetGetKeymap . hbox
                      in KeysTable.Immutable keysColor keysFont
                                             descColor descFont
+                                            keysTableXSpace
                         . handlers)
         hbox = Box.new
                (const $ Box.Immutable Box.Horizontal hboxItems) $
                afirst ^> afirst
         hboxItems = [Box.Item vbox 0.5
+                    ,Box.Item (space 50 0) 0
                     ,Box.Item keysTable 0]
 
         runWidget = mainLoop hbox initModel

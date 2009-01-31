@@ -1,17 +1,8 @@
-* Abstract away all of the SDLness in MySDL/Draw and rename it HaskGame? :-)
-
-* When a widget is shown a state, should it be able to fix it, what if
-  its inconsistent? For example, a widget inside state becomes
-  unselectable
-
-* Grid:
-  * should be able to jump to a selectable child if children become unselectable,
-    it controls children status changes because it handles them...
-  * should allow jumping to a child even if path via straight lines is not possible
+* Abstract away SDL keyboard keys, events, flip and delay
+  * Implement a GLUT-based version
 
 * Animations:
   * Draw -> Animate?
     * Can use ID's on all drawings, and have it animate stuff moving around
-
 
 Possible bug?  We pass (const immutable-value-here) for the given model that we were given, but then the guy we pass it to may receive different models and still make this const value?

@@ -7,9 +7,11 @@ import qualified Widget
 import Widget(Widget)
 import qualified HaskGame.Key as Key
 import qualified HaskGame.Color as Color
+import HaskGame.Vector2(Vector2(..))
 import qualified Widgets.Grid as Grid
 import qualified Widgets.TextView as TextView
 import qualified Widgets.Unfocusable as Unfocusable
+import qualified Widgets.Space as Space
 import qualified Draw
 import qualified Data.Map as Map
 import Data.List(sort)
@@ -22,6 +24,7 @@ data Immutable a = Immutable
     , immutableKeysFont :: Draw.Font
     , immutableDescColor :: Color.Color
     , immutableDescFont :: Draw.Font
+    , immutableXSpace :: Int
     , immutableHandlers :: Widget.ActionHandlers a
     }
 
@@ -38,12 +41,20 @@ new :: Widget.NewImmutable model (Immutable a)
 new immutableMaker model =
     Unfocusable.new (const $ Unfocusable.Immutable grid) model
     where
-      Immutable keysColor keysFont descColor descFont handlers = immutableMaker model
-      grid = Grid.new (const $ Grid.Immutable (2, Map.size handlers) gridItems) gridAccessor
+      Immutable keysColor keysFont descColor descFont xSpace handlers =
+          immutableMaker model
+      grid = Grid.new
+             (const $
+              Grid.Immutable (3, Map.size handlers) gridItems)
+             gridAccessor
+      space = Space.new
+              (const . Space.Immutable $
+               Vector2 xSpace 0)
       gridItems =
           Map.fromList . concat $
           [[((0, y), gItem keyGroupTextView),
-            ((1, y), gItem descTextView)]
+            ((1, y), gItem space),
+            ((2, y), gItem descTextView)]
            | (y, (keyGroup, desc)) <- zip [0..] . keyBindings $ handlers
            , let keyGroupTextView =
                      TextView.new (const . TextView.Immutable keysColor keysFont $

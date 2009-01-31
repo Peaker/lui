@@ -4,9 +4,11 @@
 module Main where
 
 import qualified Graphics.UI.SDL as SDL
-import qualified MySDL
-import qualified MySDLKey
-import qualified MySDLKeys
+import qualified HaskGame
+import qualified HaskGame.Font as Font
+import qualified HaskGame.Key as Key
+import qualified HaskGame.Keys as Keys
+import qualified HaskGame.Color as Color
 import qualified Draw
 import qualified Control.Monad.State as State
 
@@ -21,7 +23,7 @@ import qualified Widgets.Box as Box
 import qualified Widgets.Space as Space
 import qualified Widgets.KeysTable as KeysTable
 import qualified Data.Map as Map
-import Vector2(Vector2(..))
+import HaskGame.Vector2(Vector2(..))
 import Control.Monad(forM, forM_, msum)
 import Control.Monad.Trans(lift)
 import Accessor(afirst, asecond, aMapValue, (^>))
@@ -43,8 +45,8 @@ speed = 30
 handleKeyAction :: WidgetFuncs model ->
                    Widget.KeyStatus -> SDL.Keysym -> Maybe model
 handleKeyAction widgetFuncs keyStatus keySym =
-  let key = MySDLKey.keyOfEvent keySym
-      keyGroups = MySDLKeys.groupsOfKey key
+  let key = Key.keyOfEvent keySym
+      keyGroups = Keys.groupsOfKey key
       mKeyHandler = msum $ map lookupGroup keyGroups
       lookupGroup keyGroup = Map.lookup (keyStatus, keyGroup) =<<
                              widgetGetKeymap widgetFuncs
@@ -72,14 +74,13 @@ handleEvents events widget =
 mainLoop :: Widget model -> model -> IO ()
 mainLoop widget initModel = do
   display <- SDL.setVideoMode 800 600 16 [SDL.DoubleBuf]
-  blackPixel <- MySDL.sdlPixel display $ SDL.Color 0 0 0
   (`State.evalStateT` initModel) $
     forM_ (True:repeat False) $ \shouldDraw -> do
-      events <- lift $ MySDL.getEvents
+      events <- lift $ HaskGame.getEvents
       handledEvent <- handleEvents events widget
       model <- State.get
       lift $ do
-        SDL.fillRect display Nothing blackPixel
+        HaskGame.fillSurface display (Color.Color 0 0 0)
         if handledEvent || shouldDraw
           then do
             -- forM_ (Map.assocs $ fromMaybe Map.empty $ Widget.getKeymap widget model) $
@@ -93,18 +94,18 @@ mainLoop widget initModel = do
 
 main :: IO ()
 main =
-  MySDL.withSDL $ do
-    font <- MySDL.defaultFont 30
-    keysFont <- MySDL.defaultFont 20
-    descFont <- MySDL.defaultFont 15
-    let textEditingColor = SDL.Color 30 20 100
-        textEditColor = SDL.Color 255 255 255
-        textViewColor = SDL.Color 255 100 255
-        textEditCursorColor = SDL.Color 255 0 0
+  HaskGame.withInit $ do
+    font <- Font.defaultFont 30
+    keysFont <- Font.defaultFont 20
+    descFont <- Font.defaultFont 15
+    let textEditingColor = Color.Color 30 20 100
+        textEditColor = Color.Color 255 255 255
+        textViewColor = Color.Color 255 100 255
+        textEditCursorColor = Color.Color 255 0 0
         textEditCursorWidth = 2
-        keysColor = SDL.Color 255 0 0
-        descColor = SDL.Color 0 0 255
-        focusColor = SDL.Color 0 0 150
+        keysColor = Color.Color 255 0 0
+        descColor = Color.Color 0 0 255
+        focusColor = Color.Color 0 0 150
 
         startOutside = FocusDelegator.Mutable False
         dTextEditModel = (startOutside, TextEdit.Mutable "Hello world" 5)

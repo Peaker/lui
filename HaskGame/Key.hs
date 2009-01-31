@@ -1,9 +1,9 @@
 {-# OPTIONS_GHC -Wall -O2 #-}
 
-module MySDLKey(keyOfEvent
-               , Key(..), KeyGroup(..)
-               , singletonKeyGroup, asKeyGroup, keyName
-               , Mods(..), noMods, shift, ctrl, alt)
+module HaskGame.Key(keyOfEvent
+                   , Key(..), KeyGroup(..)
+                   , singletonKeyGroup, asKeyGroup, keyName
+                   , Mods(..), noMods, shift, ctrl, alt)
 where
 
 import qualified Graphics.UI.SDL as SDL

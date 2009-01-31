@@ -1,8 +1,9 @@
 {-# OPTIONS -Wall -O2 #-}
 
-module Vector2(Vector2(Vector2)
-              , vector2first, vector2second
-              , vector2fst, vector2snd) where
+module HaskGame.Vector2(Vector2(Vector2)
+                       ,vector2first,vector2second
+                       ,vector2fst,vector2snd)
+where
 
 import Control.Applicative(Applicative(..), liftA2)
 

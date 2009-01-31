@@ -5,8 +5,8 @@ module Widgets.KeysTable where
 
 import qualified Widget
 import Widget(Widget)
-import qualified MySDLKey
-import qualified Graphics.UI.SDL as SDL
+import qualified HaskGame.Key as Key
+import qualified HaskGame.Color as Color
 import qualified Widgets.Grid as Grid
 import qualified Widgets.TextView as TextView
 import qualified Widgets.Unfocusable as Unfocusable
@@ -18,9 +18,9 @@ import Accessor(reader)
 
 data Immutable a = Immutable
     {
-      immutableKeysColor :: SDL.Color
+      immutableKeysColor :: Color.Color
     , immutableKeysFont :: Draw.Font
-    , immutableDescColor :: SDL.Color
+    , immutableDescColor :: Color.Color
     , immutableDescFont :: Draw.Font
     , immutableHandlers :: Widget.ActionHandlers a
     }
@@ -28,7 +28,7 @@ data Immutable a = Immutable
 gItem :: Widget model -> Grid.Item model
 gItem = flip Grid.Item (0, 0.5)
 
-keyBindings :: Widget.ActionHandlers a -> [(MySDLKey.KeyGroup, String)]
+keyBindings :: Widget.ActionHandlers a -> [(Key.KeyGroup, String)]
 keyBindings = sort .
               (map . first) snd .
               (map . second) fst .
@@ -47,7 +47,7 @@ new immutableMaker model =
            | (y, (keyGroup, desc)) <- zip [0..] . keyBindings $ handlers
            , let keyGroupTextView =
                      TextView.new (const . TextView.Immutable keysColor keysFont $
-                                   MySDLKey.keyGroupName keyGroup)
+                                   Key.keyGroupName keyGroup)
                  descTextView =
                      TextView.new (const $
                                    TextView.Immutable descColor descFont desc)

@@ -7,7 +7,7 @@ import qualified Widget
 import Widget(Widget)
 import qualified Widgets.Grid as Grid
 import qualified Widgets.FocusDelegator as FocusDelegator
-import qualified Graphics.UI.SDL as SDL
+import qualified HaskGame.Color as Color
 import qualified Data.Map as Map
 import Tuple(swap)
 import Accessor(accessor, (^>), afirst, asecond)
@@ -59,7 +59,7 @@ new immutableMaker acc model =
       mutableToGridMutable = Grid.Mutable . maybeSwap . (,) 0 . mutableCursor
       gridMutableToMutable = Mutable . snd . maybeSwap . Grid.mutableCursor
 
-newDelegated :: Widget.New model (SDL.Color, (Immutable model))
+newDelegated :: Widget.New model (Color.Color, (Immutable model))
                                  (FocusDelegator.Mutable, Mutable)
 newDelegated immutableMaker acc model =
     let (focusColor, immutable) = immutableMaker model

@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wall -O2 #-}
 
-module MySDLKeys
+module HaskGame.Keys
     (KeyGroup(..),allGroups,groupsOfKey,keysUnicode
     ,printableGroup,digitsGroup,lettersGroup
     ,upperCaseGroup,lowerCaseGroup,arrowsGroup
@@ -10,8 +10,8 @@ where
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Graphics.UI.SDL as SDL
-import MySDLKey(noMods, shift, Key(..), KeyGroup(..)
-               ,singletonKeyGroup)
+import HaskGame.Key(noMods, shift, Key(..), KeyGroup(..)
+                   ,singletonKeyGroup)
 
 inGroup :: Key -> KeyGroup -> Bool
 key `inGroup` group = key `Set.member` (keyGroupKeys group)

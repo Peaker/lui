@@ -3,14 +3,14 @@
 
 module Widgets.TextView where
 
-import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
-import qualified Graphics.UI.SDL as SDL
+import qualified Widget
 import qualified Draw
+import qualified HaskGame.Color as Color
 
 data Immutable = Immutable
     {
-      immutableTextColor :: SDL.Color
+      immutableTextColor :: Color.Color
     , immutableFont :: Draw.Font
     , immutableText :: String
     }

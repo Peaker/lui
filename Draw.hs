@@ -18,12 +18,15 @@ module Draw(Position,Size,Font
            ,move
            ) where
 
-import Vector2(Vector2(..))
 import Control.Monad.Trans(lift)
 import Control.Monad.Reader(ReaderT, ask, local, runReaderT)
-import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.TTF as TTF
-import qualified MySDL
+
+import HaskGame.Vector2(Vector2(..))
+import qualified HaskGame
+import qualified HaskGame.Color as Color
+import qualified HaskGame.Font as Font
+import qualified HaskGame.Rect as Rect
 
 type Position = Vector2 Int
 type Size = Vector2 Int
@@ -35,11 +38,11 @@ liftIO :: IO a -> Compute a
 liftIO = Compute
 
 -- Monad Transformers require a bit of boiler-plate...
-newtype Draw a = Draw { unDraw :: ReaderT SDL.Surface (ReaderT Position Compute) a }
+newtype Draw a = Draw { unDraw :: ReaderT HaskGame.Surface (ReaderT Position Compute) a }
     deriving Monad
 liftPosition :: ReaderT Position Compute a -> Draw a
 liftPosition = Draw . lift
-liftSurface :: ReaderT SDL.Surface (ReaderT Position Compute) a -> Draw a
+liftSurface :: ReaderT HaskGame.Surface (ReaderT Position Compute) a -> Draw a
 liftSurface = Draw
 
 computeToDraw :: Compute a -> Draw a
@@ -48,7 +51,7 @@ computeToDraw = Draw . lift . lift
 computeResult :: Compute a -> IO a
 computeResult = unCompute
 
-render :: SDL.Surface -> Position -> Draw a -> IO a
+render :: HaskGame.Surface -> Position -> Draw a -> IO a
 render surface pos = computeResult .
                      flip runReaderT pos .
                      flip runReaderT surface .
@@ -56,23 +59,23 @@ render surface pos = computeResult .
 
 textSize :: Font -> String -> Compute Size
 textSize font str = do
-  liftIO $ MySDL.textSize font str
+  liftIO $ Font.textSize font str
 
-text :: SDL.Color -> Font -> String -> Draw Size
+text :: Color.Color -> Font -> String -> Draw Size
 text color font str = do
   surface <- liftSurface ask
   position <- liftPosition ask
   computeToDraw $ do
-    textSurface <- liftIO $ MySDL.renderText font str color
-    liftIO $ MySDL.blit surface position textSurface
+    textSurface <- liftIO $ Font.renderText font str color
+    liftIO $ HaskGame.blit surface position textSurface
     textSize font str
   
-rect :: SDL.Color -> Size -> Draw Size
+rect :: Color.Color -> Size -> Draw Size
 rect color size = do
   surface <- liftSurface $ ask
   position <- liftPosition ask
-  let r = MySDL.makeRect position size
-  computeToDraw . liftIO $ MySDL.fillRect surface r color
+  let r = Rect.makeRect position size
+  computeToDraw . liftIO $ HaskGame.fillRect surface r color
   return size
 
 move :: Position -> Draw a -> Draw a

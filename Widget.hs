@@ -3,7 +3,7 @@
 
 module Widget where
 
-import qualified MySDLKey
+import qualified HaskGame.Key
 import qualified Data.Map as Map
 import Draw(Draw, Compute, Size)
 import Accessor(Accessor)
@@ -11,8 +11,8 @@ import Accessor(Accessor)
 data KeyStatus = KeyDown | KeyUp
   deriving (Eq, Ord, Show, Read)
 
-type KeyAction = (KeyStatus, MySDLKey.KeyGroup)
-type Handler s = (String, MySDLKey.Key -> s)
+type KeyAction = (KeyStatus, HaskGame.Key.KeyGroup)
+type Handler s = (String, HaskGame.Key.Key -> s)
 type ActionHandlers s = Map.Map KeyAction (Handler s)
 
 data DrawInfo = DrawInfo

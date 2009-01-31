@@ -5,8 +5,9 @@ module Widgets.FocusDelegator where
 
 import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
-import MySDLKey(asKeyGroup, noMods)
-import qualified MySDLKey
+import HaskGame.Key(asKeyGroup, noMods)
+import qualified HaskGame.Key as Key
+import qualified HaskGame.Color as Color
 import qualified Graphics.UI.SDL as SDL
 import qualified Draw
 import qualified Data.Map as Map
@@ -20,7 +21,7 @@ data Immutable model = Immutable
       immutableStartStr :: String
     , immutableStopStr :: String
     , immutableChildWidget :: Widget model
-    , immutableFocusColor :: SDL.Color
+    , immutableFocusColor :: Color.Color
     }
 
 data Mutable = Mutable

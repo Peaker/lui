@@ -6,10 +6,11 @@ module Widgets.TextEdit where
 import qualified Widget
 import Widget(WidgetFuncs(..))
 
-import qualified MySDLKey
-import MySDLKey(asKeyGroup, noMods, ctrl)
-
-import qualified MySDLKeys
+import qualified HaskGame.Key as Key
+import HaskGame.Key(asKeyGroup, noMods, ctrl)
+import qualified HaskGame.Keys as Keys
+import HaskGame.Vector2(Vector2(..))
+import qualified HaskGame.Color as Color
 import qualified Draw
 import qualified Graphics.UI.SDL as SDL
 
@@ -19,17 +20,16 @@ import Data.Map((!))
 import Graphics.UI.SDL.Keysym(SDLKey)
 import Control.Arrow(first, second)
 import Func(result)
-import Vector2(Vector2(..))
 import List(isSorted)
 import Accessor((^.), (^>), write, afirst, asecond)
 
 data Immutable = Immutable
     {
-      immutableBgColor :: SDL.Color
-    , immutableCursorColor :: SDL.Color
+      immutableBgColor :: Color.Color
+    , immutableCursorColor :: Color.Color
     , immutableCursorWidth :: Int
     , immutableFont :: Draw.Font
-    , immutableTextColor :: SDL.Color
+    , immutableTextColor :: Color.Color
     }
 
 data Mutable = Mutable
@@ -38,9 +38,9 @@ data Mutable = Mutable
     , mutableCursor :: Int
     }
 
-insert :: Mutable -> MySDLKey.Key -> Mutable
+insert :: Mutable -> Key.Key -> Mutable
 insert (Mutable oldText oldCursor) key =
-    let iText = MySDLKeys.keysUnicode!key
+    let iText = Keys.keysUnicode!key
         (preOldText, postOldText) = splitAt oldCursor oldText
         newText = concat [preOldText, iText, postOldText]
         newCursor = oldCursor + length iText
@@ -86,13 +86,13 @@ actEnd = ("Move to end of text",             goEnd)
 
 keysMap :: Mutable -> Widget.ActionHandlers Mutable
 keysMap mutable = Map.fromList . (map . first) ((,) Widget.KeyDown) $
-    (MySDLKeys.printableGroup, ("Insert", insert mutable)) :
+    (Keys.printableGroup, ("Insert", insert mutable)) :
     (map . second . second) (const . ($mutable)) (normalActions mutable ++ ctrlActions mutable)
 
 cond :: Bool -> [a] -> [a]
 cond p i = if p then i else []
 
-normalActions :: Mutable -> [(MySDLKey.KeyGroup, (String, Mutable -> Mutable))]
+normalActions :: Mutable -> [(Key.KeyGroup, (String, Mutable -> Mutable))]
 normalActions mutable =
     let cursor = mutableCursor mutable
         text = mutableText mutable
@@ -107,7 +107,7 @@ normalActions mutable =
                      ,(SDL.SDLK_END, actEnd)]
            ]
 
-ctrlActions :: Mutable -> [(MySDLKey.KeyGroup, (String, Mutable -> Mutable))]
+ctrlActions :: Mutable -> [(Key.KeyGroup, (String, Mutable -> Mutable))]
 ctrlActions mutable =
     let cursor = mutableCursor mutable
         text = mutableText mutable
@@ -149,7 +149,7 @@ new immutableMaker acc model =
        (Map.map . second . result) applyToModel $ keysMap mutable
   }
 
-newDelegated :: Widget.New model (SDL.Color, Immutable) (FocusDelegator.Mutable, Mutable)
+newDelegated :: Widget.New model (Color.Color, Immutable) (FocusDelegator.Mutable, Mutable)
 newDelegated immutableMaker acc model =
     let (focusColor, immutable) = immutableMaker model
         textEdit = new (const immutable) $ acc ^> asecond

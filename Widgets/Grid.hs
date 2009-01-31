@@ -7,13 +7,14 @@ import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
 
 import qualified Widgets.FocusDelegator as FocusDelegator
-import qualified MySDLKey
-import MySDLKey(asKeyGroup, noMods, shift)
+import qualified HaskGame.Key as Key
+import qualified HaskGame.Color as Color
+import HaskGame.Key(asKeyGroup, noMods, shift)
+import HaskGame.Vector2(Vector2(..)
+                       ,vector2fst,vector2snd)
 import qualified Draw
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
-import Vector2(Vector2(..)
-              , vector2fst, vector2snd)
 import Data.List(transpose)
 import Control.Monad(forM_, forM)
 import Control.Arrow(first, second, (***))
@@ -204,7 +205,7 @@ new immutableMaker acc model =
                                   keysMap size model mutable items)
     }
 
-newDelegated :: Widget.New model (SDL.Color, (Immutable model))
+newDelegated :: Widget.New model (Color.Color, (Immutable model))
                                  (FocusDelegator.Mutable, Mutable)
 newDelegated immutableMaker acc model =
     let (focusColor, immutable) = immutableMaker model

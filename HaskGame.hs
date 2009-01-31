@@ -1,8 +1,8 @@
 {-# OPTIONS -Wall -O2 #-}
 
-module HaskGame(Surface
+module HaskGame(Surface,Event
                ,createRGBSurface,blit,fillRect,fillSurface
-               ,withInit,getEvents,surfaceSize
+               ,withInit,getEvents,surfaceSize,setVideoMode
                )
 where
 
@@ -67,3 +67,6 @@ getEvents = whileM (/=SDL.NoEvent) SDL.pollEvent
 surfaceSize :: Surface -> Vector2 Int
 surfaceSize surface = Vector2 (SDL.surfaceGetWidth surface)
                               (SDL.surfaceGetHeight surface)
+
+setVideoMode :: Int -> Int -> Int -> IO Surface
+setVideoMode xres yres colorDepth = SDL.setVideoMode xres yres colorDepth [SDL.DoubleBuf]

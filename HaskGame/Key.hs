@@ -1,30 +1,32 @@
 {-# OPTIONS_GHC -Wall -O2 #-}
 
 module HaskGame.Key(keyOfEvent
-                   , Key(..), KeyGroup(..)
-                   , singletonKeyGroup, asKeyGroup, keyName
-                   , Mods(..), noMods, shift, ctrl, alt)
+                   ,ModKey(..),KeyGroup(..)
+                   ,singletonKeyGroup,asKeyGroup,keyName
+                   ,Mods(..),noMods,shift,ctrl,alt
+                   ,Keysym)
 where
 
 import qualified Graphics.UI.SDL as SDL
 import qualified Data.Set as Set
 import Func(result)
 
+type Keysym = SDL.Keysym
 data Mods = MkMods { isShift, isCtrl, isAlt :: Bool }
   deriving (Eq, Ord, Show, Read)
-data Key = Key Mods SDL.SDLKey
+data ModKey = ModKey Mods SDL.SDLKey
   deriving (Eq, Ord, Show)
 data KeyGroup = KeyGroup {
       keyGroupName :: String
-    , keyGroupKeys :: Set.Set Key
+    , keyGroupKeys :: Set.Set ModKey
 }
   deriving (Eq, Ord, Show)
 
-singletonKeyGroup :: Key -> KeyGroup
+singletonKeyGroup :: ModKey -> KeyGroup
 singletonKeyGroup key = KeyGroup (keyName key) (Set.singleton key)
 
 asKeyGroup :: Mods -> SDL.SDLKey -> KeyGroup
-asKeyGroup = (result . result) singletonKeyGroup Key
+asKeyGroup = (result . result) singletonKeyGroup ModKey
 
 modsName :: Mods -> String
 modsName mods =
@@ -33,8 +35,8 @@ modsName mods =
         altStr   = if isAlt mods then "Alt+" else ""
     in concat [shiftStr, ctrlStr, altStr]
 
-keyName :: Key -> String
-keyName (Key mods sdlkey) = modsName mods ++ SDL.getKeyName sdlkey
+keyName :: ModKey -> String
+keyName (ModKey mods sdlkey) = modsName mods ++ SDL.getKeyName sdlkey
 
 noMods, shift, ctrl, alt :: Mods
 noMods = MkMods False False False
@@ -57,6 +59,6 @@ modsOf mods =
              SDL.KeyModRightAlt,
              SDL.KeyModAlt])
 
-keyOfEvent :: SDL.Keysym -> Key
-keyOfEvent keySym = Key (modsOf $ SDL.symModifiers keySym)
-                        (SDL.symKey keySym)
+keyOfEvent :: Keysym -> ModKey
+keyOfEvent keySym = ModKey (modsOf $ SDL.symModifiers keySym)
+                           (SDL.symKey keySym)

@@ -17,7 +17,6 @@ import qualified Graphics.UI.SDL as SDL
 import qualified Data.Map as Map
 import qualified Widgets.FocusDelegator as FocusDelegator
 import Data.Map((!))
-import Graphics.UI.SDL.Keysym(SDLKey)
 import Control.Arrow(first, second)
 import Func(result)
 import List(isSorted)
@@ -38,7 +37,7 @@ data Mutable = Mutable
     , mutableCursor :: Int
     }
 
-insert :: Mutable -> Key.Key -> Mutable
+insert :: Mutable -> Key.ModKey -> Mutable
 insert (Mutable oldText oldCursor) key =
     let iText = Keys.keysUnicode!key
         (preOldText, postOldText) = splitAt oldCursor oldText

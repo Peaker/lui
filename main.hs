@@ -43,7 +43,7 @@ speed = 30
 -- instance Exc.Exception QuitRequest where
 
 handleKeyAction :: WidgetFuncs model ->
-                   Widget.KeyStatus -> SDL.Keysym -> Maybe model
+                   Widget.KeyStatus -> Key.Keysym -> Maybe model
 handleKeyAction widgetFuncs keyStatus keySym =
   let key = Key.keyOfEvent keySym
       keyGroups = Keys.groupsOfKey key
@@ -53,7 +53,7 @@ handleKeyAction widgetFuncs keyStatus keySym =
       runHandler (_, func) = func key
   in fmap runHandler mKeyHandler
 
-handleEvents :: [SDL.Event] -> Widget model -> State.StateT model IO Bool
+handleEvents :: [HaskGame.Event] -> Widget model -> State.StateT model IO Bool
 handleEvents events widget =
   fmap or $ forM events $ \event -> do
     model <- State.get
@@ -73,7 +73,7 @@ handleEvents events widget =
 
 mainLoop :: Widget model -> model -> IO ()
 mainLoop widget initModel = do
-  display <- SDL.setVideoMode 800 600 16 [SDL.DoubleBuf]
+  display <- HaskGame.setVideoMode 800 600 16
   (`State.evalStateT` initModel) $
     forM_ (True:repeat False) $ \shouldDraw -> do
       events <- lift $ HaskGame.getEvents

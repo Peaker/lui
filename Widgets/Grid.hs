@@ -8,7 +8,7 @@ import Widget(Widget, WidgetFuncs(..))
 
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified MySDLKey
-import MySDLKey(asKeyGroup, noMods)
+import MySDLKey(asKeyGroup, noMods, shift)
 import qualified Draw
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
@@ -92,34 +92,59 @@ itemSelectable model (Item widget _) =
     isJust . widgetGetKeymap $ widget model
 
 getSelectables :: ((Int, Int) -> (Int, Int)) ->
-                  Cursor -> model -> Mutable -> Items model -> (Int -> Int) ->
+                  (Int -> Int) ->
+                  Cursor -> model -> Mutable -> Items model ->
                   [(Int, Int)]
-getSelectables toSwap size model (Mutable oldCursor) items cursorFunc =
+getSelectables toSwap cursorFunc size model (Mutable oldCursor) items =
     let (sizeA,_) = toSwap size
         (oldA,b) = toSwap oldCursor
         nexts = takeWhile (\a -> isSorted [0, a, sizeA-1]) .
-                drop 1 . iterate cursorFunc $ oldA
+                iterate cursorFunc $ oldA
         coor a = toSwap (a, b)
         itemAt a = (coor a, items Map.! coor a)
-    in map fst . filter (itemSelectable model . snd) . map itemAt $ nexts
+    in map fst . filter (itemSelectable model . snd) . map itemAt . drop 1 $ nexts
 
-getSelectablesX, getSelectablesY :: Cursor -> model -> Mutable -> Items model ->
-                                    (Int -> Int) -> [(Int, Int)]
+getSelectablesX, getSelectablesY :: (Int -> Int) ->
+                                    Cursor -> model -> Mutable -> Items model ->
+                                    [(Int, Int)]
 getSelectablesX = getSelectables id
 getSelectablesY = getSelectables swap
 
+getSelectablesXY :: [Int] -> (Int -> Int) ->
+                    Cursor -> model -> Mutable -> Items model ->
+                    [(Int, Int)]
+getSelectablesXY xrange cursorFunc size model (Mutable oldCursor) items =
+    let (sizeX,sizeY) = size
+        (oldX,oldY) = oldCursor
+        xnexts = drop 1 . takeWhile (\x -> isSorted [0, x, sizeX-1]) .
+                 iterate cursorFunc $ oldX
+        ynexts = drop 1 . takeWhile (\y -> isSorted [0, y, sizeY-1]) .
+                 iterate cursorFunc $ oldY
+        nexts = map (flip (,) oldY) xnexts ++
+                [(x, y) | y <- ynexts, x <- xrange]
+        itemAt cursor = (cursor, items Map.! cursor)
+    in map fst . filter (itemSelectable model . snd) . map itemAt $ nexts
+
 keysMap :: Cursor -> model -> Mutable -> Items model -> Widget.ActionHandlers Mutable
-keysMap size model mutable items =
+keysMap size@(sizeX, _) model mutable items =
     Map.fromList $
-       map (((,) Widget.KeyDown . asKeyGroup noMods) ***
+       map (((,) Widget.KeyDown) ***
             second const) . concat $
-           [let opts = axis size model mutable items direction
+           [let opts = axis size model mutable items
             in cond opts (key, (desc, head opts `mutableMoveTo` mutable))
-            | (key, axis, direction, desc) <-
-                [(SDL.SDLK_LEFT,  getSelectablesX, (subtract 1), "Move left")
-                ,(SDL.SDLK_RIGHT, getSelectablesX, (+1), "Move right")
-                ,(SDL.SDLK_UP,    getSelectablesY, (subtract 1), "Move up")
-                ,(SDL.SDLK_DOWN,  getSelectablesY, (+1), "Move down")
+            | (key, axis, desc) <-
+                [(asKeyGroup noMods SDL.SDLK_LEFT,
+                  getSelectablesX (subtract 1), "Move left")
+                ,(asKeyGroup noMods SDL.SDLK_RIGHT,
+                  getSelectablesX (+1), "Move right")
+                ,(asKeyGroup noMods SDL.SDLK_UP,
+                  getSelectablesY (subtract 1), "Move up")
+                ,(asKeyGroup noMods SDL.SDLK_DOWN,
+                  getSelectablesY (+1), "Move down")
+                ,(asKeyGroup noMods SDL.SDLK_TAB,
+                  getSelectablesXY [0..sizeX-1] (+1), "Move to next")
+                ,(asKeyGroup shift SDL.SDLK_TAB,
+                  getSelectablesXY [sizeX-1,sizeX-2..0] (subtract 1), "Move to prev")
                 ]
            ]
     where

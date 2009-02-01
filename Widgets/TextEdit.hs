@@ -153,6 +153,8 @@ type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
 
 aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
 aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable ^> aMutableCursor
+aDelegatedMutableText :: Accessor DelegatedMutable String
+aDelegatedMutableText = FocusDelegator.aDelegatedMutable ^> aMutableText
 
 delegatedMutable :: Bool -> String -> Cursor -> DelegatedMutable
 delegatedMutable startInside text cursor =

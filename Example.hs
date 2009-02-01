@@ -14,6 +14,8 @@ import HaskGame.Font(Font)
 import Accessor(Accessor, accessor, aMapValue, (^>), (^.))
 import HaskGame.Color(Color(..))
 import qualified Data.Map as Map
+import Data.Maybe(listToMaybe)
+import List(isSorted)
 
 -- Model:
 data Model = Model
@@ -80,17 +82,21 @@ textEdit cursor fonts =
                           atextEditModels ^> aMapValue cursor
                           
 
-grid, textView, hbox, vbox, keysTable, proxy1, proxy2 :: Fonts -> Widget Model
+textView :: String -> Fonts -> Widget Model
+textView text fonts =
+    TextView.new textViewColor (textViewFont fonts) text
+
+grid, hbox, vbox, keysTable, proxy1, proxy2 :: Fonts -> Widget Model
+
+gridSize :: Grid.Cursor
+gridSize = (2, 2)
 
 grid fonts =
-    Grid.newDelegated (2, 2) items agridModel
+    Grid.newDelegated gridSize items agridModel
     where
       items = Map.fromList
               [((x, y), Grid.Item (textEdit (x, y) fonts) (0.5, 1))
                | x <- [0..1], y <- [0..1]]
-
-textView fonts =
-    TextView.new textViewColor (textViewFont fonts) "This is just a view"
 
 hbox fonts =
     Box.new Box.Horizontal items ahboxModel
@@ -104,7 +110,7 @@ vbox fonts = Box.newDelegated Box.Vertical items avboxModel
       items = [Box.Item (grid fonts) 1
               ,Box.Item (Space.newH 100) 0.5
               ,Box.Item (proxy1 fonts) 0.5
-              ,Box.Item (textView fonts) 0.5
+              ,Box.Item (textView "This is just a view" fonts) 0.5
               ,Box.Item (proxy2 fonts) 0.5]
 
 keysTable fonts = KeysTable.newForWidget (keysFont fonts) (descFont fonts) (hbox fonts)
@@ -112,12 +118,26 @@ keysTable fonts = KeysTable.newForWidget (keysFont fonts) (descFont fonts) (hbox
 proxy1 fonts model =
     textEdit (model ^. agridModel ^. Grid.aDelegatedMutableCursor) fonts model
 
+simpleRead :: Read a => String -> Maybe a
+simpleRead = listToMaybe . map fst . filter (null . snd) . reads
+
+readCursor :: String -> Maybe Grid.Cursor
+readCursor text =
+    let (xCount, yCount) = gridSize
+        verifyCursor cursor@(x, y) =
+            if isSorted [0, x, xCount-1] &&
+               isSorted [0, y, yCount-1]
+            then Just cursor
+            else Nothing
+    in verifyCursor =<< simpleRead text
+
 proxy2 fonts model =
-    ([textEdit (1, 0) fonts model,
-      textView        fonts model]!!) .
-        -- The widget index is chosen as the (1-vbox cursor)
-     (1-) . min 1 $
-    model ^. avboxModel ^. Box.aDelegatedMutableCursor
+    let cursor = model ^. agridModel ^. Grid.aDelegatedMutableCursor
+        text = model ^. atextEditModels ^. aMapValue cursor ^.
+               TextEdit.aDelegatedMutableText
+    in maybe (textView ("Invalid cursor position selected: " ++ text) fonts model)
+             (\cur -> textEdit cur fonts model) $
+       readCursor text
 
 gui :: Fonts -> Widget Model
 gui = hbox

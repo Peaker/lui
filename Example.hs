@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall -O2
  #-}
 
-module Example(Fonts(..), gui, guiModel) where
+module Example(makeGui, guiModel) where
 
 import Widget(Widget)
 import qualified Widgets.TextEdit as TextEdit
@@ -11,11 +11,13 @@ import qualified Widgets.Box as Box
 import qualified Widgets.Space as Space
 import qualified Widgets.KeysTable as KeysTable
 import HaskGame.Font(Font)
+import qualified HaskGame.Font as Font
 import Accessor(Accessor, accessor, aMapValue, (^>), (^.))
 import HaskGame.Color(Color(..))
 import qualified Data.Map as Map
 import Data.Maybe(listToMaybe)
 import List(isSorted)
+import Control.Monad(mapM)
 
 -- Model:
 data Model = Model
@@ -139,5 +141,7 @@ proxy2 fonts model =
              (\cur -> textEdit cur fonts model) $
        readCursor text
 
-gui :: Fonts -> Widget Model
-gui = hbox
+makeGui :: IO (Widget Model)
+makeGui = do
+  [f15, f25, f30] <- mapM Font.defaultFont [15, 25, 30]
+  return . hbox $ Fonts f30 f15 f25 f25

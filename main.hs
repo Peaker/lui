@@ -5,7 +5,6 @@ module Main where
 
 import qualified Graphics.UI.SDL as SDL
 import qualified HaskGame
-import qualified HaskGame.Font as Font
 import qualified HaskGame.Key as Key
 import qualified HaskGame.Keys as Keys
 import HaskGame.Vector2(Vector2(..))
@@ -13,7 +12,7 @@ import HaskGame.Color(Color(..))
 import qualified Draw
 import qualified Control.Monad.State as State
 
-import Example(Fonts(Fonts), gui, guiModel)
+import Example(makeGui, guiModel)
 
 import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
@@ -87,13 +86,10 @@ mainLoop widget initModel = do
 main :: IO ()
 main =
   HaskGame.withInit $ do
-    font <- Font.defaultFont 30
-    textViewFont <- Font.defaultFont 15
-    keysFont <- Font.defaultFont 25
-    descFont <- Font.defaultFont 25
     -- Commented out for 6.8's lack of the new Exception
     -- flip Exc.catch errHandler runWidget
     -- where
     --   errHandler :: QuitRequest -> IO ()
     --   errHandler = const . putStrLn $ "Quit requested"
-    mainLoop (gui $ Fonts font textViewFont keysFont descFont) guiModel
+    gui <- makeGui
+    mainLoop gui guiModel

@@ -22,5 +22,4 @@ adapt acc widget model =
           let keymap = widgetGetKeymap widgetFuncs
               convertModel part = write acc part model
           in (fmap . Map.map . second . result) convertModel $ keymap
-                          
       }

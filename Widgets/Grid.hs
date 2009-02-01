@@ -210,8 +210,7 @@ delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
     (FocusDelegator.Mutable startInside, Mutable cursor)
 
-newDelegatedWith :: Color -> Cursor -> Items model ->
-       Widget.New model DelegatedMutable
+newDelegatedWith :: Color -> Cursor -> Items model -> Widget.New model DelegatedMutable
 newDelegatedWith focusColor size items acc =
     let grid = new size items $ acc ^> FocusDelegator.aDelegatedMutable
     in FocusDelegator.newWith focusColor "Go in" "Go out" grid $

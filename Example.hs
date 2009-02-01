@@ -39,6 +39,15 @@ atextEditModels = accessor textEditModels (\new x -> x{textEditModels=new})
 agridModel :: Accessor Model Grid.DelegatedMutable
 agridModel = accessor gridModel (\new x -> x{gridModel=new})
 
+texts :: [String]
+texts =
+    [
+     "Hello"
+    ,"World"
+    ,"Blah"
+    ,"Bleh"
+    ]
+
 guiModel :: Model
 guiModel =
     Model
@@ -47,7 +56,7 @@ guiModel =
     , hboxModel = Box.Mutable 0
     , textEditModels =
       Map.fromList [((x, y),
-                     TextEdit.delegatedMutable False "Hello world" 5)
+                     TextEdit.delegatedMutable False (texts!!(y*2+x)) 5)
                     | x <- [0..1]
                    , y <- [0..1]]
     , gridModel = Grid.delegatedMutable False (0, 0)

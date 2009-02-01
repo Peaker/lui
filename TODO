@@ -1,5 +1,8 @@
-* Remove the Immutable once again?  If Widget is exposed to be (model->)
-  then just have the "new" caller do \model -> (new ...) model if it wants to?
+* Consider removing the accessor arg and using adapter always
+  This means child containers have to be parameterized on the child
+  rather than on the generic model, so Grid is not Widget model
+  but Grid (Mutable, childModel)?
+* Rename Mutable -> Model?
 
 * Box with delete
 

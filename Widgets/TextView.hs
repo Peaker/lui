@@ -9,23 +9,10 @@ import qualified Draw
 import HaskGame.Font(Font)
 import HaskGame.Color(Color)
 
-data Immutable = Immutable
-    {
-      immutableTextColor :: Color
-    , immutableFont :: Font
-    , immutableText :: String
-    }
-
-imm :: Color -> Font -> String -> Immutable
-imm = Immutable
-
-type New model immutable =
-    (model -> immutable) -> Widget model
-
-new :: Widget.NewImmutable model Immutable
-new immutableMaker model =
-    let Immutable textColor textSize text = immutableMaker model
-    in WidgetFuncs
+new :: Color -> Font -> String -> Widget model
+new textColor textSize text =
+    const $
+    WidgetFuncs
     {
       widgetDraw = \_ -> Draw.text textColor textSize text
     , widgetSize = \_ -> Draw.textSize textSize text

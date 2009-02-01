@@ -8,6 +8,7 @@ import Widget(Widget)
 import qualified Widgets.Grid as Grid
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified Data.Map as Map
+import HaskGame.Color(Color(..))
 import Tuple(swap)
 import Accessor(Accessor, convertor, (^>))
 
@@ -23,15 +24,6 @@ data Item model = Item
 
 type Cursor = Int
 
-data Immutable model = Immutable
-    {
-      immutableOrientation :: Orientation
-    , immutableItems :: Items model
-    }
-
-imm :: Orientation -> Items model -> Immutable model
-imm = Immutable
-
 data Mutable = Mutable
     {
       mutableCursor :: Cursor
@@ -43,14 +35,10 @@ aMutableCursor = convertor mutableCursor Mutable
 -- This type exists for symmetry/similarity with Grid's Items
 type Items model = [Item model]
 
-new :: Widget.New model (Immutable model) Mutable
-new acc immutableMaker model =
-    Grid.new (acc ^> boxGridConvertor)
-            (const $ Grid.imm gridSize gridItems)
-            model
+new :: Orientation -> Items model -> Widget.New model Mutable
+new orientation items acc =
+    Grid.new gridSize gridItems $ acc ^> boxGridConvertor
     where
-      Immutable orientation items = immutableMaker model
-          
       gridSize = (maybeSwap (1, length items))
       gridItems = (Map.fromList $
                    [(maybeSwap (0, i),
@@ -72,21 +60,12 @@ delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
     (FocusDelegator.Mutable startInside, Mutable cursor)
 
-newDelegatedWithFocusableArgs ::
-    Widget.New model (Widget model -> FocusDelegator.Immutable model,
-                      Immutable model) DelegatedMutable
-newDelegatedWithFocusableArgs acc immutableMaker model =
-    let (focusableImmutableMaker, immutable) = immutableMaker model
-        box = new (acc ^> FocusDelegator.aDelegatedMutable) . const $ immutable
-    in FocusDelegator.new
-           (acc ^> FocusDelegator.aFocusDelegatorMutable)
-           (const $ focusableImmutableMaker box)
-           model
+newDelegatedWith :: Color -> Orientation -> Items model ->
+                    Widget.New model DelegatedMutable
+newDelegatedWith focusColor orientation items acc =
+    let box = new orientation items $ acc ^> FocusDelegator.aDelegatedMutable
+    in FocusDelegator.newWith focusColor "Go in" "Go out" box $
+       acc ^> FocusDelegator.aFocusDelegatorMutable
 
-newDelegated :: Widget.New model (Immutable model) DelegatedMutable
-newDelegated acc immutableMaker model =
-    newDelegatedWithFocusableArgs
-      acc
-      (const (FocusDelegator.imm "Go in" "Go out",
-              immutableMaker model))
-      model
+newDelegated :: Orientation -> Items model -> Widget.New model DelegatedMutable
+newDelegated = newDelegatedWith FocusDelegator.defaultFocusColor

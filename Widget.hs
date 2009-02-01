@@ -31,7 +31,5 @@ data WidgetFuncs model = WidgetFuncs
 
 type Widget model = model -> WidgetFuncs model
 
-type NewImmutable model immutable =
-    (model -> immutable) -> Widget model
-type New model immutable mutable =
-    Accessor model mutable -> (model -> immutable) -> Widget model
+type New model mutable =
+    Accessor model mutable -> Widget model

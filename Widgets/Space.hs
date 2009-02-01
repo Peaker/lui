@@ -4,28 +4,23 @@
 module Widgets.Space where
 
 import qualified Widget
-import Widget(WidgetFuncs(..))
+import Widget(Widget, WidgetFuncs(..))
 import HaskGame.Vector2(Vector2(..))
 import Draw(Size)
 
-data Immutable = Immutable
-    {
-      immutableSize :: Size
-    }
-
-imm :: Int -> Int -> Immutable
-imm x y = Immutable $ Vector2 x y
-
-new :: Widget.NewImmutable model Immutable
-new immutableMaker model =
-    let Immutable size = immutableMaker model
-    in WidgetFuncs
+new :: Size -> Widget model
+new size =
+    const $
+    WidgetFuncs
     {
       widgetGetKeymap = Nothing
     , widgetDraw = \_ -> return size
     , widgetSize = \_ -> return size
     }
 
-immW, immH :: Int -> Immutable
-immW width = imm width 0
-immH height = imm 0 height
+newWH :: Int -> Int -> Widget model
+newWH w h = new $ Vector2 w h
+
+newW, newH :: Int -> Widget model
+newW w = newWH w 0
+newH h = newWH 0 h

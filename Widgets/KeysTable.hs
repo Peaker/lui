@@ -25,24 +25,6 @@ defaultDescColor = Color 0 0 255
 defaultSpaceWidth :: Int
 defaultSpaceWidth = 10
 
-data Immutable model = Immutable
-    {
-      immutableKeysColor :: Color
-    , immutableDescColor :: Color
-    , immutableSpaceWidth :: Int
-    , immutableKeysFont :: Font
-    , immutableDescFont :: Font
-    , immutableHandlers :: Widget.ActionHandlers model
-    }
-
-imm :: Font -> Font -> Widget.ActionHandlers model -> Immutable model
-imm = Immutable defaultKeysColor defaultDescColor defaultSpaceWidth
-
-immWidget :: Font -> Font -> Widget model -> model -> Immutable model
-immWidget keysFont descFont widget model =
-    let handlers = fromMaybe Map.empty $ widgetGetKeymap (widget model)
-    in imm keysFont descFont handlers
-
 gItem :: Widget model -> Grid.Item model
 gItem = flip Grid.Item (0, 0.5)
 
@@ -52,16 +34,12 @@ keyBindings = sort .
               (map . second) fst .
               Map.assocs
 
-new :: Widget.NewImmutable model (Immutable model)
-new immutableMaker model =
-    Unfocusable.new (const $ Unfocusable.imm grid) model
+new :: Color -> Color -> Int -> Font -> Font -> Widget.ActionHandlers model ->
+       Widget model
+new keysColor descColor spaceWidth keysFont descFont handlers = Unfocusable.new grid
     where
-      Immutable keysColor descColor spaceWidth keysFont descFont handlers =
-          immutableMaker model
-      grid = Grid.new gridAccessor . const $
-             Grid.imm (3, Map.size handlers) gridItems
-      space = Space.new
-              (const $ Space.imm spaceWidth 0)
+      grid = Grid.new (3, Map.size handlers) gridItems gridAccessor
+      space = Space.newW spaceWidth
       gridItems =
           Map.fromList . concat $
           [[((0, y), gItem keyGroupTextView),
@@ -69,10 +47,14 @@ new immutableMaker model =
             ((2, y), gItem descTextView)]
            | (y, (keyGroup, desc)) <- zip [0..] . keyBindings $ handlers
            , let keyGroupTextView =
-                     TextView.new (const . TextView.imm keysColor keysFont $
-                                   Key.keyGroupName keyGroup)
+                     TextView.new keysColor keysFont $ Key.keyGroupName keyGroup
                  descTextView =
-                     TextView.new (const $
-                                   TextView.imm descColor descFont desc)
+                     TextView.new descColor descFont desc
           ]
       gridAccessor = reader $ Grid.Mutable (0,0)
+
+newForWidget :: Font -> Font -> Widget model -> Widget model
+newForWidget keysFont descFont widget model =
+    let handlers = fromMaybe Map.empty . widgetGetKeymap $ widget model
+    in new defaultKeysColor defaultDescColor defaultSpaceWidth
+           keysFont descFont handlers model

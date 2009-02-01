@@ -9,18 +9,9 @@ import Widget(Widget, WidgetFuncs(..))
 noFocusDrawInfo :: Widget.DrawInfo
 noFocusDrawInfo = Widget.DrawInfo False
 
-data Immutable model = Immutable
-    {
-      immutableChildWidget :: Widget model
-    }
-
-imm :: Widget model -> Immutable model
-imm = Immutable
-
-new :: Widget.NewImmutable model (Immutable model)
-new immutableMaker model =
-    let Immutable childWidget = immutableMaker model
-        childWidgetFuncs = childWidget model
+new :: Widget model -> Widget model
+new childWidget model =
+    let childWidgetFuncs = childWidget model
     in WidgetFuncs
     {
       widgetSize = \_ -> widgetSize childWidgetFuncs noFocusDrawInfo

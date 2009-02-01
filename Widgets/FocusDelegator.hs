@@ -23,20 +23,9 @@ aDelegatedMutable = asecond
 aFocusDelegatorMutable :: Accessor (DelegatedMutable mutable) Mutable
 aFocusDelegatorMutable = afirst
 
-data Immutable model = Immutable
-    {
-      immutableFocusColor :: Color
-    , immutableStartStr :: String
-    , immutableStopStr :: String
-    , immutableChildWidget :: Widget model
-    }
-
 -- defaults:
 defaultFocusColor :: Color
 defaultFocusColor = Color 0 0 150
-
-imm :: String -> String -> Widget model -> Immutable model
-imm = Immutable defaultFocusColor
 
 data Mutable = Mutable
     {
@@ -53,10 +42,9 @@ delegatingKeyMap, nonDelegatingKeyMap ::
 nonDelegatingKeyMap startStr = buildKeymap SDL.SDLK_RETURN startStr True
 delegatingKeyMap    stopStr  = buildKeymap SDL.SDLK_ESCAPE stopStr False
 
-new :: Widget.New model (Immutable model) Mutable
-new acc immutableMaker model =
-    let Immutable focusColor startStr stopStr childWidget = immutableMaker model
-        Mutable delegating = model ^. acc
+newWith :: Color -> String -> String -> Widget model -> Widget.New model Mutable
+newWith focusColor startStr stopStr childWidget acc model =
+    let Mutable delegating = model ^. acc
         childWidgetFuncs = childWidget model
     in WidgetFuncs
     {
@@ -93,3 +81,6 @@ new acc immutableMaker model =
                  -- has a keymap:
                  `fmap` mChildKeymap
     }
+
+new :: String -> String -> Widget model -> Widget.New model Mutable
+new = newWith defaultFocusColor

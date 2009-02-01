@@ -9,6 +9,7 @@ import Widget(Widget, WidgetFuncs(..))
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified HaskGame.Key as Key
 import HaskGame.Key(asKeyGroup, noMods, shift)
+import HaskGame.Color(Color)
 import HaskGame.Vector2(Vector2(..)
                        ,vector2fst,vector2snd)
 import qualified Draw
@@ -36,15 +37,6 @@ data Item model = Item
 
 type Items model = Map.Map Cursor (Item model)
 type Cursor = (Int, Int)
-
-data Immutable model = Immutable
-    {
-      immutableCursor :: Cursor
-    , immutableItems :: Items model
-    }
-
-imm :: Cursor -> Items model -> Immutable model
-imm = Immutable
 
 data Mutable = Mutable
     {
@@ -164,10 +156,9 @@ posSizes sizes =
     let positions = scanl (+) 0 sizes
     in zip positions sizes
 
-new :: Widget.New model (Immutable model) Mutable
-new acc immutableMaker model =
-    let Immutable size items = immutableMaker model
-        mutable = model ^. acc
+new :: Cursor -> Items model -> Widget.New model Mutable
+new size items acc model =
+    let mutable = model ^. acc
         rows = gridRows size items
         rowColumnSizes drawInfo = getRowColumnSizes model mutable items size drawInfo
     in WidgetFuncs
@@ -219,20 +210,12 @@ delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
     (FocusDelegator.Mutable startInside, Mutable cursor)
 
-newDelegatedWithFocusableArgs ::
-    Widget.New model (Widget model -> FocusDelegator.Immutable model,
-                      Immutable model) DelegatedMutable
-newDelegatedWithFocusableArgs acc immutableMaker model =
-    let (focusableImmutableMaker, immutable) = immutableMaker model
-        grid = new (acc ^> FocusDelegator.aDelegatedMutable) $ const immutable
-    in FocusDelegator.new
-           (acc ^> FocusDelegator.aFocusDelegatorMutable)
-           (const $ focusableImmutableMaker grid)
-           model
+newDelegatedWith :: Color -> Cursor -> Items model ->
+       Widget.New model DelegatedMutable
+newDelegatedWith focusColor size items acc =
+    let grid = new size items $ acc ^> FocusDelegator.aDelegatedMutable
+    in FocusDelegator.newWith focusColor "Go in" "Go out" grid $
+           acc ^> FocusDelegator.aFocusDelegatorMutable
 
-newDelegated :: Widget.New model (Immutable model) DelegatedMutable
-newDelegated acc immutableMaker model =
-    newDelegatedWithFocusableArgs acc
-    (const (FocusDelegator.imm "Go in" "Go out",
-            immutableMaker model))
-    model
+newDelegated :: Cursor -> Items model -> Widget.New model DelegatedMutable
+newDelegated = newDelegatedWith FocusDelegator.defaultFocusColor

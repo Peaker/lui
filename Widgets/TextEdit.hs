@@ -133,7 +133,7 @@ ctrlActions mutable =
            ]
 
 new :: Widget.New model Immutable Mutable
-new immutableMaker acc model =
+new acc immutableMaker model =
   let Immutable cursorWidth bgColor cursorColor font textColor = immutableMaker model
       mutable@(Mutable text cursor) = model ^. acc
   in WidgetFuncs
@@ -173,16 +173,18 @@ delegatedMutable startInside text cursor =
 newDelegatedWithFocusableArgs ::
     Widget.New model (Widget model -> FocusDelegator.Immutable model,
                       Immutable) DelegatedMutable
-newDelegatedWithFocusableArgs immutableMaker acc model =
+newDelegatedWithFocusableArgs acc immutableMaker model =
     let (focusableImmutableMaker, immutable) = immutableMaker model
-        textEdit = new (const immutable) $ acc ^> FocusDelegator.aDelegatedMutable
+        textEdit = new (acc ^> FocusDelegator.aDelegatedMutable) . const $ immutable
     in FocusDelegator.new
-           (const $ focusableImmutableMaker textEdit)
            (acc ^> FocusDelegator.aFocusDelegatorMutable)
+           (const $ focusableImmutableMaker textEdit)
            model
 
 newDelegated :: Widget.New model Immutable DelegatedMutable
-newDelegated immutableMaker acc model =
+newDelegated acc immutableMaker model =
     newDelegatedWithFocusableArgs
-    (const (FocusDelegator.imm "Start editing" "Stop editing",
-            immutableMaker model)) acc model
+      acc
+      (const (FocusDelegator.imm "Start editing" "Stop editing",
+              immutableMaker model))
+      model

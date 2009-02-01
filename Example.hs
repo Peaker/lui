@@ -3,7 +3,7 @@
 
 module Example(Fonts(..), gui, guiModel) where
 
-import Widget(Widget, WidgetFuncs(..))
+import Widget(Widget)
 import qualified Widgets.TextEdit as TextEdit
 import qualified Widgets.TextView as TextView
 import qualified Widgets.Proxy as Proxy
@@ -15,7 +15,6 @@ import HaskGame.Font(Font)
 import Accessor(Accessor, accessor, aMapValue, (^>), (^.))
 import HaskGame.Color(Color(..))
 import qualified Data.Map as Map
-import Data.Maybe(fromMaybe)
 
 -- Model:
 data Model = Model
@@ -64,61 +63,54 @@ textEditColor = Color 255 255 255
 textViewColor = Color 255 100 255
 textEditCursorColor = Color 255 0 0
 
-space :: Int -> Int -> Widget Model
-space x y = Space.new (const $ Space.imm x y)
-
 textEdit :: Grid.Cursor -> Fonts -> Widget Model
 textEdit cursor fonts =
-    TextEdit.newDelegated
-                  (const $
-                   TextEdit.imm
-                           textEditingColor
-                           textEditCursorColor
-                           (defaultFont fonts)
-                           textEditColor) $
-                  atextEditModels ^> aMapValue cursor
+    TextEdit.newDelegated (atextEditModels ^> aMapValue cursor) .
+            const $
+            TextEdit.imm
+                    textEditingColor
+                    textEditCursorColor
+                    (defaultFont fonts)
+                    textEditColor
+
+spaceW, spaceH :: Int -> Widget model
+spaceW = Space.new . const . Space.immW
+spaceH = Space.new . const . Space.immW
 
 grid, textView, hbox, vbox, keysTable, proxy :: Fonts -> Widget Model
 
 grid fonts =
-    Grid.newDelegated
-       (const $ Grid.imm (2, 2) items)
-       agridModel
+    Grid.newDelegated agridModel . const $ Grid.imm (2, 2) items
     where
       items = Map.fromList
               [((x, y), Grid.Item (textEdit (x, y) fonts) (0.5, 1))
                | x <- [0..1], y <- [0..1]]
 
 textView fonts =
-    TextView.new
-           (const $
-            TextView.imm textViewColor (textViewFont fonts)
-                         "This is just a view")
+    TextView.new . const $
+    TextView.imm textViewColor (textViewFont fonts) "This is just a view"
 
 hbox fonts =
-    Box.new
-       (const $ Box.imm Box.Horizontal items) $
-       ahboxModel
+    Box.new ahboxModel . const $ Box.imm Box.Horizontal items
     where
       items = [Box.Item (vbox fonts) 0.5
-              ,Box.Item (space 50 0) 0
+              ,Box.Item (spaceW 50) 0
               ,Box.Item (keysTable fonts) 0]
 
-vbox fonts = Box.newDelegated
-       (const $
+vbox fonts = Box.newDelegated avboxModel . const $
         Box.imm
            Box.Vertical
-              items) avboxModel
+           items
     where
       items = [Box.Item (grid fonts) 1
-              ,Box.Item (space 0 100) 0.5
+              ,Box.Item (spaceH 100) 0.5
               ,Box.Item (textEdit (0, 1) fonts) 0.5
               ,Box.Item (textView fonts) 0.5
               ,Box.Item (proxy fonts) 0.5]
 
-keysTable fonts = KeysTable.new
-            (let handlers = fromMaybe Map.empty . widgetGetKeymap . hbox fonts
-             in KeysTable.imm (keysFont fonts) (descFont fonts) . handlers)
+keysTable fonts = KeysTable.new $
+                  KeysTable.immWidget (keysFont fonts) (descFont fonts)
+                  (hbox fonts)
 
 proxy fonts = Proxy.new $ Proxy.imm .
         ([textEdit (1, 0) fonts,

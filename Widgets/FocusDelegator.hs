@@ -54,7 +54,7 @@ nonDelegatingKeyMap startStr = buildKeymap SDL.SDLK_RETURN startStr True
 delegatingKeyMap    stopStr  = buildKeymap SDL.SDLK_ESCAPE stopStr False
 
 new :: Widget.New model (Immutable model) Mutable
-new immutableMaker acc model =
+new acc immutableMaker model =
     let Immutable focusColor startStr stopStr childWidget = immutableMaker model
         Mutable delegating = model ^. acc
         childWidgetFuncs = childWidget model

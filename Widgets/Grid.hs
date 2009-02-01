@@ -165,7 +165,7 @@ posSizes sizes =
     in zip positions sizes
 
 new :: Widget.New model (Immutable model) Mutable
-new immutableMaker acc model =
+new acc immutableMaker model =
     let Immutable size items = immutableMaker model
         mutable = model ^. acc
         rows = gridRows size items
@@ -222,16 +222,17 @@ delegatedMutable startInside cursor =
 newDelegatedWithFocusableArgs ::
     Widget.New model (Widget model -> FocusDelegator.Immutable model,
                       Immutable model) DelegatedMutable
-newDelegatedWithFocusableArgs immutableMaker acc model =
+newDelegatedWithFocusableArgs acc immutableMaker model =
     let (focusableImmutableMaker, immutable) = immutableMaker model
-        grid = new (const immutable) $ acc ^> FocusDelegator.aDelegatedMutable
+        grid = new (acc ^> FocusDelegator.aDelegatedMutable) $ const immutable
     in FocusDelegator.new
-           (const $ focusableImmutableMaker grid)
            (acc ^> FocusDelegator.aFocusDelegatorMutable)
+           (const $ focusableImmutableMaker grid)
            model
 
 newDelegated :: Widget.New model (Immutable model) DelegatedMutable
-newDelegated immutableMaker acc model =
-    newDelegatedWithFocusableArgs
+newDelegated acc immutableMaker model =
+    newDelegatedWithFocusableArgs acc
     (const (FocusDelegator.imm "Go in" "Go out",
-            immutableMaker model)) acc model
+            immutableMaker model))
+    model

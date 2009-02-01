@@ -25,3 +25,7 @@ new immutableMaker model =
     , widgetDraw = \_ -> return size
     , widgetSize = \_ -> return size
     }
+
+immW, immH :: Int -> Immutable
+immW width = imm width 0
+immH height = imm 0 height

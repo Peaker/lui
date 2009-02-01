@@ -1,4 +1,3 @@
-* Maybe Widget.New should take immutable last?
 * Box with delete
 
 * Abstract away SDL keyboard keys, events, flip and delay

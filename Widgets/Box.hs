@@ -44,10 +44,10 @@ aMutableCursor = convertor mutableCursor Mutable
 type Items model = [Item model]
 
 new :: Widget.New model (Immutable model) Mutable
-new immutableMaker acc model =
-    Grid.new (const $ Grid.imm gridSize gridItems)
-             (acc ^> boxGridConvertor)
-             model
+new acc immutableMaker model =
+    Grid.new (acc ^> boxGridConvertor)
+            (const $ Grid.imm gridSize gridItems)
+            model
     where
       Immutable orientation items = immutableMaker model
           
@@ -75,16 +75,18 @@ delegatedMutable startInside cursor =
 newDelegatedWithFocusableArgs ::
     Widget.New model (Widget model -> FocusDelegator.Immutable model,
                       Immutable model) DelegatedMutable
-newDelegatedWithFocusableArgs immutableMaker acc model =
+newDelegatedWithFocusableArgs acc immutableMaker model =
     let (focusableImmutableMaker, immutable) = immutableMaker model
-        box = new (const immutable) (acc ^> FocusDelegator.aDelegatedMutable)
+        box = new (acc ^> FocusDelegator.aDelegatedMutable) . const $ immutable
     in FocusDelegator.new
-           (const $ focusableImmutableMaker box)
            (acc ^> FocusDelegator.aFocusDelegatorMutable)
+           (const $ focusableImmutableMaker box)
            model
 
 newDelegated :: Widget.New model (Immutable model) DelegatedMutable
-newDelegated immutableMaker acc model =
+newDelegated acc immutableMaker model =
     newDelegatedWithFocusableArgs
-    (const (FocusDelegator.imm "Go in" "Go out",
-            immutableMaker model)) acc model
+      acc
+      (const (FocusDelegator.imm "Go in" "Go out",
+              immutableMaker model))
+      model

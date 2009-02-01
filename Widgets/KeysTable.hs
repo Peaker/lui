@@ -4,7 +4,7 @@
 module Widgets.KeysTable where
 
 import qualified Widget
-import Widget(Widget)
+import Widget(Widget, widgetGetKeymap)
 import qualified HaskGame.Key as Key
 import HaskGame.Color(Color(..))
 import HaskGame.Font(Font)
@@ -13,9 +13,10 @@ import qualified Widgets.TextView as TextView
 import qualified Widgets.Unfocusable as Unfocusable
 import qualified Widgets.Space as Space
 import qualified Data.Map as Map
-import Data.List(sort)
 import Control.Arrow(first, second)
 import Accessor(reader)
+import Data.List(sort)
+import Data.Maybe(fromMaybe)
 
 -- Defaults:
 defaultKeysColor, defaultDescColor :: Color
@@ -37,25 +38,28 @@ data Immutable model = Immutable
 imm :: Font -> Font -> Widget.ActionHandlers model -> Immutable model
 imm = Immutable defaultKeysColor defaultDescColor defaultSpaceWidth
 
+immWidget :: Font -> Font -> Widget model -> model -> Immutable model
+immWidget keysFont descFont widget model =
+    let handlers = fromMaybe Map.empty $ widgetGetKeymap (widget model)
+    in imm keysFont descFont handlers
+
 gItem :: Widget model -> Grid.Item model
 gItem = flip Grid.Item (0, 0.5)
 
-keyBindings :: Widget.ActionHandlers a -> [(Key.KeyGroup, String)]
+keyBindings :: Widget.ActionHandlers model -> [(Key.KeyGroup, String)]
 keyBindings = sort .
               (map . first) snd .
               (map . second) fst .
               Map.assocs
 
-new :: Widget.NewImmutable model (Immutable a)
+new :: Widget.NewImmutable model (Immutable model)
 new immutableMaker model =
     Unfocusable.new (const $ Unfocusable.imm grid) model
     where
       Immutable keysColor descColor spaceWidth keysFont descFont handlers =
           immutableMaker model
-      grid = Grid.new
-             (const $
-              Grid.imm (3, Map.size handlers) gridItems)
-             gridAccessor
+      grid = Grid.new gridAccessor . const $
+             Grid.imm (3, Map.size handlers) gridItems
       space = Space.new
               (const $ Space.imm spaceWidth 0)
       gridItems =

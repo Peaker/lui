@@ -77,7 +77,7 @@ spaceW, spaceH :: Int -> Widget model
 spaceW = Space.new . const . Space.immW
 spaceH = Space.new . const . Space.immW
 
-grid, textView, hbox, vbox, keysTable, proxy :: Fonts -> Widget Model
+grid, textView, hbox, vbox, keysTable, proxy1, proxy2 :: Fonts -> Widget Model
 
 grid fonts =
     Grid.newDelegated agridModel . const $ Grid.imm (2, 2) items
@@ -104,15 +104,18 @@ vbox fonts = Box.newDelegated avboxModel . const $
     where
       items = [Box.Item (grid fonts) 1
               ,Box.Item (spaceH 100) 0.5
-              ,Box.Item (textEdit (0, 1) fonts) 0.5
+              ,Box.Item (proxy1 fonts) 0.5
               ,Box.Item (textView fonts) 0.5
-              ,Box.Item (proxy fonts) 0.5]
+              ,Box.Item (proxy2 fonts) 0.5]
 
 keysTable fonts = KeysTable.new $
                   KeysTable.immWidget (keysFont fonts) (descFont fonts)
                   (hbox fonts)
 
-proxy fonts = Proxy.new $ Proxy.imm .
+proxy1 fonts = Proxy.new $ \model -> Proxy.imm $ 
+               textEdit (model ^. agridModel ^. Grid.aDelegatedMutableCursor) fonts
+
+proxy2 fonts = Proxy.new $ Proxy.imm .
         ([textEdit (1, 0) fonts,
           textView fonts]!!) .
         -- The index is chosen as the (1-vbox cursor)

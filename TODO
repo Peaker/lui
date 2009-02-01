@@ -1,3 +1,6 @@
+* Remove the Immutable once again?  If Widget is exposed to be (model->)
+  then just have the "new" caller do \model -> (new ...) model if it wants to?
+
 * Box with delete
 
 * Abstract away SDL keyboard keys, events, flip and delay

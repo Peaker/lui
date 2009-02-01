@@ -7,7 +7,7 @@ import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
 import HaskGame.Key(asKeyGroup, noMods)
 import qualified HaskGame.Key as Key
-import HaskGame.Color(Color)
+import HaskGame.Color(Color(..))
 import qualified Graphics.UI.SDL as SDL
 import qualified Draw
 import qualified Data.Map as Map
@@ -25,11 +25,18 @@ aFocusDelegatorMutable = afirst
 
 data Immutable model = Immutable
     {
-      immutableStartStr :: String
+      immutableFocusColor :: Color
+    , immutableStartStr :: String
     , immutableStopStr :: String
     , immutableChildWidget :: Widget model
-    , immutableFocusColor :: Color
     }
+
+-- defaults:
+defaultFocusColor :: Color
+defaultFocusColor = Color 0 0 150
+
+imm :: String -> String -> Widget model -> Immutable model
+imm = Immutable defaultFocusColor
 
 data Mutable = Mutable
     {
@@ -48,7 +55,7 @@ delegatingKeyMap    stopStr  = buildKeymap SDL.SDLK_ESCAPE stopStr False
 
 new :: Widget.New model (Immutable model) Mutable
 new immutableMaker acc model =
-    let Immutable startStr stopStr childWidget focusColor = immutableMaker model
+    let Immutable focusColor startStr stopStr childWidget = immutableMaker model
         Mutable delegating = model ^. acc
         childWidgetFuncs = childWidget model
     in WidgetFuncs

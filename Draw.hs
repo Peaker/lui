@@ -2,7 +2,7 @@
   -XGeneralizedNewtypeDeriving
   #-}
 
-module Draw(Position,Size,Font
+module Draw(Position,Size
            -- The monads
            ,Draw
            ,Compute

@@ -1,6 +1,4 @@
-* Can I create a generic newDelegate method in FocusDelegator instead of 
-  copying it into each widget?
-* Consider creating convenience creators for the Immutables (perhaps with defaults)?
+* Maybe Widget.New should take immutable last?
 * Box with delete
 
 * Abstract away SDL keyboard keys, events, flip and delay
@@ -18,5 +16,8 @@
 * Animations:
   * Draw -> Animate?
     * Can use ID's on all drawings, and have it animate stuff moving around
+
+* Can I create a generic newDelegate method in FocusDelegator instead of 
+  copying it into each widget?
 
 Possible bug?  We pass (const immutable-value-here) for the given model that we were given, but then the guy we pass it to may receive different models and still make this const value?

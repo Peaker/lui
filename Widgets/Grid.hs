@@ -8,7 +8,6 @@ import Widget(Widget, WidgetFuncs(..))
 
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified HaskGame.Key as Key
-import HaskGame.Color(Color)
 import HaskGame.Key(asKeyGroup, noMods, shift)
 import HaskGame.Vector2(Vector2(..)
                        ,vector2fst,vector2snd)
@@ -43,6 +42,9 @@ data Immutable model = Immutable
       immutableCursor :: Cursor
     , immutableItems :: Items model
     }
+
+imm :: Cursor -> Items model -> Immutable model
+imm = Immutable
 
 data Mutable = Mutable
     {
@@ -208,7 +210,6 @@ new immutableMaker acc model =
                                   keysMap size model mutable items)
     }
 
-type DelegatedImmutable model = (Color, (Immutable model))
 type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
 
 aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
@@ -218,11 +219,19 @@ delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
     (FocusDelegator.Mutable startInside, Mutable cursor)
 
-newDelegated :: Widget.New model (DelegatedImmutable model) DelegatedMutable
-newDelegated immutableMaker acc model =
-    let (focusColor, immutable) = immutableMaker model
+newDelegatedWithFocusableArgs ::
+    Widget.New model (Widget model -> FocusDelegator.Immutable model,
+                      Immutable model) DelegatedMutable
+newDelegatedWithFocusableArgs immutableMaker acc model =
+    let (focusableImmutableMaker, immutable) = immutableMaker model
         grid = new (const immutable) $ acc ^> FocusDelegator.aDelegatedMutable
     in FocusDelegator.new
-           (const $ FocusDelegator.Immutable "Go in" "Go out" grid focusColor)
+           (const $ focusableImmutableMaker grid)
            (acc ^> FocusDelegator.aFocusDelegatorMutable)
            model
+
+newDelegated :: Widget.New model (Immutable model) DelegatedMutable
+newDelegated immutableMaker acc model =
+    newDelegatedWithFocusableArgs
+    (const (FocusDelegator.imm "Go in" "Go out",
+            immutableMaker model)) acc model

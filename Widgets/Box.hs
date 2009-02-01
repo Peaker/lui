@@ -8,7 +8,6 @@ import Widget(Widget)
 import qualified Widgets.Grid as Grid
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified Data.Map as Map
-import HaskGame.Color(Color)
 import Tuple(swap)
 import Accessor(Accessor, convertor, (^>))
 
@@ -30,6 +29,9 @@ data Immutable model = Immutable
     , immutableItems :: Items model
     }
 
+imm :: Orientation -> Items model -> Immutable model
+imm = Immutable
+
 data Mutable = Mutable
     {
       mutableCursor :: Cursor
@@ -43,7 +45,7 @@ type Items model = [Item model]
 
 new :: Widget.New model (Immutable model) Mutable
 new immutableMaker acc model =
-    Grid.new (const $ Grid.Immutable gridSize gridItems)
+    Grid.new (const $ Grid.imm gridSize gridItems)
              (acc ^> boxGridConvertor)
              model
     where
@@ -61,7 +63,6 @@ new immutableMaker acc model =
       mutableToGridMutable = Grid.Mutable . maybeSwap . (,) 0 . mutableCursor
       gridMutableToMutable = Mutable . snd . maybeSwap . Grid.mutableCursor
 
-type DelegatedImmutable model = (Color, (Immutable model))
 type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
 
 aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
@@ -71,13 +72,19 @@ delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
     (FocusDelegator.Mutable startInside, Mutable cursor)
 
-newDelegated :: Widget.New model (DelegatedImmutable model) DelegatedMutable
-newDelegated immutableMaker acc model =
-    let (focusColor, immutable) = immutableMaker model
+newDelegatedWithFocusableArgs ::
+    Widget.New model (Widget model -> FocusDelegator.Immutable model,
+                      Immutable model) DelegatedMutable
+newDelegatedWithFocusableArgs immutableMaker acc model =
+    let (focusableImmutableMaker, immutable) = immutableMaker model
         box = new (const immutable) (acc ^> FocusDelegator.aDelegatedMutable)
-        focusDelegatorImmutable = FocusDelegator.Immutable
-                                  "Go in" "Go out" box focusColor
     in FocusDelegator.new
-           (const $ focusDelegatorImmutable)
+           (const $ focusableImmutableMaker box)
            (acc ^> FocusDelegator.aFocusDelegatorMutable)
            model
+
+newDelegated :: Widget.New model (Immutable model) DelegatedMutable
+newDelegated immutableMaker acc model =
+    newDelegatedWithFocusableArgs
+    (const (FocusDelegator.imm "Go in" "Go out",
+            immutableMaker model)) acc model

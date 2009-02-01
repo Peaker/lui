@@ -6,14 +6,18 @@ module Widgets.TextView where
 import Widget(Widget, WidgetFuncs(..))
 import qualified Widget
 import qualified Draw
+import HaskGame.Font(Font)
 import HaskGame.Color(Color)
 
 data Immutable = Immutable
     {
       immutableTextColor :: Color
-    , immutableFont :: Draw.Font
+    , immutableFont :: Font
     , immutableText :: String
     }
+
+imm :: Color -> Font -> String -> Immutable
+imm = Immutable
 
 type New model immutable =
     (model -> immutable) -> Widget model

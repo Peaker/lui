@@ -14,6 +14,9 @@ data Immutable model = Immutable
       immutableChildWidget :: Widget model
     }
 
+imm :: Widget model -> Immutable model
+imm = Immutable
+
 new :: Widget.NewImmutable model (Immutable model)
 new immutableMaker model =
     let Immutable childWidget = immutableMaker model

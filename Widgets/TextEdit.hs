@@ -4,13 +4,14 @@
 module Widgets.TextEdit where
 
 import qualified Widget
-import Widget(WidgetFuncs(..))
+import Widget(Widget, WidgetFuncs(..))
 
 import qualified HaskGame.Key as Key
 import HaskGame.Key(asKeyGroup, noMods, ctrl)
 import qualified HaskGame.Keys as Keys
 import HaskGame.Vector2(Vector2(..))
 import HaskGame.Color(Color)
+import HaskGame.Font(Font)
 import qualified Draw
 import qualified Graphics.UI.SDL as SDL
 
@@ -26,12 +27,17 @@ type Cursor = Int
 
 data Immutable = Immutable
     {
-      immutableBgColor :: Color
+      immutableCursorWidth :: Int
+    , immutableBgColor :: Color
     , immutableCursorColor :: Color
-    , immutableCursorWidth :: Int
-    , immutableFont :: Draw.Font
+    , immutableFont :: Font
     , immutableTextColor :: Color
     }
+
+defaultCursorWidth :: Int
+defaultCursorWidth = 2
+imm :: Color -> Color -> Font -> Color -> Immutable
+imm = Immutable defaultCursorWidth
 
 data Mutable = Mutable
     {
@@ -128,7 +134,7 @@ ctrlActions mutable =
 
 new :: Widget.New model Immutable Mutable
 new immutableMaker acc model =
-  let Immutable bgColor cursorColor cursorWidth font textColor = immutableMaker model
+  let Immutable cursorWidth bgColor cursorColor font textColor = immutableMaker model
       mutable@(Mutable text cursor) = model ^. acc
   in WidgetFuncs
   {
@@ -155,7 +161,6 @@ new immutableMaker acc model =
        (Map.map . second . result) applyToModel $ keysMap mutable
   }
 
-type DelegatedImmutable = (Color, Immutable)
 type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
 
 aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
@@ -165,13 +170,19 @@ delegatedMutable :: Bool -> String -> Cursor -> DelegatedMutable
 delegatedMutable startInside text cursor =
     (FocusDelegator.Mutable startInside, Mutable text cursor)
 
-newDelegated :: Widget.New model DelegatedImmutable DelegatedMutable
-newDelegated immutableMaker acc model =
-    let (focusColor, immutable) = immutableMaker model
+newDelegatedWithFocusableArgs ::
+    Widget.New model (Widget model -> FocusDelegator.Immutable model,
+                      Immutable) DelegatedMutable
+newDelegatedWithFocusableArgs immutableMaker acc model =
+    let (focusableImmutableMaker, immutable) = immutableMaker model
         textEdit = new (const immutable) $ acc ^> FocusDelegator.aDelegatedMutable
-        focusDelegatorImmutable = FocusDelegator.Immutable
-                                  "Start editing" "Stop editing" textEdit focusColor
     in FocusDelegator.new
-           (const $ focusDelegatorImmutable)
+           (const $ focusableImmutableMaker textEdit)
            (acc ^> FocusDelegator.aFocusDelegatorMutable)
            model
+
+newDelegated :: Widget.New model Immutable DelegatedMutable
+newDelegated immutableMaker acc model =
+    newDelegatedWithFocusableArgs
+    (const (FocusDelegator.imm "Start editing" "Stop editing",
+            immutableMaker model)) acc model

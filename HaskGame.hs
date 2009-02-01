@@ -10,7 +10,7 @@ import qualified Graphics.UI.SDL as SDL
 import qualified HaskGame.Rect as Rect
 import qualified HaskGame.Font as Font
 import qualified HaskGame.Utils as Utils
-import qualified HaskGame.Color as Color
+import HaskGame.Color(Color(..))
 import HaskGame.Vector2(Vector2(..))
 import Control.Monad(liftM)
 
@@ -38,16 +38,16 @@ blit dest pos src = do
   SDL.blitSurface src Nothing dest (Just . Rect.makePosRect $ pos)
   return ()
 
-sdlFillRect :: Surface -> Maybe Rect.Rect -> Color.Color -> IO ()
+sdlFillRect :: Surface -> Maybe Rect.Rect -> Color -> IO ()
 sdlFillRect surface mRect color = do
   fillerPixel <- pixel surface color
   SDL.fillRect surface mRect fillerPixel
   return ()
 
-fillSurface :: Surface -> Color.Color -> IO ()
+fillSurface :: Surface -> Color -> IO ()
 fillSurface surface color = sdlFillRect surface Nothing color
 
-fillRect :: Surface -> Rect.Rect -> Color.Color -> IO ()
+fillRect :: Surface -> Rect.Rect -> Color -> IO ()
 fillRect surface rect color = sdlFillRect surface (Just rect) color
 
 initKeyRepeat :: IO ()
@@ -58,8 +58,8 @@ withInit = SDL.withInit [SDL.InitEverything] .
            Utils.bracket__ initKeyRepeat (return ()) .
            Font.withInit
 
-pixel :: Surface -> Color.Color -> IO SDL.Pixel
-pixel surface (Color.Color r g b) = SDL.mapRGB (SDL.surfaceGetPixelFormat surface) r g b
+pixel :: Surface -> Color -> IO SDL.Pixel
+pixel surface (Color r g b) = SDL.mapRGB (SDL.surfaceGetPixelFormat surface) r g b
 
 getEvents :: IO [Event]
 getEvents = whileM (/=SDL.NoEvent) SDL.pollEvent

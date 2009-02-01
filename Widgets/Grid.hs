@@ -8,7 +8,7 @@ import Widget(Widget, WidgetFuncs(..))
 
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified HaskGame.Key as Key
-import qualified HaskGame.Color as Color
+import HaskGame.Color(Color)
 import HaskGame.Key(asKeyGroup, noMods, shift)
 import HaskGame.Vector2(Vector2(..)
                        ,vector2fst,vector2snd)
@@ -22,7 +22,7 @@ import Func((~>), result)
 import Data.Maybe(isJust, fromMaybe)
 import List(isSorted)
 import Tuple(swap)
-import Accessor((^.), (^>), write, afirst, asecond)
+import Accessor(Accessor, convertor, (^.), (^>), write)
 import Data.Maybe(isNothing)
 
 data Item model = Item
@@ -48,6 +48,9 @@ data Mutable = Mutable
     {
       mutableCursor :: Cursor
     }
+-- TODO: Auto-TH for this
+aMutableCursor :: Accessor Mutable Cursor
+aMutableCursor = convertor mutableCursor Mutable
 
 selectedItem :: Mutable -> Items model -> Maybe (Item model)
 selectedItem (Mutable cursor) items = cursor `Map.lookup` items
@@ -205,12 +208,21 @@ new immutableMaker acc model =
                                   keysMap size model mutable items)
     }
 
-newDelegated :: Widget.New model (Color.Color, (Immutable model))
-                                 (FocusDelegator.Mutable, Mutable)
+type DelegatedImmutable model = (Color, (Immutable model))
+type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
+
+aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
+aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable ^> aMutableCursor
+
+delegatedMutable :: Bool -> Cursor -> DelegatedMutable
+delegatedMutable startInside cursor =
+    (FocusDelegator.Mutable startInside, Mutable cursor)
+
+newDelegated :: Widget.New model (DelegatedImmutable model) DelegatedMutable
 newDelegated immutableMaker acc model =
     let (focusColor, immutable) = immutableMaker model
-        grid = new (const immutable) $ acc ^> asecond
+        grid = new (const immutable) $ acc ^> FocusDelegator.aDelegatedMutable
     in FocusDelegator.new
            (const $ FocusDelegator.Immutable "Go in" "Go out" grid focusColor)
-           (acc ^> afirst)
+           (acc ^> FocusDelegator.aFocusDelegatorMutable)
            model

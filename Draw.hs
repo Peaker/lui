@@ -20,17 +20,16 @@ module Draw(Position,Size,Font
 
 import Control.Monad.Trans(lift)
 import Control.Monad.Reader(ReaderT, ask, local, runReaderT)
-import qualified Graphics.UI.SDL.TTF as TTF
 
 import HaskGame.Vector2(Vector2(..))
+import HaskGame.Color(Color)
+import HaskGame.Font(Font)
 import qualified HaskGame
-import qualified HaskGame.Color as Color
 import qualified HaskGame.Font as Font
 import qualified HaskGame.Rect as Rect
 
 type Position = Vector2 Int
 type Size = Vector2 Int
-type Font = TTF.Font
 
 newtype Compute a = Compute { unCompute :: IO a }
     deriving Monad
@@ -61,7 +60,7 @@ textSize :: Font -> String -> Compute Size
 textSize font str = do
   liftIO $ Font.textSize font str
 
-text :: Color.Color -> Font -> String -> Draw Size
+text :: Color -> Font -> String -> Draw Size
 text color font str = do
   surface <- liftSurface ask
   position <- liftPosition ask
@@ -70,7 +69,7 @@ text color font str = do
     liftIO $ HaskGame.blit surface position textSurface
     textSize font str
   
-rect :: Color.Color -> Size -> Draw Size
+rect :: Color -> Size -> Draw Size
 rect color size = do
   surface <- liftSurface $ ask
   position <- liftPosition ask

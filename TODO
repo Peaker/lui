@@ -1,4 +1,6 @@
-* ProxyWidget
+* Can I create a generic newDelegate method in FocusDelegator instead of 
+  copying it into each widget?
+* Consider creating convenience creators for the Immutables (perhaps with defaults)?
 * Box with delete
 
 * Abstract away SDL keyboard keys, events, flip and delay

@@ -12,8 +12,8 @@ data KeyStatus = KeyDown | KeyUp
   deriving (Eq, Ord, Show, Read)
 
 type KeyAction = (KeyStatus, Key.KeyGroup)
-type Handler s = (String, Key.ModKey -> s)
-type ActionHandlers s = Map.Map KeyAction (Handler s)
+type Handler model = (String, Key.ModKey -> model)
+type ActionHandlers model = Map.Map KeyAction (Handler model)
 
 data DrawInfo = DrawInfo
     {

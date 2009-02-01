@@ -7,10 +7,10 @@ import qualified Widget
 import Widget(Widget)
 import qualified Widgets.Grid as Grid
 import qualified Widgets.FocusDelegator as FocusDelegator
-import qualified HaskGame.Color as Color
 import qualified Data.Map as Map
+import HaskGame.Color(Color)
 import Tuple(swap)
-import Accessor(accessor, (^>), afirst, asecond)
+import Accessor(Accessor, convertor, (^>))
 
 data Orientation = Horizontal | Vertical
 
@@ -34,6 +34,9 @@ data Mutable = Mutable
     {
       mutableCursor :: Cursor
     }
+-- TODO: Auto-TH for this
+aMutableCursor :: Accessor Mutable Cursor
+aMutableCursor = convertor mutableCursor Mutable
 
 -- This type exists for symmetry/similarity with Grid's Items
 type Items model = [Item model]
@@ -54,18 +57,27 @@ new immutableMaker acc model =
       maybeSwap = case orientation of
                     Vertical -> id
                     Horizontal -> swap
-      boxGridConvertor = accessor mutableToGridMutable $
-                         const . gridMutableToMutable
+      boxGridConvertor = convertor mutableToGridMutable gridMutableToMutable
       mutableToGridMutable = Grid.Mutable . maybeSwap . (,) 0 . mutableCursor
       gridMutableToMutable = Mutable . snd . maybeSwap . Grid.mutableCursor
 
-newDelegated :: Widget.New model (Color.Color, (Immutable model))
-                                 (FocusDelegator.Mutable, Mutable)
+type DelegatedImmutable model = (Color, (Immutable model))
+type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
+
+aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
+aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable ^> aMutableCursor
+
+delegatedMutable :: Bool -> Cursor -> DelegatedMutable
+delegatedMutable startInside cursor =
+    (FocusDelegator.Mutable startInside, Mutable cursor)
+
+newDelegated :: Widget.New model (DelegatedImmutable model) DelegatedMutable
 newDelegated immutableMaker acc model =
     let (focusColor, immutable) = immutableMaker model
-        box = new (const immutable) (acc ^> asecond)
+        box = new (const immutable) (acc ^> FocusDelegator.aDelegatedMutable)
         focusDelegatorImmutable = FocusDelegator.Immutable
                                   "Go in" "Go out" box focusColor
     in FocusDelegator.new
            (const $ focusDelegatorImmutable)
-           (acc ^> afirst) model
+           (acc ^> FocusDelegator.aFocusDelegatorMutable)
+           model

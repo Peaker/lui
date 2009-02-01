@@ -7,21 +7,28 @@ import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
 import HaskGame.Key(asKeyGroup, noMods)
 import qualified HaskGame.Key as Key
-import qualified HaskGame.Color as Color
+import HaskGame.Color(Color)
 import qualified Graphics.UI.SDL as SDL
 import qualified Draw
 import qualified Data.Map as Map
 import Control.Arrow(second)
 import Func(result)
-import Accessor((^.), write)
+import Accessor(Accessor, afirst, asecond, (^.), write)
 import Data.Maybe(fromMaybe)
+
+-- TODO: Use record instead of tuple so auto-TH creates the accessors:
+type DelegatedMutable mutable = (Mutable, mutable)
+aDelegatedMutable :: Accessor (DelegatedMutable mutable) mutable
+aDelegatedMutable = asecond
+aFocusDelegatorMutable :: Accessor (DelegatedMutable mutable) Mutable
+aFocusDelegatorMutable = afirst
 
 data Immutable model = Immutable
     {
       immutableStartStr :: String
     , immutableStopStr :: String
     , immutableChildWidget :: Widget model
-    , immutableFocusColor :: Color.Color
+    , immutableFocusColor :: Color
     }
 
 data Mutable = Mutable

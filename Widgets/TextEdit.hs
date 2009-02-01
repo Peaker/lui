@@ -10,7 +10,7 @@ import qualified HaskGame.Key as Key
 import HaskGame.Key(asKeyGroup, noMods, ctrl)
 import qualified HaskGame.Keys as Keys
 import HaskGame.Vector2(Vector2(..))
-import qualified HaskGame.Color as Color
+import HaskGame.Color(Color)
 import qualified Draw
 import qualified Graphics.UI.SDL as SDL
 
@@ -20,22 +20,29 @@ import Data.Map((!))
 import Control.Arrow(first, second)
 import Func(result)
 import List(isSorted)
-import Accessor((^.), (^>), write, afirst, asecond)
+import Accessor(Accessor, accessor, (^.), (^>), write)
+
+type Cursor = Int
 
 data Immutable = Immutable
     {
-      immutableBgColor :: Color.Color
-    , immutableCursorColor :: Color.Color
+      immutableBgColor :: Color
+    , immutableCursorColor :: Color
     , immutableCursorWidth :: Int
     , immutableFont :: Draw.Font
-    , immutableTextColor :: Color.Color
+    , immutableTextColor :: Color
     }
 
 data Mutable = Mutable
     {
       mutableText :: String
-    , mutableCursor :: Int
+    , mutableCursor :: Cursor
     }
+-- TODO: TH
+aMutableCursor :: Accessor Mutable Cursor
+aMutableCursor = accessor mutableCursor (\n x -> x{mutableCursor=n})
+aMutableText :: Accessor Mutable String
+aMutableText = accessor mutableText  (\n x -> x{mutableText=n})
 
 insert :: Mutable -> Key.ModKey -> Mutable
 insert (Mutable oldText oldCursor) key =
@@ -60,7 +67,7 @@ delForward count (Mutable oldText oldCursor) =
         newText = oldPreText ++ newPostText
     in Mutable newText oldCursor
 
-moveCursor :: (Int -> Int) -> Mutable -> Mutable
+moveCursor :: (Cursor -> Cursor) -> Mutable -> Mutable
 moveCursor cursorFunc (Mutable text oldCursor) =
     let newCursor = cursorFunc oldCursor
     in Mutable text $ if isSorted [0, newCursor, length text]
@@ -148,10 +155,23 @@ new immutableMaker acc model =
        (Map.map . second . result) applyToModel $ keysMap mutable
   }
 
-newDelegated :: Widget.New model (Color.Color, Immutable) (FocusDelegator.Mutable, Mutable)
+type DelegatedImmutable = (Color, Immutable)
+type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
+
+aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
+aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable ^> aMutableCursor
+
+delegatedMutable :: Bool -> String -> Cursor -> DelegatedMutable
+delegatedMutable startInside text cursor =
+    (FocusDelegator.Mutable startInside, Mutable text cursor)
+
+newDelegated :: Widget.New model DelegatedImmutable DelegatedMutable
 newDelegated immutableMaker acc model =
     let (focusColor, immutable) = immutableMaker model
-        textEdit = new (const immutable) $ acc ^> asecond
+        textEdit = new (const immutable) $ acc ^> FocusDelegator.aDelegatedMutable
         focusDelegatorImmutable = FocusDelegator.Immutable
                                   "Start editing" "Stop editing" textEdit focusColor
-    in FocusDelegator.new (const $ focusDelegatorImmutable) (acc ^> afirst) model
+    in FocusDelegator.new
+           (const $ focusDelegatorImmutable)
+           (acc ^> FocusDelegator.aFocusDelegatorMutable)
+           model

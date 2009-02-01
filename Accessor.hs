@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall -O2
  #-}
 
-module Accessor(Accessor,accessor
+module Accessor(Accessor,accessor,convertor
                -- getter/setter
                ,(^.),(^:)
                -- composition
@@ -33,6 +33,11 @@ accessor :: (whole -> part) ->
             (part -> whole -> whole) ->
             Accessor whole part
 accessor = Accessor
+
+-- If you can create a whole from a part, then its really a convertor:
+convertor :: (whole -> part) -> (part -> whole) ->
+             Accessor whole part
+convertor extract build = accessor extract (const . build)
 
 self :: Accessor a a
 self = accessor id const

@@ -6,7 +6,7 @@ module Widgets.KeysTable where
 import qualified Widget
 import Widget(Widget)
 import qualified HaskGame.Key as Key
-import qualified HaskGame.Color as Color
+import HaskGame.Color(Color)
 import HaskGame.Vector2(Vector2(..))
 import qualified Widgets.Grid as Grid
 import qualified Widgets.TextView as TextView
@@ -20,9 +20,9 @@ import Accessor(reader)
 
 data Immutable a = Immutable
     {
-      immutableKeysColor :: Color.Color
+      immutableKeysColor :: Color
     , immutableKeysFont :: Draw.Font
-    , immutableDescColor :: Color.Color
+    , immutableDescColor :: Color
     , immutableDescFont :: Draw.Font
     , immutableXSpace :: Int
     , immutableHandlers :: Widget.ActionHandlers a

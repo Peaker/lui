@@ -1,12 +1,12 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Widget where
+module Graphics.UI.LUI.Widget where
 
 import qualified Graphics.UI.HaskGame.Key as Key
 import qualified Data.Map as Map
-import Draw(Draw, Compute, Size)
-import Accessor(Accessor)
+import Graphics.UI.LUI.Draw(Draw, Compute, Size)
+import Graphics.UI.LUI.Accessor(Accessor)
 
 data KeyStatus = KeyDown | KeyUp
   deriving (Eq, Ord, Show, Read)

@@ -9,13 +9,13 @@ import qualified Graphics.UI.HaskGame.Key as Key
 import qualified Graphics.UI.HaskGame.Keys as Keys
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
 import Graphics.UI.HaskGame.Color(Color(..))
-import qualified Draw
+import qualified Graphics.UI.LUI.Draw as Draw
 import qualified Control.Monad.State as State
 
 import Example(makeGui, guiModel)
 
-import qualified Widget
-import Widget(Widget, WidgetFuncs(..))
+import qualified Graphics.UI.LUI.Widget as Widget
+import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
 import qualified Data.Map as Map
 import Control.Monad(forM, forM_, msum)

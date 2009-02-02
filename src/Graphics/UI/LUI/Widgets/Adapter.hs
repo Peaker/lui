@@ -1,14 +1,14 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Widgets.Adapter where
+module Graphics.UI.LUI.Widgets.Adapter where
 
 import qualified Data.Map as Map
-import qualified Widget
-import Widget(Widget, WidgetFuncs(..))
+import qualified Graphics.UI.LUI.Widget as Widget
+import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import Control.Arrow(second)
-import Func(result)
-import Accessor(Accessor, write, (^.))
+import Graphics.UI.LUI.Func(result)
+import Graphics.UI.LUI.Accessor(Accessor, write, (^.))
 
 adapt :: Accessor whole part -> Widget part -> Widget whole
 adapt acc widget model =

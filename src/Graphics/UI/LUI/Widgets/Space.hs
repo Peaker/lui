@@ -1,12 +1,12 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Widgets.Space where
+module Graphics.UI.LUI.Widgets.Space where
 
-import qualified Widget
-import Widget(Widget, WidgetFuncs(..))
+import qualified Graphics.UI.LUI.Widget as Widget
+import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
-import Draw(Size)
+import Graphics.UI.LUI.Draw(Size)
 
 new :: Size -> Widget model
 new size =

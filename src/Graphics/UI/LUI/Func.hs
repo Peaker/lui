@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Func where
+module Graphics.UI.LUI.Func where
 
 import Control.Arrow(Arrow, (<<<), (>>>))
 

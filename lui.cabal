@@ -27,7 +27,7 @@ Library
   Build-Depends:       base, HaskGame
   Exposed-Modules:     Graphics.UI.LUI
                        Graphics.UI.LUI.Widgets.XXX
-  Other-Modules:
+  Other-Modules:       main
                        Example
 
   ghc-options:         -Wall

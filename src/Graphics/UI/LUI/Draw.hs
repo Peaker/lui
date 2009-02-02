@@ -2,7 +2,7 @@
   -XGeneralizedNewtypeDeriving
   #-}
 
-module Draw(Position,Size
+module Graphics.UI.LUI.Draw(Position,Size
            -- The monads
            ,Draw
            ,Compute

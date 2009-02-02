@@ -1,11 +1,11 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Widgets.TextView where
+module Graphics.UI.LUI.Widgets.TextView where
 
-import Widget(Widget, WidgetFuncs(..))
-import qualified Widget
-import qualified Draw
+import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
+import qualified Graphics.UI.LUI.Widget as Widget
+import qualified Graphics.UI.LUI.Draw as Draw
 import Graphics.UI.HaskGame.Font(Font)
 import Graphics.UI.HaskGame.Color(Color)
 

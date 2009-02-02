@@ -1,10 +1,10 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Widgets.TextEdit where
+module Graphics.UI.LUI.Widgets.TextEdit where
 
-import qualified Widget
-import Widget(WidgetFuncs(..))
+import qualified Graphics.UI.LUI.Widget as Widget
+import Graphics.UI.LUI.Widget(WidgetFuncs(..))
 
 import qualified Graphics.UI.HaskGame.Key as Key
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, ctrl)
@@ -12,16 +12,16 @@ import qualified Graphics.UI.HaskGame.Keys as Keys
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
 import Graphics.UI.HaskGame.Color(Color)
 import Graphics.UI.HaskGame.Font(Font)
-import qualified Draw
+import qualified Graphics.UI.LUI.Draw as Draw
 import qualified Graphics.UI.SDL as SDL
 
 import qualified Data.Map as Map
-import qualified Widgets.FocusDelegator as FocusDelegator
+import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
 import Data.Map((!))
 import Control.Arrow(first, second)
-import Func(result)
-import List(isSorted)
-import Accessor(Accessor, accessor, (^.), (^>), write)
+import Graphics.UI.LUI.Func(result)
+import Graphics.UI.LUI.List(isSorted)
+import Graphics.UI.LUI.Accessor(Accessor, accessor, (^.), (^>), write)
 
 type Cursor = Int
 

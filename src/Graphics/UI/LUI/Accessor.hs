@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall -O2
  #-}
 
-module Accessor(Accessor,accessor,convertor
+module Graphics.UI.LUI.Accessor(Accessor,accessor,convertor
                -- getter/setter
                ,(^.),(^:)
                -- composition
@@ -18,7 +18,7 @@ module Accessor(Accessor,accessor,convertor
                ,aMapValueDefault) where
 
 import Control.Arrow(first, second)
-import List(nth)
+import Graphics.UI.LUI.List(nth)
 import qualified Data.Map as Map
 import Data.Map(Map)
 

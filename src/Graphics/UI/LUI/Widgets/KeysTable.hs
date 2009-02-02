@@ -1,20 +1,20 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Widgets.KeysTable where
+module Graphics.UI.LUI.Widgets.KeysTable where
 
-import qualified Widget
-import Widget(Widget, widgetGetKeymap)
+import qualified Graphics.UI.LUI.Widget as Widget
+import Graphics.UI.LUI.Widget(Widget, widgetGetKeymap)
 import qualified Graphics.UI.HaskGame.Key as Key
 import Graphics.UI.HaskGame.Color(Color(..))
 import Graphics.UI.HaskGame.Font(Font)
-import qualified Widgets.Grid as Grid
-import qualified Widgets.TextView as TextView
-import qualified Widgets.Unfocusable as Unfocusable
-import qualified Widgets.Space as Space
+import qualified Graphics.UI.LUI.Widgets.Grid as Grid
+import qualified Graphics.UI.LUI.Widgets.TextView as TextView
+import qualified Graphics.UI.LUI.Widgets.Unfocusable as Unfocusable
+import qualified Graphics.UI.LUI.Widgets.Space as Space
 import qualified Data.Map as Map
 import Control.Arrow(first, second)
-import Accessor(reader)
+import Graphics.UI.LUI.Accessor(reader)
 import Data.List(sort)
 import Data.Maybe(fromMaybe)
 

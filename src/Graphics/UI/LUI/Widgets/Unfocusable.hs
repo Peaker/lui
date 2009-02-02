@@ -1,10 +1,10 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Widgets.Unfocusable where
+module Graphics.UI.LUI.Widgets.Unfocusable where
 
-import qualified Widget
-import Widget(Widget, WidgetFuncs(..))
+import qualified Graphics.UI.LUI.Widget as Widget
+import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
 noFocusDrawInfo :: Widget.DrawInfo
 noFocusDrawInfo = Widget.DrawInfo False

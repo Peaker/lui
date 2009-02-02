@@ -12,7 +12,6 @@ import qualified Graphics.UI.LUI.Widgets.Space as Space
 import qualified Graphics.UI.LUI.Widgets.KeysTable as KeysTable
 import Graphics.UI.LUI.Widget(Widget)
 import Graphics.UI.LUI.Accessor(Accessor, accessor, aMapValue, (^>), (^.))
-import Graphics.UI.LUI.List(isSorted)
 
 import qualified Graphics.UI.HaskGame.Font as Font
 import qualified Graphics.UI.HaskGame as HaskGame
@@ -22,6 +21,9 @@ import Graphics.UI.HaskGame.Color(Color(..))
 import qualified Data.Map as Map
 import Data.Maybe(listToMaybe)
 import Control.Monad(mapM)
+
+isSorted :: (Ord a) => [a] -> Bool
+isSorted xs = and $ zipWith (<=) xs (tail xs)
 
 main :: IO ()
 main = HaskGame.withInit $ do

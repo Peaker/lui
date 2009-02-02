@@ -2,31 +2,32 @@
   -XGeneralizedNewtypeDeriving
   #-}
 
-module Graphics.UI.LUI.Draw(Position,Size
-           -- The monads
-           ,Draw
-           ,Compute
-           -- Monad runners
-           ,render
-           ,computeResult
-           -- Compute primitives
-           ,textSize
-           -- Draw primitives
-           ,computeToDraw
-           ,text
-           ,rect
-           ,move
-           ) where
+module Graphics.UI.LUI.Draw
+    (Position,Size
+    -- The monads
+    ,Draw
+    ,Compute
+    -- Monad runners
+    ,render
+    ,computeResult
+    -- Compute primitives
+    ,textSize
+    -- Draw primitives
+    ,computeToDraw
+    ,text
+    ,rect
+    ,move
+    ) where
 
-import Control.Monad.Trans(lift)
-import Control.Monad.Reader(ReaderT, ask, local, runReaderT)
-
-import Graphics.UI.HaskGame.Vector2(Vector2(..))
-import Graphics.UI.HaskGame.Color(Color)
-import Graphics.UI.HaskGame.Font(Font)
 import qualified Graphics.UI.HaskGame as HaskGame
 import qualified Graphics.UI.HaskGame.Font as Font
 import qualified Graphics.UI.HaskGame.Rect as Rect
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
+import Graphics.UI.HaskGame.Color(Color)
+import Graphics.UI.HaskGame.Font(Font)
+
+import Control.Monad.Trans(lift)
+import Control.Monad.Reader(ReaderT, ask, local, runReaderT)
 
 type Position = Vector2 Int
 type Size = Vector2 Int

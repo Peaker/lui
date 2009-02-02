@@ -1,24 +1,28 @@
 {-# OPTIONS_GHC -Wall -O2
  #-}
 
-module Graphics.UI.LUI.Accessor(Accessor,accessor,convertor
-               -- getter/setter
-               ,(^.),(^:)
-               -- composition
-               ,(<^),(^>)
-               -- Accessors
-               ,self,null,reader
-               ,write
-               -- Tuple
-               ,afirst,asecond
-               -- List
-               ,anth
-               -- Data.Map
-               ,aMapValue
-               ,aMapValueDefault) where
+-- TODO: Put this in a more generic library
+
+module Graphics.UI.LUI.Accessor
+    (Accessor,accessor,convertor
+    -- getter/setter
+    ,(^.),(^:)
+    -- composition
+    ,(<^),(^>)
+    -- Accessors
+    ,self,null,reader
+    ,write
+    -- Tuple
+    ,afirst,asecond
+    -- List
+    ,anth
+    -- Data.Map
+    ,aMapValue
+    ,aMapValueDefault) where
+
+import Graphics.UI.LUI.List(nth)
 
 import Control.Arrow(first, second)
-import Graphics.UI.LUI.List(nth)
 import qualified Data.Map as Map
 import Data.Map(Map)
 

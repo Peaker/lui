@@ -3,20 +3,22 @@
 
 module Example(makeGui, guiModel) where
 
-import Graphics.UI.LUI.Widget(Widget)
 import qualified Graphics.UI.LUI.Widgets.TextEdit as TextEdit
 import qualified Graphics.UI.LUI.Widgets.TextView as TextView
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.Box as Box
 import qualified Graphics.UI.LUI.Widgets.Space as Space
 import qualified Graphics.UI.LUI.Widgets.KeysTable as KeysTable
-import Graphics.UI.HaskGame.Font(Font)
 import qualified Graphics.UI.HaskGame.Font as Font
+import Graphics.UI.LUI.Widget(Widget)
 import Graphics.UI.LUI.Accessor(Accessor, accessor, aMapValue, (^>), (^.))
+import Graphics.UI.LUI.List(isSorted)
+
+import Graphics.UI.HaskGame.Font(Font)
 import Graphics.UI.HaskGame.Color(Color(..))
+
 import qualified Data.Map as Map
 import Data.Maybe(listToMaybe)
-import Graphics.UI.LUI.List(isSorted)
 import Control.Monad(mapM)
 
 -- Model:

@@ -4,25 +4,28 @@
 module Graphics.UI.LUI.Widgets.Grid where
 
 import qualified Graphics.UI.LUI.Widget as Widget
+import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
+import qualified Graphics.UI.LUI.Draw as Draw
+
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
-import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
+import Graphics.UI.LUI.Func((~>), result)
+import Graphics.UI.LUI.List(isSorted)
+import Graphics.UI.LUI.Tuple(swap)
+import Graphics.UI.LUI.Accessor(Accessor, convertor, (^.), (^>), write)
+
+import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.HaskGame.Key as Key
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, shift)
 import Graphics.UI.HaskGame.Color(Color)
 import Graphics.UI.HaskGame.Vector2(Vector2(..)
                                    ,vector2fst,vector2snd)
-import qualified Graphics.UI.LUI.Draw as Draw
+
 import qualified Data.Map as Map
-import qualified Graphics.UI.SDL as SDL
-import Data.List(transpose)
 import Control.Monad(forM_, forM)
 import Control.Arrow(first, second, (***))
-import Graphics.UI.LUI.Func((~>), result)
+import Data.List(transpose)
 import Data.Maybe(isJust, fromMaybe)
-import Graphics.UI.LUI.List(isSorted)
-import Graphics.UI.LUI.Tuple(swap)
-import Graphics.UI.LUI.Accessor(Accessor, convertor, (^.), (^>), write)
 import Data.Maybe(isNothing)
 
 data Item model = Item

@@ -3,10 +3,12 @@
 
 module Graphics.UI.LUI.Widget where
 
-import qualified Graphics.UI.HaskGame.Key as Key
-import qualified Data.Map as Map
 import Graphics.UI.LUI.Draw(Draw, Compute, Size)
 import Graphics.UI.LUI.Accessor(Accessor)
+
+import qualified Graphics.UI.HaskGame.Key as Key
+
+import qualified Data.Map as Map
 
 data KeyStatus = KeyDown | KeyUp
   deriving (Eq, Ord, Show, Read)

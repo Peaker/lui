@@ -3,9 +3,10 @@
 
 module Graphics.UI.LUI.Widgets.TextView where
 
-import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Draw as Draw
+import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
+
 import Graphics.UI.HaskGame.Font(Font)
 import Graphics.UI.HaskGame.Color(Color)
 

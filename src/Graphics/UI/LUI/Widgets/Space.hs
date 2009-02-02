@@ -5,8 +5,8 @@ module Graphics.UI.LUI.Widgets.Space where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
-import Graphics.UI.HaskGame.Vector2(Vector2(..))
 import Graphics.UI.LUI.Draw(Size)
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
 
 new :: Size -> Widget model
 new size =

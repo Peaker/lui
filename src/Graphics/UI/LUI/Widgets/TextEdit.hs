@@ -4,24 +4,25 @@
 module Graphics.UI.LUI.Widgets.TextEdit where
 
 import qualified Graphics.UI.LUI.Widget as Widget
+import qualified Graphics.UI.LUI.Draw as Draw
+import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
 import Graphics.UI.LUI.Widget(WidgetFuncs(..))
 
-import qualified Graphics.UI.HaskGame.Key as Key
-import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, ctrl)
-import qualified Graphics.UI.HaskGame.Keys as Keys
-import Graphics.UI.HaskGame.Vector2(Vector2(..))
-import Graphics.UI.HaskGame.Color(Color)
-import Graphics.UI.HaskGame.Font(Font)
-import qualified Graphics.UI.LUI.Draw as Draw
-import qualified Graphics.UI.SDL as SDL
-
-import qualified Data.Map as Map
-import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
-import Data.Map((!))
-import Control.Arrow(first, second)
 import Graphics.UI.LUI.Func(result)
 import Graphics.UI.LUI.List(isSorted)
 import Graphics.UI.LUI.Accessor(Accessor, accessor, (^.), (^>), write)
+
+import qualified Graphics.UI.SDL as SDL
+import qualified Graphics.UI.HaskGame.Key as Key
+import qualified Graphics.UI.HaskGame.Keys as Keys
+import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, ctrl)
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
+import Graphics.UI.HaskGame.Color(Color)
+import Graphics.UI.HaskGame.Font(Font)
+
+import qualified Data.Map as Map
+import Data.Map((!))
+import Control.Arrow(first, second)
 
 type Cursor = Int
 

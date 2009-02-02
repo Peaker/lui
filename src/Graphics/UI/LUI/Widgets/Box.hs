@@ -4,13 +4,15 @@
 module Graphics.UI.LUI.Widgets.Box where
 
 import qualified Graphics.UI.LUI.Widget as Widget
-import Graphics.UI.LUI.Widget(Widget)
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
-import qualified Data.Map as Map
-import Graphics.UI.HaskGame.Color(Color(..))
+import Graphics.UI.LUI.Widget(Widget)
 import Graphics.UI.LUI.Tuple(swap)
 import Graphics.UI.LUI.Accessor(Accessor, convertor, (^>))
+
+import Graphics.UI.HaskGame.Color(Color(..))
+
+import qualified Data.Map as Map
 
 data Orientation = Horizontal | Vertical
 

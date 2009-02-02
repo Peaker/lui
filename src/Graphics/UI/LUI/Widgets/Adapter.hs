@@ -3,12 +3,14 @@
 
 module Graphics.UI.LUI.Widgets.Adapter where
 
-import qualified Data.Map as Map
 import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
-import Control.Arrow(second)
+
 import Graphics.UI.LUI.Func(result)
 import Graphics.UI.LUI.Accessor(Accessor, write, (^.))
+
+import qualified Data.Map as Map
+import Control.Arrow(second)
 
 adapt :: Accessor whole part -> Widget part -> Widget whole
 adapt acc widget model =

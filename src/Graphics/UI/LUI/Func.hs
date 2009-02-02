@@ -3,6 +3,8 @@
 
 module Graphics.UI.LUI.Func where
 
+-- TODO: Put this in a more generic library
+
 import Control.Arrow(Arrow, (<<<), (>>>))
 
 result :: Arrow arr => arr b c -> arr a b -> arr a c

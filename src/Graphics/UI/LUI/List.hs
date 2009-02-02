@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
+-- TODO: Put this in a more generic library
+
 module Graphics.UI.LUI.List where
     isSorted :: (Ord a) => [a] -> Bool
     isSorted xs = and $ zipWith (<=) xs (tail xs)

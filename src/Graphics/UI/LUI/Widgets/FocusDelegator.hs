@@ -4,16 +4,19 @@
 module Graphics.UI.LUI.Widgets.FocusDelegator where
 
 import qualified Graphics.UI.LUI.Widget as Widget
-import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
-import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
-import qualified Graphics.UI.HaskGame.Key as Key
-import Graphics.UI.HaskGame.Color(Color(..))
-import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.LUI.Draw as Draw
-import qualified Data.Map as Map
-import Control.Arrow(second)
+import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
+
 import Graphics.UI.LUI.Func(result)
 import Graphics.UI.LUI.Accessor(Accessor, afirst, asecond, (^.), write)
+
+import qualified Graphics.UI.SDL as SDL
+import qualified Graphics.UI.HaskGame.Key as Key
+import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
+import Graphics.UI.HaskGame.Color(Color(..))
+
+import qualified Data.Map as Map
+import Control.Arrow(second)
 import Data.Maybe(fromMaybe)
 
 -- TODO: Use record instead of tuple so auto-TH creates the accessors:

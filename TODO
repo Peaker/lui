@@ -1,28 +1,50 @@
-* Consider removing the accessor arg and using adapter always
-  This means child containers have to be parameterized on the child
-  rather than on the generic model, so Grid is not Widget model
-  but Grid (Mutable, childModel)?
-* Rename Mutable -> Model?
-
-* Box with delete
+* Restructure it as a library and upload to hackage.
+  Put dependency on SDL-ttf >= 0.5.5 (The bug in prior version renders widget set
+  unusable on x86-64)
 
 * Abstract away SDL keyboard keys, events, flip and delay
   * Implement a GLUT-based version
 
-* Plan editor:
-  * The model can be an AST
-    * Keys associated with manipulating the AST model
-    * Accessors to model can convert AST to the widget form
-
-  * Revision control (Diff management?)
-    * Model accessors can put extra information in model about how to save only the
-      changes
+* Grid with delete row/column, Box with delete item?
 
 * Animations:
   * Draw -> Animate?
     * Can use ID's on all drawings, and have it animate stuff moving around
 
-* Can I create a generic newDelegate method in FocusDelegator instead of 
-  copying it into each widget?
+Questions:
 
-Possible bug?  We pass (const immutable-value-here) for the given model that we were given, but then the guy we pass it to may receive different models and still make this const value?
+* After chat with conal:
+
+  * type FontMap = Map String Font
+  * type Draw = FontMap -> Image
+  * render :: Font -> (Image, Size)
+    * unsafePerformIO all font renderings?
+    * Have Size be an opaque type usable only for Image manipulations?
+
+* Is the "Clipboard" a good idea?
+  * Maybe have a "Clipring" instead?
+
+  * Clipring is a list of N items, and showing it shows one line per item
+    with the "summary" of each.
+
+  * When whole content fits in line it is shown, otherwise, it is
+    "summarized". Each model needs to be associated with 
+
+  * Bottom line of the screen can show summary of top clipring item
+  * Clipring accessible with some key, animating all the contents up,
+    allowing to move item to the top
+
+* What do widget actions do, besides updating the model?
+  1. Read and write from the clipboard (Clipboard monad?)
+  2. "Signal"? Probably not, as it implies a side-effect.
+
+* Consider removing the accessor arg and using adapter always
+  This means child containers have to be parameterized on the child
+  rather than on the generic model, so Grid is not Widget model
+  but Widget (Mutable, Map Cursor childModel)?
+  Then, you can adapt the real model to that tuple.
+  This is probably less convenient than what I have now
+
+* Can I create a generic newDelegate method in FocusDelegator instead
+  of copying it into each widget?  Its probably possible by using ugly
+  accessors/adapters, but less important at the moment.

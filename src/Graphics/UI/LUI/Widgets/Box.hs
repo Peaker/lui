@@ -1,7 +1,19 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widgets.Box where
+module Graphics.UI.LUI.Widgets.Box
+    (Orientation(..)
+    ,Item(..)
+    ,Mutable(..)
+    ,Cursor
+    ,new
+    ,aMutableCursor
+    ,DelegatedMutable
+    ,delegatedMutable
+    ,aDelegatedMutableCursor
+    ,newDelegated
+    ,newDelegatedWith
+    ) where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
@@ -34,10 +46,7 @@ data Mutable = Mutable
 aMutableCursor :: Accessor Mutable Cursor
 aMutableCursor = convertor mutableCursor Mutable
 
--- This type exists for symmetry/similarity with Grid's Items
-type Items model = [Item model]
-
-new :: Orientation -> Items model -> Widget.New model Mutable
+new :: Orientation -> [Item model] -> Widget.New model Mutable
 new orientation items acc =
     Grid.new gridSize gridItems $ acc ^> boxGridConvertor
     where
@@ -62,12 +71,12 @@ delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
     (FocusDelegator.Mutable startInside, Mutable cursor)
 
-newDelegatedWith :: Color -> Orientation -> Items model ->
+newDelegatedWith :: Color -> Orientation -> [Item model] ->
                     Widget.New model DelegatedMutable
 newDelegatedWith focusColor orientation items acc =
     let box = new orientation items $ acc ^> FocusDelegator.aDelegatedMutable
     in FocusDelegator.newWith focusColor "Go in" "Go out" box $
        acc ^> FocusDelegator.aFocusDelegatorMutable
 
-newDelegated :: Orientation -> Items model -> Widget.New model DelegatedMutable
+newDelegated :: Orientation -> [Item model] -> Widget.New model DelegatedMutable
 newDelegated = newDelegatedWith FocusDelegator.defaultFocusColor

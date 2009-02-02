@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widgets.TextView where
+module Graphics.UI.LUI.Widgets.TextView(new)
+where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Draw as Draw

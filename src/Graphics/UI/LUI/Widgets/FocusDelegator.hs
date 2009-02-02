@@ -1,7 +1,16 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widgets.FocusDelegator where
+module Graphics.UI.LUI.Widgets.FocusDelegator
+    (Mutable(..)
+    ,DelegatedMutable
+    ,aDelegatedMutable
+    ,aFocusDelegatorMutable
+    ,defaultFocusColor
+    ,newWith
+    ,new
+    )
+where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Draw as Draw

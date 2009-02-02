@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widgets.Space where
+module Graphics.UI.LUI.Widgets.Space(new, newWH, newW, newH)
+where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))

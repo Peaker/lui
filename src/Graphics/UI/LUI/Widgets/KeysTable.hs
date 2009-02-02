@@ -1,7 +1,14 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widgets.KeysTable where
+module Graphics.UI.LUI.Widgets.KeysTable
+    (defaultKeysColor
+    ,defaultDescColor
+    ,defaultSpaceWidth
+    ,new
+    ,newForWidget
+    )
+where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid

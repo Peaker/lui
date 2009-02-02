@@ -1,7 +1,21 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widgets.TextEdit where
+module Graphics.UI.LUI.Widgets.TextEdit
+    (Mutable(..)
+    ,aMutableCursor
+    ,aMutableText
+    ,Cursor
+    ,defaultCursorWidth
+    ,new
+    ,DelegatedMutable
+    ,aDelegatedMutableCursor
+    ,aDelegatedMutableText
+    ,delegatedMutable
+    ,newDelegatedWith
+    ,newDelegated
+    )
+where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Draw as Draw
@@ -156,7 +170,6 @@ aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
 aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable ^> aMutableCursor
 aDelegatedMutableText :: Accessor DelegatedMutable String
 aDelegatedMutableText = FocusDelegator.aDelegatedMutable ^> aMutableText
-
 delegatedMutable :: Bool -> String -> Cursor -> DelegatedMutable
 delegatedMutable startInside text cursor =
     (FocusDelegator.Mutable startInside, Mutable text cursor)

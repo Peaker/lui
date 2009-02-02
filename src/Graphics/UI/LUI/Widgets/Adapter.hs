@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widgets.Adapter where
+module Graphics.UI.LUI.Widgets.Adapter(adapt) where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))

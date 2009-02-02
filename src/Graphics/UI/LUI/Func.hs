@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Func where
+module Graphics.UI.LUI.Func(result, argument, (~>)) where
 
 -- TODO: Put this in a more generic library
 

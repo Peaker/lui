@@ -3,7 +3,7 @@
 
 -- TODO: Put this in a more generic library
 
-module Graphics.UI.LUI.List where
+module Graphics.UI.LUI.List(isSorted, nth) where
     isSorted :: (Ord a) => [a] -> Bool
     isSorted xs = and $ zipWith (<=) xs (tail xs)
 

@@ -1,7 +1,17 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widget where
+module Graphics.UI.LUI.Widget
+    (DrawInfo(..)
+    ,WidgetFuncs(..)
+    ,KeyStatus(..)
+    ,Widget
+    ,New
+    ,KeyAction
+    ,Handler
+    ,ActionHandlers
+    )
+where
 
 import Graphics.UI.LUI.Draw(Draw, Compute, Size)
 import Graphics.UI.LUI.Accessor(Accessor)

@@ -1,7 +1,20 @@
 {-# OPTIONS_GHC -Wall -O2
   #-}
 
-module Graphics.UI.LUI.Widgets.Grid where
+module Graphics.UI.LUI.Widgets.Grid
+    (Item(..)
+    ,Mutable(..)
+    ,Items
+    ,Cursor
+    ,new
+    ,aMutableCursor
+    ,DelegatedMutable
+    ,delegatedMutable
+    ,aDelegatedMutableCursor
+    ,newDelegated
+    ,newDelegatedWith
+    )
+where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
@@ -23,7 +36,7 @@ import Graphics.UI.HaskGame.Vector2(Vector2(..)
 
 import qualified Data.Map as Map
 import Control.Monad(forM_, forM)
-import Control.Arrow(first, second, (***))
+import Control.Arrow(second, (***))
 import Data.List(transpose)
 import Data.Maybe(isJust, fromMaybe)
 import Data.Maybe(isNothing)
@@ -81,12 +94,6 @@ mutableCursorApply func (Mutable oldCursor) = Mutable $ func oldCursor
 
 mutableMoveTo :: (Int, Int) -> Mutable -> Mutable
 mutableMoveTo newCursor = mutableCursorApply (const newCursor)
-
-moveX, moveY :: (Int -> Int) -> Cursor -> Cursor -> Cursor
-moveX delta (sizex, _) oldCursor =
-    first (max 0 . min (sizex-1) . delta) oldCursor
-moveY delta (_, sizey) oldCursor =
-    second (max 0 . min (sizey-1) . delta) oldCursor
 
 itemSelectable :: model -> Item model -> Bool
 itemSelectable model (Item widget _) =

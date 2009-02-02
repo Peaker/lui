@@ -1,6 +1,8 @@
 * Restructure it as a library and upload to hackage.
-  Put dependency on SDL-ttf >= 0.5.5 (The bug in prior version renders widget set
-  unusable on x86-64)
+  Name it: Graphics.UI.LUI?
+  Need a .cabal and Setup.hs files:
+    Put dependency on SDL-ttf >= 0.5.5 (The bug in prior version renders widget set
+    unusable on x86-64)
 
 * Abstract away SDL keyboard keys, events, flip and delay
   * Implement a GLUT-based version

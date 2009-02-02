@@ -1,0 +1,35 @@
+Name:                lui
+Version:             0.0.1
+Cabal-Version:       >= 1.2
+Synopsis:            Purely FunctionaL User Interface
+Category:            graphics
+Description:
+  This package contains a set of composable purely funcitonal widgets
+  and a mainloop adapter to adapt the widgets to run in IO.
+  It is currently based on SDL.
+  .
+  Project wiki page: <http://haskell.org/haskellwiki/LUI>
+  .
+  &#169; 2009 by Eyal Lotem; GPL3 license.
+
+Author:              Eyal Lotem
+Maintainer:          eyal.lotem@gmail.com
+--Homepage:            http://haskell.org/haskellwiki/LUI
+--Package-Url:         http://code.haskell.org/LUI
+Copyright:           (c) 2008 by Conal Elliott
+License:             GPL3
+Stability:           experimental
+build-type:          Simple
+
+Library
+  hs-Source-Dirs:      src
+  Extensions:
+  Build-Depends:       base, HaskGame
+  Exposed-Modules:     Graphics.UI.LUI
+                       Graphics.UI.LUI.Widgets.XXX
+  Other-Modules:
+                       Example
+
+  ghc-options:         -Wall
+
+--  ghc-prof-options:    -prof -auto-all 

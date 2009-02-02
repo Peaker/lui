@@ -7,11 +7,11 @@ import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
 
 import qualified Widgets.FocusDelegator as FocusDelegator
-import qualified HaskGame.Key as Key
-import HaskGame.Key(asKeyGroup, noMods, shift)
-import HaskGame.Color(Color)
-import HaskGame.Vector2(Vector2(..)
-                       ,vector2fst,vector2snd)
+import qualified Graphics.UI.HaskGame.Key as Key
+import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, shift)
+import Graphics.UI.HaskGame.Color(Color)
+import Graphics.UI.HaskGame.Vector2(Vector2(..)
+                                   ,vector2fst,vector2snd)
 import qualified Draw
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL

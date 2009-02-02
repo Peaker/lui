@@ -5,9 +5,9 @@ module Widgets.FocusDelegator where
 
 import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
-import HaskGame.Key(asKeyGroup, noMods)
-import qualified HaskGame.Key as Key
-import HaskGame.Color(Color(..))
+import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
+import qualified Graphics.UI.HaskGame.Key as Key
+import Graphics.UI.HaskGame.Color(Color(..))
 import qualified Graphics.UI.SDL as SDL
 import qualified Draw
 import qualified Data.Map as Map

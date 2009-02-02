@@ -4,11 +4,11 @@
 module Main where
 
 import qualified Graphics.UI.SDL as SDL
-import qualified HaskGame
-import qualified HaskGame.Key as Key
-import qualified HaskGame.Keys as Keys
-import HaskGame.Vector2(Vector2(..))
-import HaskGame.Color(Color(..))
+import qualified Graphics.UI.HaskGame as HaskGame
+import qualified Graphics.UI.HaskGame.Key as Key
+import qualified Graphics.UI.HaskGame.Keys as Keys
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
+import Graphics.UI.HaskGame.Color(Color(..))
 import qualified Draw
 import qualified Control.Monad.State as State
 
@@ -44,7 +44,8 @@ handleKeyAction widgetFuncs keyStatus keySym =
       runHandler (_, func) = func key
   in fmap runHandler mKeyHandler
 
-handleEvents :: [HaskGame.Event] -> Widget model -> State.StateT model IO Bool
+handleEvents :: [HaskGame.Event] -> Widget model ->
+                State.StateT model IO Bool
 handleEvents events widget =
   fmap or $ forM events $ \event -> do
     model <- State.get

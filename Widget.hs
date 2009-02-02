@@ -3,7 +3,7 @@
 
 module Widget where
 
-import qualified HaskGame.Key as Key
+import qualified Graphics.UI.HaskGame.Key as Key
 import qualified Data.Map as Map
 import Draw(Draw, Compute, Size)
 import Accessor(Accessor)

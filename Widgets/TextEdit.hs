@@ -6,12 +6,12 @@ module Widgets.TextEdit where
 import qualified Widget
 import Widget(WidgetFuncs(..))
 
-import qualified HaskGame.Key as Key
-import HaskGame.Key(asKeyGroup, noMods, ctrl)
-import qualified HaskGame.Keys as Keys
-import HaskGame.Vector2(Vector2(..))
-import HaskGame.Color(Color)
-import HaskGame.Font(Font)
+import qualified Graphics.UI.HaskGame.Key as Key
+import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, ctrl)
+import qualified Graphics.UI.HaskGame.Keys as Keys
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
+import Graphics.UI.HaskGame.Color(Color)
+import Graphics.UI.HaskGame.Font(Font)
 import qualified Draw
 import qualified Graphics.UI.SDL as SDL
 

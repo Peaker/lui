@@ -5,9 +5,9 @@ module Widgets.KeysTable where
 
 import qualified Widget
 import Widget(Widget, widgetGetKeymap)
-import qualified HaskGame.Key as Key
-import HaskGame.Color(Color(..))
-import HaskGame.Font(Font)
+import qualified Graphics.UI.HaskGame.Key as Key
+import Graphics.UI.HaskGame.Color(Color(..))
+import Graphics.UI.HaskGame.Font(Font)
 import qualified Widgets.Grid as Grid
 import qualified Widgets.TextView as TextView
 import qualified Widgets.Unfocusable as Unfocusable

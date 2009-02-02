@@ -10,10 +10,10 @@ import qualified Widgets.Grid as Grid
 import qualified Widgets.Box as Box
 import qualified Widgets.Space as Space
 import qualified Widgets.KeysTable as KeysTable
-import HaskGame.Font(Font)
-import qualified HaskGame.Font as Font
+import Graphics.UI.HaskGame.Font(Font)
+import qualified Graphics.UI.HaskGame.Font as Font
 import Accessor(Accessor, accessor, aMapValue, (^>), (^.))
-import HaskGame.Color(Color(..))
+import Graphics.UI.HaskGame.Color(Color(..))
 import qualified Data.Map as Map
 import Data.Maybe(listToMaybe)
 import List(isSorted)

@@ -5,7 +5,7 @@ module Widgets.Space where
 
 import qualified Widget
 import Widget(Widget, WidgetFuncs(..))
-import HaskGame.Vector2(Vector2(..))
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
 import Draw(Size)
 
 new :: Size -> Widget model

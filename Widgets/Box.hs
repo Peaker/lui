@@ -8,7 +8,7 @@ import Widget(Widget)
 import qualified Widgets.Grid as Grid
 import qualified Widgets.FocusDelegator as FocusDelegator
 import qualified Data.Map as Map
-import HaskGame.Color(Color(..))
+import Graphics.UI.HaskGame.Color(Color(..))
 import Tuple(swap)
 import Accessor(Accessor, convertor, (^>))
 

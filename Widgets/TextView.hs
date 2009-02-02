@@ -6,8 +6,8 @@ module Widgets.TextView where
 import Widget(Widget, WidgetFuncs(..))
 import qualified Widget
 import qualified Draw
-import HaskGame.Font(Font)
-import HaskGame.Color(Color)
+import Graphics.UI.HaskGame.Font(Font)
+import Graphics.UI.HaskGame.Color(Color)
 
 new :: Color -> Font -> String -> Widget model
 new textColor textSize text =

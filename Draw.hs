@@ -21,12 +21,12 @@ module Draw(Position,Size
 import Control.Monad.Trans(lift)
 import Control.Monad.Reader(ReaderT, ask, local, runReaderT)
 
-import HaskGame.Vector2(Vector2(..))
-import HaskGame.Color(Color)
-import HaskGame.Font(Font)
-import qualified HaskGame
-import qualified HaskGame.Font as Font
-import qualified HaskGame.Rect as Rect
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
+import Graphics.UI.HaskGame.Color(Color)
+import Graphics.UI.HaskGame.Font(Font)
+import qualified Graphics.UI.HaskGame as HaskGame
+import qualified Graphics.UI.HaskGame.Font as Font
+import qualified Graphics.UI.HaskGame.Rect as Rect
 
 type Position = Vector2 Int
 type Size = Vector2 Int

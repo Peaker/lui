@@ -1,25 +1,33 @@
 {-# OPTIONS_GHC -Wall -O2
  #-}
 
-module Example(makeGui, guiModel) where
+module Example(main) where
 
+import qualified Graphics.UI.LUI.Run as Run
 import qualified Graphics.UI.LUI.Widgets.TextEdit as TextEdit
 import qualified Graphics.UI.LUI.Widgets.TextView as TextView
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.Box as Box
 import qualified Graphics.UI.LUI.Widgets.Space as Space
 import qualified Graphics.UI.LUI.Widgets.KeysTable as KeysTable
-import qualified Graphics.UI.HaskGame.Font as Font
 import Graphics.UI.LUI.Widget(Widget)
 import Graphics.UI.LUI.Accessor(Accessor, accessor, aMapValue, (^>), (^.))
 import Graphics.UI.LUI.List(isSorted)
 
+import qualified Graphics.UI.HaskGame.Font as Font
+import qualified Graphics.UI.HaskGame as HaskGame
 import Graphics.UI.HaskGame.Font(Font)
 import Graphics.UI.HaskGame.Color(Color(..))
 
 import qualified Data.Map as Map
 import Data.Maybe(listToMaybe)
 import Control.Monad(mapM)
+
+main :: IO ()
+main = HaskGame.withInit $ do
+    gui <- makeGui
+    Run.mainLoop gui guiModel
+    return ()
 
 -- Model:
 data Model = Model

@@ -1,9 +1,8 @@
 {-# OPTIONS_GHC -Wall -O2
  #-}
 
-module Main where
-
-import Example(makeGui, guiModel)
+module Graphics.UI.LUI.Run(mainLoop)
+where
 
 import qualified Graphics.UI.LUI.Draw as Draw
 import qualified Graphics.UI.LUI.Widget as Widget
@@ -24,9 +23,6 @@ import Control.Monad.Trans(lift)
 -- Commented out for 6.8's lack of the new Exception
 -- import qualified Control.Exception as Exc
 -- import Data.Typeable(Typeable)
-
-speed :: Num a => a
-speed = 30
 
 -- Commented out for 6.8's lack of the new Exception
 -- data QuitRequest = QuitRequest
@@ -63,10 +59,11 @@ handleEvents events widget =
           State.put newState
           return True
 
-mainLoop :: Widget model -> model -> IO ()
+-- TODO: Must return the new model
+mainLoop :: Widget model -> model -> IO model
 mainLoop widget initModel = do
   display <- HaskGame.setVideoMode 800 600 16
-  (`State.evalStateT` initModel) $
+  (`State.execStateT` initModel) $
     forM_ (True:repeat False) $ \shouldDraw -> do
       events <- lift $ HaskGame.getEvents
       handledEvent <- handleEvents events widget
@@ -83,14 +80,3 @@ mainLoop widget initModel = do
             SDL.flip display
           else
             SDL.delay 20
-
-main :: IO ()
-main =
-  HaskGame.withInit $ do
-    -- Commented out for 6.8's lack of the new Exception
-    -- flip Exc.catch errHandler runWidget
-    -- where
-    --   errHandler :: QuitRequest -> IO ()
-    --   errHandler = const . putStrLn $ "Quit requested"
-    gui <- makeGui
-    mainLoop gui guiModel

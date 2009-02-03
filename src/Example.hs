@@ -28,7 +28,9 @@ isSorted xs = and $ zipWith (<=) xs (tail xs)
 main :: IO ()
 main = HaskGame.withInit $ do
     gui <- makeGui
-    Run.mainLoop gui guiModel
+    resultModel <- Run.mainLoop gui guiModel
+    -- Prove that we have the new model here:
+    print $ gridModel resultModel ^. Grid.aDelegatedMutableCursor
     return ()
 
 -- Model:

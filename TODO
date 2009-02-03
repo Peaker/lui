@@ -1,6 +1,3 @@
-* Restructure it as a library and upload to hackage.
-  Export lists everywhere!
-  * Mention its HaskGame based (it uses its Vector2 type/etc)
 * Abstract away SDL keyboard keys, events, flip and delay
   * Implement a GLUT-based version
 

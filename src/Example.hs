@@ -37,7 +37,6 @@ main = HaskGame.withInit $ do
 data Model = Model
     {
       vboxModel :: Box.DelegatedMutable
-    , hboxModel :: Box.Mutable
     , textEditModels :: Map.Map Grid.Cursor TextEdit.DelegatedMutable
     , gridModel :: Grid.DelegatedMutable
     }
@@ -50,8 +49,6 @@ data Fonts = Fonts
 -- TODO: Replace with TH auto-gen
 avboxModel :: Accessor Model Box.DelegatedMutable
 avboxModel = accessor vboxModel (\new x -> x{vboxModel=new})
-ahboxModel :: Accessor Model Box.Mutable
-ahboxModel = accessor hboxModel (\new x -> x{hboxModel=new})
 atextEditModels :: Accessor Model (Map.Map Grid.Cursor TextEdit.DelegatedMutable)
 atextEditModels = accessor textEditModels (\new x -> x{textEditModels=new})
 agridModel :: Accessor Model Grid.DelegatedMutable
@@ -71,7 +68,6 @@ guiModel =
     Model
     {
       vboxModel = Box.delegatedMutable False 0
-    , hboxModel = Box.Mutable 0
     , textEditModels =
       Map.fromList [((x, y),
                      TextEdit.delegatedMutable False (texts!!(y*2+x)) 5)
@@ -96,13 +92,12 @@ textEdit cursor fonts =
                           (defaultFont fonts)
                           textEditColor $
                           atextEditModels ^> aMapValue cursor
-                          
 
 textView :: String -> Fonts -> Widget Model
 textView text fonts =
     TextView.new textViewColor (textViewFont fonts) text
 
-grid, hbox, vbox, keysTable, proxy1, proxy2 :: Fonts -> Widget Model
+grid, vbox, withKeysTable, proxy1, proxy2 :: Fonts -> Widget Model
 
 gridSize :: Grid.Cursor
 gridSize = (2, 2)
@@ -114,13 +109,6 @@ grid fonts =
               [((x, y), Grid.Item (textEdit (x, y) fonts) (0.5, 1))
                | x <- [0..1], y <- [0..1]]
 
-hbox fonts =
-    Box.new Box.Horizontal items ahboxModel
-    where
-      items = [Box.Item (vbox fonts) 0.5
-              ,Box.Item (Space.newW 50) 0
-              ,Box.Item (keysTable fonts) 0]
-
 vbox fonts = Box.newDelegated Box.Vertical items avboxModel
     where
       items = [Box.Item (grid fonts) 1
@@ -129,7 +117,7 @@ vbox fonts = Box.newDelegated Box.Vertical items avboxModel
               ,Box.Item (textView "This is just a view" fonts) 0.5
               ,Box.Item (proxy2 fonts) 0.5]
 
-keysTable fonts = KeysTable.newForWidget (keysFont fonts) (descFont fonts) (hbox fonts)
+withKeysTable fonts = KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fonts) (descFont fonts) (vbox fonts)
 
 proxy1 fonts model =
     textEdit (model ^. agridModel ^. Grid.aDelegatedMutableCursor) fonts model
@@ -158,4 +146,4 @@ proxy2 fonts model =
 makeGui :: IO (Widget Model)
 makeGui = do
   [f15, f25, f30] <- mapM Font.defaultFont [15, 25, 30]
-  return . hbox $ Fonts f30 f15 f25 f25
+  return . withKeysTable $ Fonts f30 f15 f25 f25

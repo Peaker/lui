@@ -7,10 +7,12 @@ module Graphics.UI.LUI.Widgets.KeysTable
     ,defaultSpaceWidth
     ,new
     ,newForWidget
+    ,newBoxedWidget
     )
 where
 
 import qualified Graphics.UI.LUI.Widget as Widget
+import qualified Graphics.UI.LUI.Widgets.Box as Box
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.TextView as TextView
 import qualified Graphics.UI.LUI.Widgets.Unfocusable as Unfocusable
@@ -68,3 +70,12 @@ newForWidget keysFont descFont widget model =
     let handlers = fromMaybe Map.empty . widgetGetKeymap $ widget model
     in new defaultKeysColor defaultDescColor defaultSpaceWidth
            keysFont descFont handlers model
+
+newBoxedWidget :: Box.Orientation -> Int -> Font -> Font -> Widget model -> Widget model
+newBoxedWidget orientation space keysFont descFont widget = box
+    where
+        box = Box.new orientation items . reader . Box.Mutable $ 0
+        items = [Box.Item widget 0.5
+                ,Box.Item (Space.newWH space space) 0
+                ,Box.Item keysTable 0]
+        keysTable = newForWidget keysFont descFont box

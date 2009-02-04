@@ -13,9 +13,6 @@
   retro-actively to other place?
 
 * Abstract away SDL keyboard keys, events, flip and delay
-  * Implement a GLUT-based version
-
-* Abstract away SDL keyboard keys, events, flip and delay
   * Implement a GLUT-based version first, to see what needs to be
     shared and how
   * Basically copy big parts of the SDL wrapper and convert to it

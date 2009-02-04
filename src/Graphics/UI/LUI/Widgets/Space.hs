@@ -6,8 +6,10 @@ where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
-import Graphics.UI.LUI.Draw(Size)
+import Graphics.UI.HaskGame(Size)
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
+
+import Data.Monoid(mempty)
 
 new :: Size -> Widget model
 new size =
@@ -15,8 +17,8 @@ new size =
     WidgetFuncs
     {
       widgetGetKeymap = Nothing
-    , widgetDraw = \_ -> return size
-    , widgetSize = \_ -> return size
+    , widgetImage = const mempty
+    , widgetSize = const size
     }
 
 newWH :: Int -> Int -> Widget model

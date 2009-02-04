@@ -18,7 +18,7 @@ where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
-import qualified Graphics.UI.LUI.Draw as Draw
+import qualified Graphics.UI.LUI.Image as Image
 
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
@@ -35,11 +35,10 @@ import Graphics.UI.HaskGame.Vector2(Vector2(..)
                                    ,vector2fst,vector2snd)
 
 import qualified Data.Map as Map
-import Control.Monad(forM_, forM)
 import Control.Arrow(second, (***))
 import Data.List(transpose)
-import Data.Maybe(isJust, fromMaybe)
-import Data.Maybe(isNothing)
+import Data.Maybe(isJust, isNothing, fromMaybe)
+import Data.Monoid(mempty, mconcat)
 
 data Item model = Item
     {
@@ -74,20 +73,21 @@ gridDrawInfo (Mutable cursor) itemIndex (Widget.DrawInfo drawInfo) =
     Widget.DrawInfo (drawInfo && cursor==itemIndex)
 
 getRowColumnSizes :: model -> Mutable -> Items model -> Cursor -> Widget.DrawInfo ->
-                     Draw.Compute ([Int], [Int])
-getRowColumnSizes model mutable items size drawInfo = do
-  rowsSizes <- forM (gridRows size items) . mapM $ \(itemIndex, mItem) ->
-                   case mItem of
-                     Nothing -> return $ Vector2 0 0
-                     Just item ->
-                         widgetSize ((itemWidget item) model)
-                                    (gridDrawInfo mutable itemIndex drawInfo)
+                     ([Int], [Int])
+getRowColumnSizes model mutable items size drawInfo = (rowHeights, columnWidths)
+    where
+      mapItems = map . map
+      rowsSizes = mapItems itemWidgetSize (gridRows size items)
+      itemWidgetSize (itemIndex, mItem) =
+        case mItem of
+          Nothing -> Vector2 0 0
+          Just item -> widgetSize (itemWidget item model)
+                                  (gridDrawInfo mutable itemIndex drawInfo)
+      rowsHeights = mapItems vector2snd rowsSizes
+      rowsWidths =  mapItems vector2fst rowsSizes
 
-  let rowsHeights = (map . map) vector2snd rowsSizes
-      rowsWidths = (map . map) vector2fst rowsSizes
-      rowHeights = map maximum $ rowsHeights
+      rowHeights =   map maximum             $ rowsHeights
       columnWidths = map maximum . transpose $ rowsWidths
-  return (rowHeights, columnWidths)
 
 mutableCursorApply :: (Cursor -> Cursor) -> Mutable -> Mutable
 mutableCursorApply func (Mutable oldCursor) = Mutable $ func oldCursor
@@ -173,29 +173,30 @@ new size items acc model =
         rowColumnSizes drawInfo = getRowColumnSizes model mutable items size drawInfo
     in WidgetFuncs
     {
-      widgetDraw = \drawInfo -> do
-        (rowHeights, columnWidths) <- Draw.computeToDraw . rowColumnSizes $ drawInfo
-        forM_ (zip (posSizes rowHeights) rows) $
-          \((ypos, height), row) -> do
-            forM_ (zip (posSizes columnWidths) row) $
-              \((xpos, width), (itemIndex, mItem)) ->
-                case mItem of
-                  Nothing -> return ()
-                  Just item -> do
+      widgetImage = \drawInfo -> let
+        (rowHeights, columnWidths) = rowColumnSizes drawInfo
+        images =
+          flip map (zip (posSizes rowHeights) rows) $
+          \((ypos, height), row) ->
+            flip map (zip (posSizes columnWidths) row) $
+            \((xpos, width), (itemIndex, mItem)) ->
+              case mItem of
+                Nothing -> mempty
+                Just item ->
                     let Item childWidget (ax, ay) = item
                         childDrawInfo = gridDrawInfo mutable itemIndex drawInfo
                         childWidgetFuncs = childWidget model
-                    Vector2 w h <- Draw.computeToDraw $
-                                   widgetSize childWidgetFuncs childDrawInfo
-                    let pos = Vector2 (xpos + inFrac (*ax) (width-w))
+                        childImage = widgetImage childWidgetFuncs childDrawInfo
+                        Vector2 w h = widgetSize childWidgetFuncs childDrawInfo
+                        pos = Vector2 (xpos + inFrac (*ax) (width-w))
                                       (ypos + inFrac (*ay) (height-h))
-                    Draw.move pos $ widgetDraw childWidgetFuncs childDrawInfo
-                    return ()
-        return $ Vector2 (sum columnWidths) (sum rowHeights)
+                    in Image.move pos childImage
+        in mconcat . concat $ images
 
-    , widgetSize = \drawInfo -> do
-      (rowHeights, columnWidths) <- rowColumnSizes drawInfo
-      return $ Vector2 (sum columnWidths) (sum rowHeights)
+    , widgetSize =
+        \drawInfo ->
+            let (rowHeights, columnWidths) = rowColumnSizes drawInfo
+            in Vector2 (sum columnWidths) (sum rowHeights)
 
     , widgetGetKeymap =
       if all isNothing .

@@ -13,7 +13,7 @@ module Graphics.UI.LUI.Widgets.FocusDelegator
 where
 
 import qualified Graphics.UI.LUI.Widget as Widget
-import qualified Graphics.UI.LUI.Draw as Draw
+import qualified Graphics.UI.LUI.Image as Image
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
 import Graphics.UI.LUI.Func(result)
@@ -27,6 +27,7 @@ import Graphics.UI.HaskGame.Color(Color(..))
 import qualified Data.Map as Map
 import Control.Arrow(second)
 import Data.Maybe(fromMaybe)
+import Data.Monoid(Monoid(..))
 
 -- TODO: Use record instead of tuple so auto-TH creates the accessors:
 type DelegatedMutable mutable = (Mutable, mutable)
@@ -58,10 +59,11 @@ newWith :: Color -> String -> String -> Widget model -> Widget.New model Mutable
 newWith focusColor startStr stopStr childWidget acc model =
     let Mutable delegating = model ^. acc
         childWidgetFuncs = childWidget model
+        childWidgetSize = widgetSize childWidgetFuncs
     in WidgetFuncs
     {
-      widgetSize = \drawInfo -> widgetSize childWidgetFuncs drawInfo
-    , widgetDraw = \drawInfo -> do
+      widgetSize = childWidgetSize
+    , widgetImage = \drawInfo ->
         let 
             haveFocus = Widget.diHasFocus drawInfo
             delegatorHasFocus = haveFocus && not delegating
@@ -69,15 +71,11 @@ newWith focusColor startStr stopStr childWidget acc model =
                             {
                               Widget.diHasFocus = haveFocus && delegating
                             }
-        if delegatorHasFocus
-          then do
-            size <- Draw.computeToDraw $
-                    widgetSize childWidgetFuncs childDrawInfo
-            Draw.rect focusColor size
-            return ()
-          else
-            return ()
-        widgetDraw childWidgetFuncs childDrawInfo
+        in (if delegatorHasFocus
+            then Image.rect focusColor $ childWidgetSize childDrawInfo
+            else mempty)
+           `mappend`
+           widgetImage childWidgetFuncs childDrawInfo
     , widgetGetKeymap =
         let mChildKeymap = widgetGetKeymap childWidgetFuncs
             childKeymap = fromMaybe Map.empty mChildKeymap

@@ -18,7 +18,7 @@ adapt acc widget model =
     in
       WidgetFuncs
       {
-        widgetDraw = widgetDraw widgetFuncs
+        widgetImage = widgetImage widgetFuncs
       , widgetSize = widgetSize widgetFuncs
       , widgetGetKeymap =
           let keymap = widgetGetKeymap widgetFuncs

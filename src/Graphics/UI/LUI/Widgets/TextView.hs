@@ -5,7 +5,7 @@ module Graphics.UI.LUI.Widgets.TextView(new)
 where
 
 import qualified Graphics.UI.LUI.Widget as Widget
-import qualified Graphics.UI.LUI.Draw as Draw
+import qualified Graphics.UI.LUI.Image as Image
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
 import Graphics.UI.HaskGame.Font(Font)
@@ -16,7 +16,7 @@ new textColor textSize text =
     const $
     WidgetFuncs
     {
-      widgetDraw = \_ -> Draw.text textColor textSize text
-    , widgetSize = \_ -> Draw.textSize textSize text
+      widgetImage = const $ Image.text textColor textSize text
+    , widgetSize = const $ Image.textSize textSize text
     , widgetGetKeymap = Nothing
     }

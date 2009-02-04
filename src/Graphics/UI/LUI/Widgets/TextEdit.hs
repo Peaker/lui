@@ -18,7 +18,7 @@ module Graphics.UI.LUI.Widgets.TextEdit
 where
 
 import qualified Graphics.UI.LUI.Widget as Widget
-import qualified Graphics.UI.LUI.Draw as Draw
+import qualified Graphics.UI.LUI.Image as Image
 import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
 import Graphics.UI.LUI.Widget(WidgetFuncs(..))
 
@@ -36,6 +36,7 @@ import Graphics.UI.HaskGame.Font(Font)
 
 import qualified Data.Map as Map
 import Data.Map((!))
+import Data.Monoid(mconcat)
 import Control.Arrow(first, second)
 
 type Cursor = Int
@@ -141,22 +142,24 @@ new cursorWidth bgColor cursorColor font textColor acc model =
   let mutable@(Mutable text cursor) = model ^. acc
   in WidgetFuncs
   {
-    widgetDraw = \drawInfo -> do
-    
-    if Widget.diHasFocus drawInfo
-      then do
-        textSize <- Draw.computeToDraw . Draw.textSize font $ text
-        Vector2 w h <- Draw.computeToDraw . Draw.textSize font $ take cursor text
-        let cursorSize = Vector2 cursorWidth h
+    widgetImage = \drawInfo ->
+      if Widget.diHasFocus drawInfo
+      then
+        let textSize = Image.textSize font text
+            Vector2 w h = Image.textSize font $ take cursor text
+            cursorSize = Vector2 cursorWidth h
             cursorPos = Vector2 w 0
-        Draw.rect bgColor textSize
-        Draw.text textColor font text
-        Draw.move cursorPos $ Draw.rect cursorColor cursorSize
-        return textSize
+        in
+          mconcat
+          [
+           Image.rect bgColor textSize
+          ,Image.text textColor font text
+          ,Image.move cursorPos $ Image.rect cursorColor cursorSize
+          ]
       else
-        Draw.text textColor font text
+        Image.text textColor font text
 
-  , widgetSize = \_ -> Draw.textSize font text
+  , widgetSize = const $ Image.textSize font text
 
   , widgetGetKeymap =
     let applyToModel newMutable = acc `write` newMutable $ model

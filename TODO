@@ -18,19 +18,13 @@
   * Basically copy big parts of the SDL wrapper and convert to it
 
 * Animations:
-  * Draw -> Animate?
+  * Image -> Animation?
     * Can use ID's on all drawings, and have it animate stuff moving around
       * Conal says ID's aren't it
 
 Questions:
 
-* After chat with conal:
-
-  * type FontMap = Map String Font
-  * type Draw = FontMap -> Image
-  * render :: Font -> (Image, Size)
-    * unsafePerformIO all font renderings?
-    * Have Size be an opaque type usable only for Image manipulations?
+* add FontMap = Map String Font ?
 
 * Is the "Clipboard" a good idea?
   * Maybe have a "Clipring" instead?

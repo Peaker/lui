@@ -4,7 +4,7 @@
 module Graphics.UI.LUI.Run(mainLoop)
 where
 
-import qualified Graphics.UI.LUI.Draw as Draw
+import qualified Graphics.UI.LUI.Image as Image
 import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
@@ -68,8 +68,8 @@ mainLoop widget initModel = do
         HaskGame.fillSurface display (Color 0 0 0)
         if handledEvent || shouldDraw
           then do
-            let draw = widgetDraw (widget model) (Widget.DrawInfo True)
-            Draw.render display (Vector2 0 0) draw
+            let draw = widgetImage (widget model) (Widget.DrawInfo True)
+            Image.render draw display $ Vector2 0 0
             SDL.flip display
           else
             SDL.delay 20

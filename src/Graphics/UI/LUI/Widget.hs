@@ -13,9 +13,10 @@ module Graphics.UI.LUI.Widget
     )
 where
 
-import Graphics.UI.LUI.Draw(Draw, Compute, Size)
+import Graphics.UI.LUI.Image(Image)
 import Graphics.UI.LUI.Accessor(Accessor)
 
+import Graphics.UI.HaskGame(Size)
 import qualified Graphics.UI.HaskGame.Key as Key
 
 import qualified Data.Map as Map
@@ -36,8 +37,8 @@ data DrawInfo = DrawInfo
 -- TODO: Consider moving the model argument outside of the record
 data WidgetFuncs model = WidgetFuncs
     {
-      widgetDraw :: DrawInfo -> Draw Size
-    , widgetSize :: DrawInfo -> Compute Size
+      widgetImage :: DrawInfo -> Image
+    , widgetSize :: DrawInfo -> Size
     , widgetGetKeymap :: Maybe (ActionHandlers model)
     }
 

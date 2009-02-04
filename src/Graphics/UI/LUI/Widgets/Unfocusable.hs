@@ -16,6 +16,6 @@ new childWidget model =
     in WidgetFuncs
     {
       widgetSize = \_ -> widgetSize childWidgetFuncs noFocusDrawInfo
-    , widgetDraw = \_ -> widgetDraw childWidgetFuncs noFocusDrawInfo
+    , widgetImage = \_ -> widgetImage childWidgetFuncs noFocusDrawInfo
     , widgetGetKeymap = Nothing
     }

@@ -29,7 +29,7 @@ Library
   Extensions:
   Build-Depends:       base, haskell98, containers, mtl, SDL, haskgame, MaybeT
   Exposed-Modules:     Graphics.UI.LUI.Accessor,
-                       Graphics.UI.LUI.Draw,
+                       Graphics.UI.LUI.Image,
                        Graphics.UI.LUI.Run,
                        Graphics.UI.LUI.Widget,
                        Graphics.UI.LUI.Widgets.Adapter,

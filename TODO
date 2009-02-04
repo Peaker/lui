@@ -1,7 +1,11 @@
-* Abstract away SDL keyboard keys, events, flip and delay
-  * Implement a GLUT-based version
+* Widgets:
+  * Scrollable
+  * Grid with delete row/column, Box with delete item?
 
-* Grid with delete row/column, Box with delete item?
+* Abstract away SDL keyboard keys, events, flip and delay
+  * Implement a GLUT-based version first, to see what needs to be
+    shared and how
+  * Basically copy big parts of the SDL wrapper and convert to it
 
 * Animations:
   * Draw -> Animate?
@@ -24,15 +28,31 @@ Questions:
     with the "summary" of each.
 
   * When whole content fits in line it is shown, otherwise, it is
-    "summarized". Each model needs to be associated with 
+    "summarized". Each model needs to be associated with ......
 
   * Bottom line of the screen can show summary of top clipring item
   * Clipring accessible with some key, animating all the contents up,
     allowing to move item to the top
 
 * What do widget actions do, besides updating the model?
+
   1. Read and write from the clipboard (Clipboard monad?)
-  2. "Signal"? Probably not, as it implies a side-effect.
+     -- Nope, probably "edit" the clipboard as part of the model,
+        allowing local clipboards/et al.
+
+  2. Do I have "buttons"?
+
+     -- Undo/Redo can really just control the model's current reivision
+        ptr (think of a widget hierarchy editing a git repo), instead
+        of actually doing stuff.
+
+     -- Network/irreversible operations really do need such signals,
+        can model these as:
+
+        1. An extra type parameter for widgets, and something that
+           they can output in addition to a new model.
+
+        2. As a "queue" of things to do, which gets added to.
 
 * Consider removing the accessor arg and using adapter always
   This means child containers have to be parameterized on the child

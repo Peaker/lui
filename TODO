@@ -1,3 +1,12 @@
+* Need to create a "multi-widget" that gets multiple accessors, one widget and
+  multiple viewers, and applies the widget modifications to all the accessors.
+* Multi-widget can be used instead of macros.
+
+* Maybe event handlers should give a model->(Maybe|Either) model
+  rather than model so that you can re-apply their handlers?  Or can
+  the accessor writes capture the changes so they can later apply
+  retro-actively to other place?
+
 * Abstract away SDL keyboard keys, events, flip and delay
   * Implement a GLUT-based version
 
@@ -6,6 +15,7 @@
 * Animations:
   * Draw -> Animate?
     * Can use ID's on all drawings, and have it animate stuff moving around
+      * Conal says ID's aren't it
 
 Questions:
 

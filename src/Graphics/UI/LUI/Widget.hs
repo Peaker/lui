@@ -16,7 +16,7 @@ where
 import Graphics.UI.LUI.Image(Image)
 import Graphics.UI.LUI.Accessor(Accessor)
 
-import Graphics.UI.HaskGame(Size)
+import Graphics.UI.HaskGame.Vector2(Vector2)
 import qualified Graphics.UI.HaskGame.Key as Key
 
 import qualified Data.Map as Map
@@ -38,7 +38,7 @@ data DrawInfo = DrawInfo
 data WidgetFuncs model = WidgetFuncs
     {
       widgetImage :: DrawInfo -> Image
-    , widgetSize :: DrawInfo -> Size
+    , widgetSize :: DrawInfo -> Vector2 Int
     , widgetGetKeymap :: Maybe (ActionHandlers model)
     }
 

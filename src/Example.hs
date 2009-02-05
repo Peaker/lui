@@ -4,12 +4,14 @@
 module Example(main) where
 
 import qualified Graphics.UI.LUI.Run as Run
+import qualified Graphics.UI.LUI.Image as Image
 import qualified Graphics.UI.LUI.Widgets.TextEdit as TextEdit
 import qualified Graphics.UI.LUI.Widgets.TextView as TextView
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.Box as Box
 import qualified Graphics.UI.LUI.Widgets.Space as Space
 import qualified Graphics.UI.LUI.Widgets.KeysTable as KeysTable
+import qualified Graphics.UI.LUI.Widgets.Adapter as Adapter
 import Graphics.UI.LUI.Widget(Widget)
 import Graphics.UI.LUI.Accessor(Accessor, accessor, aMapValue, (^>), (^.))
 
@@ -17,6 +19,7 @@ import qualified Graphics.UI.HaskGame.Font as Font
 import qualified Graphics.UI.HaskGame as HaskGame
 import Graphics.UI.HaskGame.Font(Font)
 import Graphics.UI.HaskGame.Color(Color(..))
+import Graphics.UI.HaskGame.Rect(Rect(..))
 
 import qualified Data.Map as Map
 import Data.Maybe(listToMaybe)
@@ -97,10 +100,10 @@ textView :: String -> Fonts -> Widget Model
 textView text fonts =
     TextView.new textViewColor (textViewFont fonts) text
 
-grid, vbox, withKeysTable, proxy1, proxy2 :: Fonts -> Widget Model
-
 gridSize :: Grid.Cursor
 gridSize = (2, 2)
+
+grid, vbox, withKeysTable, proxy1, proxy2 :: Fonts -> Widget Model
 
 grid fonts =
     Grid.newDelegated gridSize items agridModel
@@ -115,6 +118,9 @@ vbox fonts = Box.newDelegated Box.Vertical items avboxModel
               ,Box.Item (Space.newH 100) 0.5
               ,Box.Item (proxy1 fonts) 0.5
               ,Box.Item (textView "This is just a view" fonts) 0.5
+              ,Box.Item (Adapter.adaptImage
+                         (Image.crop $ Rect 10 10 100 25) $
+                         textView "This is a truncated view" fonts) 0.5
               ,Box.Item (proxy2 fonts) 0.5]
 
 withKeysTable fonts = KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fonts) (descFont fonts) (vbox fonts)

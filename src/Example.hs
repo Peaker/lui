@@ -17,6 +17,7 @@ import Graphics.UI.LUI.Accessor(Accessor, accessor, aMapValue, (^>), (^.))
 
 import qualified Graphics.UI.HaskGame.Font as Font
 import qualified Graphics.UI.HaskGame as HaskGame
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
 import Graphics.UI.HaskGame.Font(Font)
 import Graphics.UI.HaskGame.Color(Color(..))
 import Graphics.UI.HaskGame.Rect(Rect(..))
@@ -96,9 +97,9 @@ textEdit cursor fonts =
                           textEditColor $
                           atextEditModels ^> aMapValue cursor
 
-textView :: String -> Fonts -> Widget Model
-textView text fonts =
-    TextView.new textViewColor (textViewFont fonts) text
+textView :: String -> Font -> Widget Model
+textView text font =
+    TextView.new textViewColor font text
 
 gridSize :: Grid.Cursor
 gridSize = (2, 2)
@@ -114,14 +115,19 @@ grid fonts =
 
 vbox fonts = Box.newDelegated Box.Vertical items avboxModel
     where
+      font = textViewFont fonts
       items = [Box.Item (grid fonts) 1
               ,Box.Item (Space.newH 100) 0.5
               ,Box.Item (proxy1 fonts) 0.5
-              ,Box.Item (textView "This is just a view" fonts) 0.5
-              ,Box.Item (Adapter.adaptImage
-                         (Image.crop $ Rect 10 10 100 25) $
-                         textView "This is a truncated view" fonts) 0.5
-              ,Box.Item (proxy2 fonts) 0.5]
+              ,Box.Item (textView "This is just a view" font) 0.5
+              ,Box.Item (proxy2 fonts) 0.5] ++
+              [Box.Item (Adapter.adaptImage
+                         (Image.crop $ Rect 0 i w (h-(i*2))) $
+                         textView text font) 0.5
+               | i <- [5..9]
+              , let text = "THIS IS A TRUNCATED VIEW: " ++ show i
+                    Vector2 w h = Image.textSize font text]
+
 
 withKeysTable fonts = KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fonts) (descFont fonts) (vbox fonts)
 
@@ -145,7 +151,8 @@ proxy2 fonts model =
     let cursor = model ^. agridModel ^. Grid.aDelegatedMutableCursor
         text = model ^. atextEditModels ^. aMapValue cursor ^.
                TextEdit.aDelegatedMutableText
-    in maybe (textView ("Invalid cursor position selected: " ++ text) fonts model)
+    in maybe (textView ("Invalid cursor position selected: " ++ text)
+                       (textViewFont fonts) model)
              (\cur -> textEdit cur fonts model) $
        readCursor text
 

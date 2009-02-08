@@ -29,10 +29,10 @@ import Graphics.UI.LUI.Accessor(Accessor, convertor, (^.), (^>), write)
 
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.HaskGame.Key as Key
+import qualified Graphics.UI.HaskGame.Vector2 as Vector2
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, shift)
 import Graphics.UI.HaskGame.Color(Color)
-import Graphics.UI.HaskGame.Vector2(Vector2(..)
-                                   ,vector2fst,vector2snd)
+import Graphics.UI.HaskGame.Vector2(Vector2(..))
 
 import qualified Data.Map as Map
 import Control.Arrow(second, (***))
@@ -83,8 +83,8 @@ getRowColumnSizes model mutable items size drawInfo = (rowHeights, columnWidths)
           Nothing -> Vector2 0 0
           Just item -> widgetSize (itemWidget item model)
                                   (gridDrawInfo mutable itemIndex drawInfo)
-      rowsHeights = mapItems vector2snd rowsSizes
-      rowsWidths =  mapItems vector2fst rowsSizes
+      rowsHeights = mapItems Vector2.snd rowsSizes
+      rowsWidths =  mapItems Vector2.fst rowsSizes
 
       rowHeights =   map maximum             $ rowsHeights
       columnWidths = map maximum . transpose $ rowsWidths

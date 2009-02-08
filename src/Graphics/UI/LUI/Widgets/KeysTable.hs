@@ -20,8 +20,6 @@ import qualified Graphics.UI.LUI.Widgets.Space as Space
 import qualified Graphics.UI.HaskGame.Key as Key
 import Graphics.UI.LUI.Widget(Widget, widgetGetKeymap)
 
-import Graphics.UI.LUI.Accessor(reader)
-
 import Graphics.UI.HaskGame.Color(Color(..))
 import Graphics.UI.HaskGame.Font(Font)
 
@@ -50,7 +48,8 @@ new :: Color -> Color -> Int -> Font -> Font -> Widget.ActionHandlers model ->
        Widget model
 new keysColor descColor spaceWidth keysFont descFont handlers = Unfocusable.new grid
     where
-      grid = Grid.new (3, Map.size handlers) gridItems gridAccessor
+      grid = Grid.new (3, Map.size handlers) gridItems $
+             Grid.noAcc (error "Unfocusable grid should never use cursor")
       space = Space.newW spaceWidth
       gridItems =
           Map.fromList . concat $
@@ -63,7 +62,6 @@ new keysColor descColor spaceWidth keysFont descFont handlers = Unfocusable.new 
                  descTextView =
                      TextView.new descColor descFont desc
           ]
-      gridAccessor = reader $ Grid.Mutable (0,0)
 
 newForWidget :: Font -> Font -> Widget model -> Widget model
 newForWidget keysFont descFont widget model =
@@ -74,8 +72,8 @@ newForWidget keysFont descFont widget model =
 newBoxedWidget :: Box.Orientation -> Int -> Font -> Font -> Widget model -> Widget model
 newBoxedWidget orientation space keysFont descFont widget = box
     where
-        box = Box.new orientation items . reader . Box.Mutable $ 0
-        items = [Box.Item widget 0.5
-                ,Box.Item (Space.newWH space space) 0
-                ,Box.Item keysTable 0]
-        keysTable = newForWidget keysFont descFont box
+      box = Box.new orientation items $ Box.noAcc 0
+      items = [Box.Item widget 0.5
+              ,Box.Item (Space.newWH space space) 0
+              ,Box.Item keysTable 0]
+      keysTable = newForWidget keysFont descFont box

@@ -6,6 +6,7 @@ module Graphics.UI.LUI.Widgets.Box
     ,Item(..)
     ,Mutable(..)
     ,Cursor
+    ,noAcc
     ,new
     ,aMutableCursor
     ,DelegatedMutable
@@ -20,7 +21,7 @@ import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
 import Graphics.UI.LUI.Widget(Widget)
 import Graphics.UI.LUI.Tuple(swap)
-import Graphics.UI.LUI.Accessor(Accessor, convertor, (^>))
+import Graphics.UI.LUI.Accessor(Accessor, reader, convertor, (^>))
 
 import Graphics.UI.HaskGame.Color(Color(..))
 
@@ -45,6 +46,9 @@ data Mutable = Mutable
 -- TODO: Auto-TH for this
 aMutableCursor :: Accessor Mutable Cursor
 aMutableCursor = convertor mutableCursor Mutable
+
+noAcc :: Cursor -> Accessor model Mutable
+noAcc cursor = reader . Mutable $ cursor
 
 new :: Orientation -> [Item model] -> Widget.New model Mutable
 new orientation items acc =

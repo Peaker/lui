@@ -1,8 +1,15 @@
-* Data.Binary instances
+* Scrollable
+  * Fix crop/size bugs
+  * Need the drawInfo to build the keymap, becuase the movement keys are function
+    of size, which is function of draw info...
+    So we need to rename drawInfo to isFocus and have a normal bool, and put it outside
+    with the model?
 
 * Widgets:
-  * Scrollable
   * Grid with delete row/column, Box with delete item?
+
+* Data.Binary instances
+* TH auto-gen of accessors
 
 * How do I get the cropping to prevent the stuff underneath from
   running at all?
@@ -75,3 +82,8 @@ Questions:
 * Can I create a generic newDelegate method in FocusDelegator instead
   of copying it into each widget?  Its probably possible by using ugly
   accessors/adapters, but less important at the moment.
+
+* Where to put:
+import Debug.Trace(trace)
+traceId :: Show a => String -> a -> a
+traceId prefix x = trace (prefix ++ show x) x

@@ -7,6 +7,7 @@ import qualified Graphics.UI.LUI.Run as Run
 import qualified Graphics.UI.LUI.Image as Image
 import qualified Graphics.UI.LUI.Widgets.TextEdit as TextEdit
 import qualified Graphics.UI.LUI.Widgets.TextView as TextView
+import qualified Graphics.UI.LUI.Widgets.Scroll as Scroll
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.Box as Box
 import qualified Graphics.UI.LUI.Widgets.Space as Space
@@ -43,6 +44,7 @@ data Model = Model
       vboxModel :: Box.DelegatedMutable
     , textEditModels :: Map.Map Grid.Cursor TextEdit.DelegatedMutable
     , gridModel :: Grid.DelegatedMutable
+    , scrollModel :: Scroll.Mutable
     }
 
 data Fonts = Fonts
@@ -53,6 +55,8 @@ data Fonts = Fonts
 -- TODO: Replace with TH auto-gen
 avboxModel :: Accessor Model Box.DelegatedMutable
 avboxModel = accessor vboxModel (\new x -> x{vboxModel=new})
+scrollerModel :: Accessor Model Scroll.Mutable
+scrollerModel = accessor scrollModel (\new x -> x{scrollModel=new})
 atextEditModels :: Accessor Model (Map.Map Grid.Cursor TextEdit.DelegatedMutable)
 atextEditModels = accessor textEditModels (\new x -> x{textEditModels=new})
 agridModel :: Accessor Model Grid.DelegatedMutable
@@ -78,6 +82,7 @@ guiModel =
                     | x <- [0..1]
                    , y <- [0..1]]
     , gridModel = Grid.delegatedMutable False (0, 0)
+    , scrollModel = Scroll.Mutable $ Vector2 0 0
     }
 
 
@@ -104,7 +109,7 @@ textView text font =
 gridSize :: Grid.Cursor
 gridSize = (2, 2)
 
-grid, vbox, withKeysTable, proxy1, proxy2 :: Fonts -> Widget Model
+grid, scrollBox, vbox, withKeysTable, proxy1, proxy2 :: Fonts -> Widget Model
 
 grid fonts =
     Grid.newDelegated gridSize items agridModel
@@ -113,20 +118,25 @@ grid fonts =
               [((x, y), Grid.Item (textEdit (x, y) fonts) (0.5, 1))
                | x <- [0..1], y <- [0..1]]
 
-vbox fonts = Box.newDelegated Box.Vertical items avboxModel
+scrollBox fonts = Scroll.new (Vector2 80 30) box scrollerModel
     where
       font = textViewFont fonts
+      box = Box.new Box.Vertical items $ Box.noAcc 0
+      items = [Box.Item (Adapter.adaptImage
+                         (Image.crop $ Rect i 0 (w-i-i) h) $
+                         textView text font) 0.5
+               | i <- [0,20..100]
+              , let text = "THIS IS A TRUNCATED VIEW: " ++ show i
+                    Vector2 w h = Image.textSize font text]
+
+vbox fonts = Box.newDelegated Box.Vertical items avboxModel
+    where
       items = [Box.Item (grid fonts) 1
               ,Box.Item (Space.newH 100) 0.5
               ,Box.Item (proxy1 fonts) 0.5
-              ,Box.Item (textView "This is just a view" font) 0.5
-              ,Box.Item (proxy2 fonts) 0.5] ++
-              [Box.Item (Adapter.adaptImage
-                         (Image.crop $ Rect 0 i w (h-(i*2))) $
-                         textView text font) 0.5
-               | i <- [5..9]
-              , let text = "THIS IS A TRUNCATED VIEW: " ++ show i
-                    Vector2 w h = Image.textSize font text]
+              ,Box.Item (proxy2 fonts) 0.5
+              ,Box.Item (scrollBox fonts) 0.5
+              ]
 
 
 withKeysTable fonts = KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fonts) (descFont fonts) (vbox fonts)

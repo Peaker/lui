@@ -6,6 +6,7 @@ module Graphics.UI.LUI.Widgets.Grid
     ,Mutable(..)
     ,Items
     ,Cursor
+    ,noAcc
     ,new
     ,aMutableCursor
     ,DelegatedMutable
@@ -25,7 +26,7 @@ import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import Graphics.UI.LUI.Func((~>), result)
 import Graphics.UI.LUI.List(isSorted)
 import Graphics.UI.LUI.Tuple(swap)
-import Graphics.UI.LUI.Accessor(Accessor, convertor, (^.), (^>), write)
+import Graphics.UI.LUI.Accessor(Accessor, reader, convertor, (^.), (^>), write)
 
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.HaskGame.Key as Key
@@ -35,7 +36,7 @@ import Graphics.UI.HaskGame.Color(Color)
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
 
 import qualified Data.Map as Map
-import Control.Arrow(second, (***))
+import Control.Arrow(second)
 import Data.List(transpose)
 import Data.Maybe(isJust, isNothing, fromMaybe)
 import Data.Monoid(mempty, mconcat)
@@ -133,26 +134,38 @@ getSelectablesXY xrange cursorFunc size model (Mutable oldCursor) items =
         itemAt cursor = (cursor, items Map.! cursor)
     in map fst . filter (itemSelectable model . snd) . map itemAt $ nexts
 
+leftKeyGroup,
+ rightKeyGroup,
+ upKeyGroup,
+ downKeyGroup,
+ nextKeyGroup,
+ prevKeyGroup :: Widget.KeyAction
+
+leftKeyGroup  = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_LEFT)
+rightKeyGroup = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_RIGHT)
+upKeyGroup    = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_UP)
+downKeyGroup  = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_DOWN)
+nextKeyGroup  = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_TAB)
+prevKeyGroup  = (Widget.KeyDown, asKeyGroup shift  SDL.SDLK_TAB)
+
 keysMap :: Cursor -> model -> Mutable -> Items model -> Widget.ActionHandlers Mutable
 keysMap size@(sizeX, _) model mutable items =
-    Map.fromList $
-       map (((,) Widget.KeyDown) ***
-            second const) . concat $
+    Map.fromList $ concat $
            [let opts = axis size model mutable items
-            in cond opts (key, (desc, head opts `mutableMoveTo` mutable))
+            in cond opts (key, (desc, const $ head opts `mutableMoveTo` mutable))
             | (key, axis, desc) <-
-                [(asKeyGroup noMods SDL.SDLK_LEFT,
-                  getSelectablesX (subtract 1), "Move left")
-                ,(asKeyGroup noMods SDL.SDLK_RIGHT,
-                  getSelectablesX (+1), "Move right")
-                ,(asKeyGroup noMods SDL.SDLK_UP,
-                  getSelectablesY (subtract 1), "Move up")
-                ,(asKeyGroup noMods SDL.SDLK_DOWN,
-                  getSelectablesY (+1), "Move down")
-                ,(asKeyGroup noMods SDL.SDLK_TAB,
-                  getSelectablesXY [0..sizeX-1] (+1), "Move to next")
-                ,(asKeyGroup shift SDL.SDLK_TAB,
-                  getSelectablesXY [sizeX-1,sizeX-2..0] (subtract 1), "Move to prev")
+                [(leftKeyGroup,  getSelectablesX (subtract 1),
+                  "Move left")
+                ,(rightKeyGroup, getSelectablesX (+1),
+                  "Move right")
+                ,(upKeyGroup,    getSelectablesY (subtract 1),
+                  "Move up")
+                ,(downKeyGroup,  getSelectablesY (+1),
+                  "Move down")
+                ,(nextKeyGroup,  getSelectablesXY [0..sizeX-1] (+1),
+                  "Move to next")
+                ,(prevKeyGroup,  getSelectablesXY [sizeX-1,sizeX-2..0] (subtract 1),
+                  "Move to prev")
                 ]
            ]
     where
@@ -165,6 +178,9 @@ posSizes :: [Int] -> [(Int, Int)]
 posSizes sizes =
     let positions = scanl (+) 0 sizes
     in zip positions sizes
+
+noAcc :: Cursor -> Accessor model Mutable
+noAcc cursor = reader . Mutable $ cursor
 
 new :: Cursor -> Items model -> Widget.New model Mutable
 new size items acc model =

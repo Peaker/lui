@@ -36,6 +36,12 @@ rightKeyGroup = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_RIGHT)
 upKeyGroup    = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_UP)
 downKeyGroup  = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_DOWN)
 
+hjump :: Int
+hjump = 10
+
+vjump :: Int
+vjump = 10
+
 makeKeymap :: Vector2 Int -> Vector2 Int ->
               model -> Accessor model Mutable -> Maybe (Widget.ActionHandlers model)
 makeKeymap minScroll maxScroll model acc =
@@ -50,10 +56,10 @@ makeKeymap minScroll maxScroll model acc =
              else
                  []
             | (keyGroup, delta, desc) <-
-                [(leftKeyGroup,  Vector2 (-5) 0, "Scroll left")
-                ,(rightKeyGroup, Vector2 5 0   , "Scroll right")
-                ,(upKeyGroup,    Vector2 0 (-5), "Scroll up")
-                ,(downKeyGroup,  Vector2 0 5   , "Scroll down")
+                [(leftKeyGroup,  Vector2 (-hjump) 0, "Scroll left")
+                ,(rightKeyGroup, Vector2 vjump 0   , "Scroll right")
+                ,(upKeyGroup,    Vector2 0 (-hjump), "Scroll up")
+                ,(downKeyGroup,  Vector2 0 vjump   , "Scroll down")
                 ]
            ]
     in if null handlers then

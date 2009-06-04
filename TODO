@@ -1,31 +1,26 @@
+* Use Data-Accessor-Template to avoid the repetative data accessors
+* Draw Info to be moved out to the Widget function itself, not in the record
+
 * Scrollable
-  * Fix crop/size bugs
-  * Need the drawInfo to build the keymap, becuase the movement keys are function
-    of size, which is function of draw info...
-    So we need to rename drawInfo to isFocus and have a normal bool, and put it outside
-    with the model?
+  * Add the with delegated stuff all the widgets have here
+
+* Consider removing the accessor arg and using adapter always
+  This means child containers have to be parameterized on the child
+  rather than on the generic model, so Grid is not Widget model
+  but Widget (Mutable, Map Cursor childModel)?
+  Then, you can adapt the real model to that tuple.
+  This is probably less convenient than what I have now
 
 * Rename Mutable -> Model
 
-* Widgets:
-  * Grid with delete row/column, Box with delete item?
-
-* Data.Binary instances
-* TH auto-gen of accessors
-
-* How do I get the cropping to prevent the stuff underneath from
-  running at all?
-* Perhaps replace Rect and (Vector2 Int) with more general types?
-  * How can I create infinite-in-one-axis clip rects?
-
-* Need to create a "multi-widget" that gets multiple accessors, one widget and
-  multiple viewers, and applies the widget modifications to all the accessors.
-* Multi-widget can be used instead of macros.
-
-* Maybe event handlers should give a model->(Maybe|Either) model
-  rather than model so that you can re-apply their handlers?  Or can
-  the accessor writes capture the changes so they can later apply
-  retro-actively to other place?
+* Macros:
+  * Need to create a "multi-widget" that gets multiple accessors, one widget and
+    multiple viewers, and applies the widget modifications to all the accessors.
+  * Multi-widget can be used instead of macros.
+  * Maybe event handlers should give a model->(Maybe|Either) model
+    rather than model so that you can re-apply their handlers?  Or can
+    the accessor writes capture the changes so they can later apply
+    retro-actively to other place?
 
 * Abstract away SDL keyboard keys, events, flip and delay
   * Implement a GLUT-based version first, to see what needs to be
@@ -34,12 +29,26 @@
 
 * Animations:
   * Image -> Animation?
+    * Animation can be a function from time and reverse list of
+      previous models to Image?
     * Can use ID's on all drawings, and have it animate stuff moving around
-      * Conal says ID's aren't it
+      * Conal says ID's aren't composable
+  * What's the semantic model of Widget if animations are involved?
 
 Questions:
 
-* add FontMap = Map String Font ?
+* How do I get the cropping to prevent the stuff underneath from
+  running at all, to allow massively deep image hierarchies?
+
+* Perhaps replace Rect and (Vector2 Int) with more general types?
+  * How can I create infinite-in-one-axis clip rects?
+
+* Data.Binary instances?
+
+* Widgets:
+  * Grid with delete row/column, Box with delete item?
+
+* add FontMap = Map String Font  to allow purely functional handling of fonts?
 
 * Is the "Clipboard" a good idea?
   * Maybe have a "Clipring" instead?
@@ -73,13 +82,6 @@ Questions:
            they can output in addition to a new model.
 
         2. As a "queue" of things to do, which gets added to.
-
-* Consider removing the accessor arg and using adapter always
-  This means child containers have to be parameterized on the child
-  rather than on the generic model, so Grid is not Widget model
-  but Widget (Mutable, Map Cursor childModel)?
-  Then, you can adapt the real model to that tuple.
-  This is probably less convenient than what I have now
 
 * Can I create a generic newDelegate method in FocusDelegator instead
   of copying it into each widget?  Its probably possible by using ugly

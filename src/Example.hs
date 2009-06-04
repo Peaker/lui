@@ -29,6 +29,9 @@ import Control.Monad(mapM)
 isSorted :: (Ord a) => [a] -> Bool
 isSorted xs = and $ zipWith (<=) xs (tail xs)
 
+simpleRead :: Read a => String -> Maybe a
+simpleRead = listToMaybe . map fst . filter (null . snd) . reads
+
 main :: IO ()
 main = HaskGame.withInit $ do
     gui <- makeGui
@@ -101,15 +104,10 @@ textEdit cursor fonts =
                           textEditColor $
                           atextEditModels ^> aMapValue cursor
 
-textView :: String -> Font -> Widget Model
-textView text font =
-    TextView.new textViewColor font text
-
 gridSize :: Grid.Cursor
 gridSize = (2, 2)
 
-grid, scrollBox, vbox, withKeysTable, proxy1, proxy2 :: Fonts -> Widget Model
-
+grid :: Fonts -> Widget Model
 grid fonts =
     Grid.newDelegated gridSize items agridModel
     where
@@ -117,34 +115,9 @@ grid fonts =
               [((x, y), Grid.Item (textEdit (x, y) fonts) (0.5, 1))
                | x <- [0..1], y <- [0..1]]
 
-scrollBox fonts = Scroll.new (Vector2 200 200) box scrollerModel
-    where
-      font = defaultFont fonts
-      box = Box.new Box.Vertical items $ Box.noAcc 0
-      items = [Box.Item (Adapter.adaptImage
-                         (Image.cropRect $ Rect i 0 (w-i-i) h) $
-                         textView text font) 0.5
-               | i <- [0,20..250]
-              , let text = "THIS IS A TRUNCATED VIEW: " ++ show i
-                    Vector2 w h = Image.textSize font text]
-
-vbox fonts = Box.newDelegated Box.Vertical items avboxModel
-    where
-      items = [Box.Item (grid fonts) 1
-              ,Box.Item (Space.newH 100) 0.5
-              ,Box.Item (proxy1 fonts) 0.5
-              ,Box.Item (proxy2 fonts) 0.5
-              ,Box.Item (scrollBox fonts) 0.5
-              ]
-
-
-withKeysTable fonts = KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fonts) (descFont fonts) (vbox fonts)
-
+proxy1 :: Fonts -> Widget Model
 proxy1 fonts model =
     textEdit (model ^. agridModel ^. Grid.aDelegatedMutableCursor) fonts model
-
-simpleRead :: Read a => String -> Maybe a
-simpleRead = listToMaybe . map fst . filter (null . snd) . reads
 
 readCursor :: String -> Maybe Grid.Cursor
 readCursor text =
@@ -156,6 +129,11 @@ readCursor text =
             else Nothing
     in verifyCursor =<< simpleRead text
 
+textView :: String -> Font -> Widget Model
+textView text font =
+    TextView.new textViewColor font text
+
+proxy2 :: Fonts -> Widget Model
 proxy2 fonts model =
     let cursor = model ^. agridModel ^. Grid.aDelegatedMutableCursor
         text = model ^. atextEditModels ^. aMapValue cursor ^.
@@ -164,6 +142,31 @@ proxy2 fonts model =
                        (textViewFont fonts) model)
              (\cur -> textEdit cur fonts model) $
        readCursor text
+
+scrollBox :: Fonts -> Widget Model
+scrollBox fonts = Scroll.new (Vector2 200 200) box scrollerModel
+    where
+      font = defaultFont fonts
+      box = Box.new Box.Vertical items $ Box.noAcc 0
+      items = [Box.Item (Adapter.adaptImage
+                         (Image.cropRect $ Rect i 0 (w-i-i) h) $
+                         textView text font) 0.5
+               | i <- [0,20..250]
+              , let text = "THIS IS A TRUNCATED VIEW: " ++ show i
+                    Vector2 w h = Image.textSize font text]
+
+vbox :: Fonts -> Widget Model
+vbox fonts = Box.newDelegated Box.Vertical items avboxModel
+    where
+      items = [Box.Item (grid fonts) 1
+              ,Box.Item (Space.newH 100) 0.5
+              ,Box.Item (proxy1 fonts) 0.5
+              ,Box.Item (proxy2 fonts) 0.5
+              ,Box.Item (scrollBox fonts) 0.5
+              ]
+
+withKeysTable :: Fonts -> Widget Model
+withKeysTable fonts = KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fonts) (descFont fonts) (vbox fonts)
 
 makeGui :: IO (Widget Model)
 makeGui = do

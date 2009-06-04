@@ -9,6 +9,7 @@ module Graphics.UI.LUI.Image
     ,rect
     ,move
     ,crop
+    ,cropRect
     -- The implementational interface
     ,render
     ) where
@@ -60,33 +61,47 @@ instance Monoid Image where
 textSize :: Font -> String -> Vector2 Int
 textSize = Font.textSize
 
-blitPart :: Rect -> Surface -> Vector2 Int -> Surface -> IO ()
-blitPart srcRect dest destPos src =
-    HaskGame.blitPart dest destPos src srcRect
+cropBlit :: Surface -> Vector2 Int -> Rect -> Surface -> IO ()
+cropBlit dest destPos destCropRect src =
+    HaskGame.blitPart dest finalTopLeft src srcRect
+    where
+      srcRect = Rect.make (finalTopLeft - requestedTopLeft) (Rect.getSize finalDest)
+      finalTopLeft = Rect.getTopLeft finalDest
+      finalDest = requestedDest `Rect.intersect` destCropRect
+      requestedTopLeft = Rect.getTopLeft requestedDest
+      requestedDest = Rect.make destPos srcSize
+      srcSize = HaskGame.surfaceSize src
 
 text :: Color -> Font -> String -> Image
 text color font str = Image draw
     where
       draw surface pos bbox = do
-        let rpos = maybe (Vector2 0 0) (fst . Rect.toVectors) bbox
         textSurface <- Font.renderText font str color
-        let blit = maybe HaskGame.blit blitPart bbox
-        blit surface (pos+rpos) textSurface
+        maybe (HaskGame.blit surface pos)
+              (cropBlit surface pos) bbox $ textSurface
 
 rect :: Color -> Vector2 Int -> Image
 rect color size = Image draw
     where
       draw surface pos bbox =
         let origRect = Rect.make pos size
-            finalRect = maybe origRect (origRect `Rect.intersect`) bbox
+            finalRect = Rect.trunc $ maybe origRect (origRect `Rect.intersect`) bbox
         in HaskGame.fillRect surface finalRect color
 
 move :: Vector2 Int -> Image -> Image
 move delta (Image xdraw) = Image draw
     where
-      draw surface pos = xdraw surface (pos + delta)
+      draw surface pos = xdraw surface (delta + pos)
 
-crop :: Rect -> Image -> Image
-crop cropRect (Image xdraw) = Image draw
+cropRect :: Rect -> Image -> Image
+cropRect r = move topLeft .
+             crop size .
+             move (-topLeft)
     where
-      draw surface pos bbox = xdraw surface pos (Just cropRect `intersectBBox` bbox)
+      (topLeft, size) = Rect.toVectors r
+
+crop :: Vector2 Int -> Image -> Image
+crop cropSize (Image xdraw) = Image draw
+    where
+      draw surface pos bbox = xdraw surface pos $
+                              Just (Rect.make pos cropSize) `intersectBBox` bbox

@@ -5,6 +5,8 @@
     So we need to rename drawInfo to isFocus and have a normal bool, and put it outside
     with the model?
 
+* Rename Mutable -> Model
+
 * Widgets:
   * Grid with delete row/column, Box with delete item?
 

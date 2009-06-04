@@ -1,5 +1,4 @@
-{-# OPTIONS_GHC -Wall -O2
- #-}
+{-# OPTIONS_GHC -Wall -O2 #-}
 
 module Example(main) where
 
@@ -118,14 +117,14 @@ grid fonts =
               [((x, y), Grid.Item (textEdit (x, y) fonts) (0.5, 1))
                | x <- [0..1], y <- [0..1]]
 
-scrollBox fonts = Scroll.new (Vector2 80 30) box scrollerModel
+scrollBox fonts = Scroll.new (Vector2 200 200) box scrollerModel
     where
-      font = textViewFont fonts
+      font = defaultFont fonts
       box = Box.new Box.Vertical items $ Box.noAcc 0
       items = [Box.Item (Adapter.adaptImage
-                         (Image.crop $ Rect i 0 (w-i-i) h) $
+                         (Image.cropRect $ Rect i 0 (w-i-i) h) $
                          textView text font) 0.5
-               | i <- [0,20..100]
+               | i <- [0,20..250]
               , let text = "THIS IS A TRUNCATED VIEW: " ++ show i
                     Vector2 w h = Image.textSize font text]
 

@@ -34,7 +34,6 @@ data DrawInfo = DrawInfo
     }
   deriving (Eq, Ord, Show, Read)
 
--- TODO: Consider moving the model argument outside of the record
 data WidgetFuncs model = WidgetFuncs
     {
       widgetImage :: DrawInfo -> Image

@@ -12,7 +12,6 @@ import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
 import Graphics.UI.LUI.Accessor(Accessor, (^.), write)
 
-import qualified Graphics.UI.HaskGame.Rect as Rect
 import qualified Graphics.UI.HaskGame.Vector2 as Vector2
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
 
@@ -76,7 +75,7 @@ new size widget acc model =
                                    (widgetSize childFuncs noFocusDrawInfo - size)
                         model acc
     , widgetImage = \drawInfo ->
-                    Image.crop (Rect.make (Vector2 0 0) size) .
+                    Image.crop size .
                     Image.move (negate . mutablePos $ model ^. acc) $
                     widgetImage childFuncs drawInfo
     , widgetSize = const size

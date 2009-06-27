@@ -1,5 +1,5 @@
 Name:                lui
-Version:             0.0.4
+Version:             0.0.5
 Cabal-Version:       >= 1.2
 Synopsis:            Purely FunctionaL User Interface
 Category:            graphics
@@ -39,6 +39,7 @@ Library
                        Graphics.UI.LUI.Widgets.KeysTable,
                        Graphics.UI.LUI.Widgets.Space,
                        Graphics.UI.LUI.Widgets.TextEdit,
+                       Graphics.UI.LUI.Widgets.Scroll,
                        Graphics.UI.LUI.Widgets.TextView,
                        Graphics.UI.LUI.Widgets.Unfocusable
   Other-Modules:       Example,

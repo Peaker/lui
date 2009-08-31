@@ -1,5 +1,5 @@
 Name:                lui
-Version:             0.0.5
+Version:             0.0.6
 Cabal-Version:       >= 1.2
 Synopsis:            Purely FunctionaL User Interface
 Category:            graphics
@@ -27,7 +27,7 @@ build-type:          Simple
 Library
   hs-Source-Dirs:      src
   Extensions:
-  Build-Depends:       base >= 4 && < 5, haskell98, containers, mtl, SDL, haskgame, MaybeT
+  Build-Depends:       base >= 4 && < 5, haskell98, containers, mtl, SDL, haskgame >= 0.0.6, MaybeT
   Exposed-Modules:     Graphics.UI.LUI.Accessor,
                        Graphics.UI.LUI.Image,
                        Graphics.UI.LUI.Run,

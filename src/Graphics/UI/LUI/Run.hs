@@ -58,7 +58,7 @@ handleEvents events widget =
 
 mainLoop :: Widget model -> model -> IO model
 mainLoop widget initModel = do
-  display <- HaskGame.setVideoMode 800 600 16
+  display <- HaskGame.setVideoMode (Vector2 800 600) 16
   (`State.execStateT` initModel) . runMaybeT $ do
     forM_ (True:repeat False) $ \shouldDraw -> do
       events <- lift . lift $ HaskGame.getEvents

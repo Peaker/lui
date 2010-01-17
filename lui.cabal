@@ -42,11 +42,16 @@ Library
                        Graphics.UI.LUI.Widgets.Scroll,
                        Graphics.UI.LUI.Widgets.TextView,
                        Graphics.UI.LUI.Widgets.Unfocusable
-  Other-Modules:       Example,
-                       Graphics.UI.LUI.Func,
+  Other-Modules:       Graphics.UI.LUI.Func,
                        Graphics.UI.LUI.List,
                        Graphics.UI.LUI.Tuple
 
   ghc-options:         -Wall
 
---  ghc-prof-options:    -prof -auto-all 
+executable lui-example
+  hs-Source-Dirs:      src
+  Extensions:
+  Build-Depends:       base >= 4 && < 5, haskell98, containers, mtl, SDL, haskgame >= 0.0.6, MaybeT
+  ghc-options : -O2 -Wall
+  main-is: Example.hs
+  ghc-prof-options:    -prof -auto-all 

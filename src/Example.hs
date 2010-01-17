@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wall -O2 #-}
 
-module Example(main) where
+module Main(main) where
 
 import qualified Graphics.UI.LUI.Run as Run
 import qualified Graphics.UI.LUI.Image as Image

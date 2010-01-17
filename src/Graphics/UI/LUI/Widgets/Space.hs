@@ -4,7 +4,6 @@
 module Graphics.UI.LUI.Widgets.Space(new, newWH, newW, newH)
 where
 
-import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
 

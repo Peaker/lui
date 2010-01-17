@@ -29,7 +29,6 @@ import Graphics.UI.LUI.Tuple(swap)
 import Graphics.UI.LUI.Accessor(Accessor, reader, convertor, (^.), (^>), write)
 
 import qualified Graphics.UI.SDL as SDL
-import qualified Graphics.UI.HaskGame.Key as Key
 import qualified Graphics.UI.HaskGame.Vector2 as Vector2
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, shift)
 import Graphics.UI.HaskGame.Color(Color)

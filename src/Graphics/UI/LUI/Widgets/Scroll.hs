@@ -12,7 +12,6 @@ import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
 import Graphics.UI.LUI.Accessor(Accessor, (^.), write)
 
-import qualified Graphics.UI.HaskGame.Vector2 as Vector2
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
 
 import qualified Graphics.UI.SDL as SDL

@@ -20,7 +20,6 @@ import Graphics.UI.LUI.Func(result)
 import Graphics.UI.LUI.Accessor(Accessor, afirst, asecond, (^.), write)
 
 import qualified Graphics.UI.SDL as SDL
-import qualified Graphics.UI.HaskGame.Key as Key
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
 import Graphics.UI.HaskGame.Color(Color(..))
 

@@ -4,7 +4,6 @@
 module Graphics.UI.LUI.Widgets.TextView(new)
 where
 
-import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Image as Image
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 

@@ -14,7 +14,7 @@ module Graphics.UI.LUI.Widget
 where
 
 import Graphics.UI.LUI.Image(Image)
-import Graphics.UI.LUI.Accessor(Accessor)
+import Data.Accessor(Accessor)
 
 import Graphics.UI.HaskGame.Vector2(Vector2)
 import qualified Graphics.UI.HaskGame.Key as Key

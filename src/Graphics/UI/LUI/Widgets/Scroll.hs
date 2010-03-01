@@ -10,7 +10,7 @@ import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Image as Image
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
-import Graphics.UI.LUI.Accessor(Accessor, (^.), write)
+import Data.Accessor(Accessor, (^.), setVal)
 
 import Graphics.UI.HaskGame.Vector2(Vector2(..))
 
@@ -47,7 +47,7 @@ makeKeymap minScroll maxScroll model acc =
     let Mutable pos = model ^. acc
         clip = liftA2 max minScroll . liftA2 min maxScroll
         doesMove delta = pos /= clip (delta + pos)
-        newModel delta = write acc (Mutable . clip $ delta + pos) model
+        newModel delta = setVal acc (Mutable . clip $ delta + pos) model
         handlers =
             concat
             [if doesMove delta then

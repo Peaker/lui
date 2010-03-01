@@ -28,8 +28,7 @@ Library
   hs-Source-Dirs:      src
   Extensions:
   Build-Depends:       base >= 4 && < 5, haskell98, containers, mtl, SDL, haskgame >= 0.0.6, MaybeT
-  Exposed-Modules:     Graphics.UI.LUI.Accessor,
-                       Graphics.UI.LUI.Image,
+  Exposed-Modules:     Graphics.UI.LUI.Image,
                        Graphics.UI.LUI.Run,
                        Graphics.UI.LUI.Widget,
                        Graphics.UI.LUI.Widgets.Adapter,
@@ -42,16 +41,20 @@ Library
                        Graphics.UI.LUI.Widgets.Scroll,
                        Graphics.UI.LUI.Widgets.TextView,
                        Graphics.UI.LUI.Widgets.Unfocusable
-  Other-Modules:       Graphics.UI.LUI.Func,
-                       Graphics.UI.LUI.List,
-                       Graphics.UI.LUI.Tuple
+  Other-Modules:       Data.Editor.Function,
+                       Data.Editor.List,
+                       Data.Tuple.Swap,
+                       Data.Accessor.List,
+                       Data.Accessor.Simple,
+                       Data.Accessor.Map
 
   ghc-options:         -Wall
 
 executable lui-example
   hs-Source-Dirs:      src
   Extensions:
-  Build-Depends:       base >= 4 && < 5, haskell98, containers, mtl, SDL, haskgame >= 0.0.6, MaybeT
+  Build-Depends:       base >= 4 && < 5, haskell98, containers, mtl, SDL, haskgame >= 0.0.6,
+                       MaybeT, data-accessor
   ghc-options : -O2 -Wall
   main-is: Example.hs
   ghc-prof-options:    -prof -auto-all 

@@ -13,7 +13,8 @@ import qualified Graphics.UI.LUI.Widgets.Space as Space
 import qualified Graphics.UI.LUI.Widgets.KeysTable as KeysTable
 import qualified Graphics.UI.LUI.Widgets.Adapter as Adapter
 import Graphics.UI.LUI.Widget(Widget)
-import Graphics.UI.LUI.Accessor(Accessor, accessor, aMapValue, (^>), (^.))
+import Data.Accessor(Accessor, accessor, (^.))
+import Data.Accessor.Map(aMapValue)
 
 import qualified Graphics.UI.HaskGame.Font as Font
 import qualified Graphics.UI.HaskGame as HaskGame
@@ -25,6 +26,7 @@ import Graphics.UI.HaskGame.Rect(Rect(..))
 import qualified Data.Map as Map
 import Data.Maybe(listToMaybe)
 import Control.Monad(mapM)
+import Control.Category((>>>))
 
 isSorted :: (Ord a) => [a] -> Bool
 isSorted xs = and $ zipWith (<=) xs (tail xs)
@@ -103,7 +105,7 @@ textEdit cursor fonts =
                           textEditCursorColor
                           (defaultFont fonts)
                           textEditColor $
-                          atextEditModels ^> aMapValue cursor
+                          atextEditModels >>> aMapValue cursor
 
 gridSize :: Grid.Cursor
 gridSize = (2, 2)
@@ -118,7 +120,7 @@ grid fonts =
 
 proxy1 :: Fonts -> Widget Model
 proxy1 fonts model =
-    textEdit (model ^. agridModel ^. Grid.aDelegatedMutableCursor) fonts model
+    textEdit (model ^. (agridModel >>> Grid.aDelegatedMutableCursor)) fonts model
 
 readCursor :: String -> Maybe Grid.Cursor
 readCursor text =
@@ -136,9 +138,9 @@ textView text font =
 
 proxy2 :: Fonts -> Widget Model
 proxy2 fonts model =
-    let cursor = model ^. agridModel ^. Grid.aDelegatedMutableCursor
-        text = model ^. atextEditModels ^. aMapValue cursor ^.
-               TextEdit.aDelegatedMutableText
+    let cursor = model ^. (agridModel >>> Grid.aDelegatedMutableCursor)
+        text = model ^. (atextEditModels >>> aMapValue cursor >>>
+                         TextEdit.aDelegatedMutableText)
     in maybe (textView ("Invalid cursor position selected: " ++ text)
                        (textViewFont fonts) model)
              (\cur -> textEdit cur fonts model) $

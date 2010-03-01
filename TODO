@@ -1,3 +1,6 @@
+* Complete convertion to Data.Accessor
+* Convert to use image combinators
+
 * Use Data-Accessor-Template to avoid the repetative data accessors
 * Draw Info to be moved out to the Widget function itself, not in the record
 

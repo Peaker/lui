@@ -20,8 +20,11 @@ import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
 import Graphics.UI.LUI.Widget(Widget)
-import Graphics.UI.LUI.Tuple(swap)
-import Graphics.UI.LUI.Accessor(Accessor, reader, convertor, (^>))
+import Data.Tuple.Swap(swap)
+import Data.Accessor(Accessor)
+import Data.Accessor.Simple(reader)
+import Data.Accessor.Basic(fromWrapper)
+import Control.Category((>>>))
 
 import Graphics.UI.HaskGame.Color(Color(..))
 
@@ -45,14 +48,14 @@ data Mutable = Mutable
     }
 -- TODO: Auto-TH for this
 aMutableCursor :: Accessor Mutable Cursor
-aMutableCursor = convertor mutableCursor Mutable
+aMutableCursor = fromWrapper Mutable mutableCursor
 
 noAcc :: Cursor -> Accessor model Mutable
 noAcc cursor = reader . Mutable $ cursor
 
 new :: Orientation -> [Item model] -> Widget.New model Mutable
 new orientation items acc =
-    Grid.new gridSize gridItems $ acc ^> boxGridConvertor
+    Grid.new gridSize gridItems $ acc >>> boxGridConvertor
     where
       gridSize = (maybeSwap (1, length items))
       gridItems = (Map.fromList $
@@ -62,14 +65,14 @@ new orientation items acc =
       maybeSwap = case orientation of
                     Vertical -> id
                     Horizontal -> swap
-      boxGridConvertor = convertor mutableToGridMutable gridMutableToMutable
+      boxGridConvertor = fromWrapper gridMutableToMutable mutableToGridMutable
       mutableToGridMutable = Grid.Mutable . maybeSwap . (,) 0 . mutableCursor
       gridMutableToMutable = Mutable . snd . maybeSwap . Grid.mutableCursor
 
 type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
 
 aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
-aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable ^> aMutableCursor
+aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable >>> aMutableCursor
 
 delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
@@ -78,9 +81,9 @@ delegatedMutable startInside cursor =
 newDelegatedWith :: Color -> Orientation -> [Item model] ->
                     Widget.New model DelegatedMutable
 newDelegatedWith focusColor orientation items acc =
-    let box = new orientation items $ acc ^> FocusDelegator.aDelegatedMutable
+    let box = new orientation items $ acc >>> FocusDelegator.aDelegatedMutable
     in FocusDelegator.newWith focusColor "Go in" "Go out" box $
-       acc ^> FocusDelegator.aFocusDelegatorMutable
+       acc >>> FocusDelegator.aFocusDelegatorMutable
 
 newDelegated :: Orientation -> [Item model] -> Widget.New model DelegatedMutable
 newDelegated = newDelegatedWith FocusDelegator.defaultFocusColor

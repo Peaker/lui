@@ -12,8 +12,8 @@ import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 import Graphics.UI.LUI.Image(Image)
 
-import Graphics.UI.LUI.Func(result)
-import Graphics.UI.LUI.Accessor(Accessor, write, (^.))
+import Data.Editor.Function(result)
+import Data.Accessor(Accessor, setVal, (^.))
 
 import Graphics.UI.HaskGame.Vector2(Vector2)
 
@@ -38,7 +38,7 @@ adaptAll imageFunc sizeFunc keymapFunc widgetFuncs =
 adaptModel :: Accessor whole part -> Widget part -> Widget whole
 adaptModel acc widget model = adaptAll id id convertKeymap (widget (model ^. acc))
     where convertKeymap = fmap . Map.map . second . result $ convertModel
-          convertModel part = write acc part model
+          convertModel part = setVal acc part model
 
 adaptImage :: Endo Image -> Endo (Widget model)
 adaptImage imageFunc widget model = adaptAll imageFunc id id $ widget model

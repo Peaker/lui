@@ -22,9 +22,8 @@ import qualified Graphics.UI.LUI.Image as Image
 import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
 import Graphics.UI.LUI.Widget(WidgetFuncs(..))
 
-import Graphics.UI.LUI.Func(result)
-import Graphics.UI.LUI.List(isSorted)
-import Graphics.UI.LUI.Accessor(Accessor, accessor, (^.), (^>), write)
+import Data.Editor.Function(result)
+import Data.Accessor(Accessor, accessor, (^.), setVal)
 
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.HaskGame.Key as Key
@@ -38,6 +37,7 @@ import qualified Data.Map as Map
 import Data.Map((!))
 import Data.Monoid(mconcat)
 import Control.Arrow(first, second)
+import Control.Category((>>>))
 
 type Cursor = Int
 
@@ -77,6 +77,9 @@ delForward count (Mutable oldText oldCursor) =
         newPostText = drop count oldPostText
         newText = oldPreText ++ newPostText
     in Mutable newText oldCursor
+
+isSorted :: (Ord a) => [a] -> Bool
+isSorted xs = and $ zipWith (<=) xs (tail xs)
 
 moveCursor :: (Cursor -> Cursor) -> Mutable -> Mutable
 moveCursor cursorFunc (Mutable text oldCursor) =
@@ -162,7 +165,7 @@ new cursorWidth bgColor cursorColor font textColor acc model =
   , widgetSize = const $ Image.textSize font text
 
   , widgetGetKeymap =
-    let applyToModel newMutable = acc `write` newMutable $ model
+    let applyToModel newMutable = acc `setVal` newMutable $ model
     in Just $
        (Map.map . second . result) applyToModel $ keysMap mutable
   }
@@ -170,9 +173,9 @@ new cursorWidth bgColor cursorColor font textColor acc model =
 type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
 
 aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
-aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable ^> aMutableCursor
+aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable >>> aMutableCursor
 aDelegatedMutableText :: Accessor DelegatedMutable String
-aDelegatedMutableText = FocusDelegator.aDelegatedMutable ^> aMutableText
+aDelegatedMutableText = FocusDelegator.aDelegatedMutable >>> aMutableText
 delegatedMutable :: Bool -> String -> Cursor -> DelegatedMutable
 delegatedMutable startInside text cursor =
     (FocusDelegator.Mutable startInside, Mutable text cursor)
@@ -181,9 +184,9 @@ newDelegatedWith :: Color -> Int -> Color -> Color -> Font -> Color ->
                     Widget.New model DelegatedMutable
 newDelegatedWith focusColor cursorWidth bgColor cursorColor font textColor acc =
     let textEdit = new cursorWidth bgColor cursorColor font textColor $
-                   acc ^> FocusDelegator.aDelegatedMutable
+                   acc >>> FocusDelegator.aDelegatedMutable
     in FocusDelegator.newWith focusColor "Start editing" "Stop editing" textEdit $
-       acc ^> FocusDelegator.aFocusDelegatorMutable
+       acc >>> FocusDelegator.aFocusDelegatorMutable
 
 newDelegated :: Color -> Color -> Font -> Color ->
                 Widget.New model DelegatedMutable

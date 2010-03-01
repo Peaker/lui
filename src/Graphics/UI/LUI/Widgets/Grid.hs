@@ -17,16 +17,18 @@ module Graphics.UI.LUI.Widgets.Grid
     )
 where
 
+import Control.Category((>>>))
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
 import qualified Graphics.UI.LUI.Image as Image
 
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
-import Graphics.UI.LUI.Func((~>), result)
-import Graphics.UI.LUI.List(isSorted)
-import Graphics.UI.LUI.Tuple(swap)
-import Graphics.UI.LUI.Accessor(Accessor, reader, convertor, (^.), (^>), write)
+import Data.Editor.Function((~>), result)
+import Data.Tuple.Swap(swap)
+import Data.Accessor(Accessor, (^.), setVal)
+import Data.Accessor.Simple(reader)
+import Data.Accessor.Basic(fromWrapper)
 
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.HaskGame.Vector2 as Vector2
@@ -59,7 +61,7 @@ data Mutable = Mutable
     }
 -- TODO: Auto-TH for this
 aMutableCursor :: Accessor Mutable Cursor
-aMutableCursor = convertor mutableCursor Mutable
+aMutableCursor = fromWrapper Mutable mutableCursor
 
 selectedItem :: Mutable -> Items model -> Maybe (Item model)
 selectedItem (Mutable cursor) items = cursor `Map.lookup` items
@@ -98,6 +100,9 @@ mutableMoveTo newCursor = mutableCursorApply (const newCursor)
 itemSelectable :: model -> Item model -> Bool
 itemSelectable model (Item widget _) =
     isJust . widgetGetKeymap $ widget model
+
+isSorted :: (Ord a) => [a] -> Bool
+isSorted xs = and $ zipWith (<=) xs (tail xs)
 
 getSelectables :: ((Int, Int) -> (Int, Int)) ->
                   (Int -> Int) ->
@@ -222,7 +227,7 @@ new size items acc model =
         let childKeys = fromMaybe Map.empty $ do
                           Item childWidget _ <- selectedItem mutable items
                           widgetGetKeymap $ childWidget model
-            applyToModel newMutable = acc `write` newMutable $ model
+            applyToModel newMutable = acc `setVal` newMutable $ model
         in childKeys `Map.union` ((Map.map . second . result) applyToModel $
                                   keysMap size model mutable items)
     }
@@ -230,7 +235,7 @@ new size items acc model =
 type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
 
 aDelegatedMutableCursor :: Accessor DelegatedMutable Cursor
-aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable ^> aMutableCursor
+aDelegatedMutableCursor = FocusDelegator.aDelegatedMutable >>> aMutableCursor
 
 delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
@@ -238,9 +243,9 @@ delegatedMutable startInside cursor =
 
 newDelegatedWith :: Color -> Cursor -> Items model -> Widget.New model DelegatedMutable
 newDelegatedWith focusColor size items acc =
-    let grid = new size items $ acc ^> FocusDelegator.aDelegatedMutable
+    let grid = new size items $ acc >>> FocusDelegator.aDelegatedMutable
     in FocusDelegator.newWith focusColor "Go in" "Go out" grid $
-           acc ^> FocusDelegator.aFocusDelegatorMutable
+           acc >>> FocusDelegator.aFocusDelegatorMutable
 
 newDelegated :: Cursor -> Items model -> Widget.New model DelegatedMutable
 newDelegated = newDelegatedWith FocusDelegator.defaultFocusColor

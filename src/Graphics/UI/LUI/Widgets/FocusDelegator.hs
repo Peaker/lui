@@ -16,8 +16,9 @@ import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Image as Image
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
-import Graphics.UI.LUI.Func(result)
-import Graphics.UI.LUI.Accessor(Accessor, afirst, asecond, (^.), write)
+import Data.Editor.Function(result)
+import Data.Accessor(Accessor, (^.), setVal)
+import qualified Data.Accessor.Tuple
 
 import qualified Graphics.UI.SDL as SDL
 import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
@@ -31,9 +32,9 @@ import Data.Monoid(Monoid(..))
 -- TODO: Use record instead of tuple so auto-TH creates the accessors:
 type DelegatedMutable mutable = (Mutable, mutable)
 aDelegatedMutable :: Accessor (DelegatedMutable mutable) mutable
-aDelegatedMutable = asecond
+aDelegatedMutable = Data.Accessor.Tuple.second
 aFocusDelegatorMutable :: Accessor (DelegatedMutable mutable) Mutable
-aFocusDelegatorMutable = afirst
+aFocusDelegatorMutable = Data.Accessor.Tuple.first
 
 -- defaults:
 defaultFocusColor :: Color
@@ -78,7 +79,7 @@ newWith focusColor startStr stopStr childWidget acc model =
     , widgetGetKeymap =
         let mChildKeymap = widgetGetKeymap childWidgetFuncs
             childKeymap = fromMaybe Map.empty mChildKeymap
-            applyToModel newMutable = acc `write` newMutable $ model
+            applyToModel newMutable = acc `setVal` newMutable $ model
             wrapKeymap = (Map.map . second . result) applyToModel
         in case delegating of
              True ->

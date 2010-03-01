@@ -1,8 +1,6 @@
-{-# OPTIONS_GHC -Wall -O2
- #-}
+{-# OPTIONS_GHC -Wall -O2 #-}
 
-module Graphics.UI.LUI.Run(mainLoop)
-where
+module Graphics.UI.LUI.Run(mainLoop) where
 
 import qualified Graphics.UI.LUI.Image as Image
 import qualified Graphics.UI.LUI.Widget as Widget

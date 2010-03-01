@@ -80,9 +80,10 @@ guiModel =
       vboxModel = Box.delegatedMutable False 0
     , textEditModels =
       Map.fromList [((x, y),
-                     TextEdit.delegatedMutable False (texts!!(y*2+x)) 5)
+                     TextEdit.delegatedMutable False text (length text))
                     | x <- [0..1]
-                   , y <- [0..1]]
+                    , y <- [0..1]
+                    , let text = texts !! (y*2 + x)]
     , gridModel = Grid.delegatedMutable False (0, 0)
     , scrollModel = Scroll.Mutable $ Vector2 0 0
     }

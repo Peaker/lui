@@ -10,12 +10,9 @@ where
 
 import qualified Graphics.UI.LUI.Widget as Widget
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
-import Graphics.UI.LUI.Image(Image)
 
 import Data.Editor.Function(result)
 import Data.Accessor(Accessor, setVal, (^.))
-
-import Graphics.UI.HaskGame.Vector2(Vector2)
 
 import qualified Data.Map as Map
 import Control.Arrow(second)

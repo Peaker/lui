@@ -9,10 +9,7 @@ where
 import qualified Graphics.UI.LUI.Widget as Widget
 import qualified Graphics.UI.LUI.Image as Image
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
-import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
 import Data.Accessor(Accessor, (^.), setVal)
-
-import Graphics.UI.HaskGame.Vector2(Vector2(..))
 
 import qualified Graphics.UI.SDL as SDL
 

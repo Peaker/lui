@@ -17,11 +17,8 @@ import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.TextView as TextView
 import qualified Graphics.UI.LUI.Widgets.Unfocusable as Unfocusable
 import qualified Graphics.UI.LUI.Widgets.Space as Space
-import qualified Graphics.UI.HaskGame.Key as Key
 import Graphics.UI.LUI.Widget(Widget, widgetGetKeymap)
-
-import Graphics.UI.HaskGame.Color(Color(..))
-import Graphics.UI.HaskGame.Font(Font)
+import qualified Graphics.DrawingCombinators as Draw
 
 import qualified Data.Map as Map
 import Control.Arrow(first, second)
@@ -29,9 +26,9 @@ import Data.List(sort)
 import Data.Maybe(fromMaybe)
 
 -- Defaults:
-defaultKeysColor, defaultDescColor :: Color
-defaultKeysColor = Color 255 0 0
-defaultDescColor = Color 0 0 255
+defaultKeysColor, defaultDescColor :: Draw.Color
+defaultKeysColor = Draw.Color 255 0 0
+defaultDescColor = Draw.Color 0 0 255
 defaultSpaceWidth :: Int
 defaultSpaceWidth = 10
 
@@ -44,7 +41,7 @@ keyBindings = sort .
               (map . second) fst .
               Map.assocs
 
-new :: Color -> Color -> Int -> Font -> Font -> Widget.ActionHandlers model ->
+new :: Draw.Color -> Draw.Color -> Int -> Font -> Font -> Widget.ActionHandlers model ->
        Widget model
 new keysColor descColor spaceWidth keysFont descFont handlers = Unfocusable.new grid
     where

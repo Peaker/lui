@@ -1,45 +1,34 @@
-{-# OPTIONS_GHC -Wall -O2
-  #-}
+{-# OPTIONS_GHC -Wall -O2 #-}
 
 module Graphics.UI.LUI.Widget
-    (DrawInfo(..)
-    ,WidgetFuncs(..)
-    ,KeyStatus(..)
-    ,Widget
-    ,New
-    ,KeyAction
-    ,Handler
-    ,ActionHandlers
+    (DrawInfo(..),WidgetFuncs(..),Widget,New,rect,scale
     )
 where
 
-import Graphics.UI.LUI.Image(Image)
 import Data.Accessor(Accessor)
+import Graphics.UI.LUI.Keymap(Keymap)
 
-import Graphics.UI.HaskGame.Vector2(Vector2)
-import qualified Graphics.UI.HaskGame.Key as Key
+import qualified Graphics.DrawingCombinators as Draw
+import Graphics.DrawingCombinators(Image, Any)
 
-import qualified Data.Map as Map
+rect :: Image Any
+rect = Draw.convexPoly [(0, 0), (1, 0), (1, 1), (0, 1)]
 
-data KeyStatus = KeyDown | KeyUp
+scale :: Draw.R2 -> Draw.Affine
+scale = uncurry Draw.scale
+
+
+data DrawInfo = DrawInfo { diHasFocus :: Bool }
   deriving (Eq, Ord, Show, Read)
 
-type KeyAction = (KeyStatus, Key.KeyGroup)
-type Handler model = (String, Key.ModKey -> model)
-type ActionHandlers model = Map.Map KeyAction (Handler model)
+--TODO: Replace Image/Size with SizedImage
+--type SizedImage a = (Draw.R2, Image a)
 
-data DrawInfo = DrawInfo
-    {
-      diHasFocus :: Bool
-    }
-  deriving (Eq, Ord, Show, Read)
-
-data WidgetFuncs model = WidgetFuncs
-    {
-      widgetImage :: DrawInfo -> Image
-    , widgetSize :: DrawInfo -> Vector2 Int
-    , widgetGetKeymap :: Maybe (ActionHandlers model)
-    }
+data WidgetFuncs model = WidgetFuncs {
+    widgetImage :: DrawInfo -> Image Any
+  , widgetSize :: DrawInfo -> Draw.R2
+  , widgetGetKeymap :: Maybe (Keymap model)
+}
 
 type Widget model = model -> WidgetFuncs model
 

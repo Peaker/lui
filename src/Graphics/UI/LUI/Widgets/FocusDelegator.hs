@@ -13,19 +13,16 @@ module Graphics.UI.LUI.Widgets.FocusDelegator
 where
 
 import qualified Graphics.UI.LUI.Widget as Widget
-import qualified Graphics.UI.LUI.Image as Image
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
+import Graphics.UI.LUI.KeyGroup(KeyGroupName, returnKey, escapeKey)
 
-import Data.Editor.Function(result)
+import Graphics.UI.LUI.Keymap(Keymap, ModKey, Doc)
+import qualified Graphics.UI.LUI.Keymap as Keymap
+
 import Data.Accessor(Accessor, (^.), setVal)
 import qualified Data.Accessor.Tuple
-
-import qualified Graphics.UI.SDL as SDL
-import Graphics.UI.HaskGame.Key(asKeyGroup, noMods)
-import Graphics.UI.HaskGame.Color(Color(..))
-
-import qualified Data.Map as Map
-import Control.Arrow(second)
+import qualified Graphics.DrawingCombinators as Draw
+import Graphics.DrawingCombinators((%%))
 import Data.Maybe(fromMaybe)
 import Data.Monoid(Monoid(..))
 
@@ -37,25 +34,24 @@ aFocusDelegatorMutable :: Accessor (DelegatedMutable mutable) Mutable
 aFocusDelegatorMutable = Data.Accessor.Tuple.first
 
 -- defaults:
-defaultFocusColor :: Color
-defaultFocusColor = Color 0 0 150
+defaultFocusColor :: Draw.Color
+defaultFocusColor = Draw.Color 0 0 0.7 1
 
 data Mutable = Mutable
     {
       mutableDelegateFocus :: Bool
     }
 
-buildKeymap :: SDL.SDLKey -> String -> Bool -> Widget.ActionHandlers Mutable
-buildKeymap key desc newDelegating =
-    Map.singleton (Widget.KeyDown, asKeyGroup noMods key)
-                  (desc, const $ Mutable newDelegating)
+mkKeymap :: KeyGroupName -> Doc -> ModKey -> Bool -> Keymap Mutable
+mkKeymap gn doc key b = Keymap.singleton gn doc key (Mutable b)
 
-delegatingKeyMap, nonDelegatingKeyMap ::
-    String -> Widget.ActionHandlers Mutable
-nonDelegatingKeyMap startStr = buildKeymap SDL.SDLK_RETURN startStr True
-delegatingKeyMap    stopStr  = buildKeymap SDL.SDLK_ESCAPE stopStr False
+nonDelegatingKeymap :: Doc -> Keymap Mutable
+nonDelegatingKeymap doc = mkKeymap "Return" doc returnKey True
 
-newWith :: Color -> String -> String -> Widget model -> Widget.New model Mutable
+delegatingKeymap :: Doc -> Keymap Mutable
+delegatingKeymap doc = mkKeymap "Escape" doc escapeKey False
+
+newWith :: Draw.Color -> String -> String -> Widget model -> Widget.New model Mutable
 newWith focusColor startStr stopStr childWidget acc model =
     let Mutable delegating = model ^. acc
         childWidgetFuncs = childWidget model
@@ -64,30 +60,28 @@ newWith focusColor startStr stopStr childWidget acc model =
     {
       widgetSize = childWidgetSize
     , widgetImage = \drawInfo ->
-        let 
-            haveFocus = Widget.diHasFocus drawInfo
+        let haveFocus = Widget.diHasFocus drawInfo
             delegatorHasFocus = haveFocus && not delegating
-            childDrawInfo = Widget.DrawInfo
-                            {
-                              Widget.diHasFocus = haveFocus && delegating
-                            }
-        in (if delegatorHasFocus
-            then Image.rect focusColor $ childWidgetSize childDrawInfo
-            else mempty)
+            childDrawInfo = Widget.DrawInfo { Widget.diHasFocus = haveFocus && delegating }
+        in widgetImage childWidgetFuncs childDrawInfo
            `mappend`
-           widgetImage childWidgetFuncs childDrawInfo
+           if delegatorHasFocus
+           then Widget.scale (childWidgetSize childDrawInfo) %%
+                focusColor `Draw.tint` Widget.rect
+           else mempty
+           
     , widgetGetKeymap =
         let mChildKeymap = widgetGetKeymap childWidgetFuncs
-            childKeymap = fromMaybe Map.empty mChildKeymap
+            childKeymap = fromMaybe mempty mChildKeymap
             applyToModel newMutable = acc `setVal` newMutable $ model
-            wrapKeymap = (Map.map . second . result) applyToModel
+            wrapKeymap = fmap applyToModel
         in case delegating of
              True ->
                  Just $
-                 childKeymap `Map.union` (wrapKeymap $ delegatingKeyMap stopStr)
+                 childKeymap `mappend` (wrapKeymap $ delegatingKeymap stopStr)
              False ->
-                 const (wrapKeymap $ nonDelegatingKeyMap startStr)
-                 -- Only expose the nonDelegatingKeyMap if the child
+                 const (wrapKeymap $ nonDelegatingKeymap startStr)
+                 -- Only expose the nonDelegatingKeymap if the child
                  -- has a keymap:
                  `fmap` mChildKeymap
     }

@@ -18,50 +18,44 @@ module Graphics.UI.LUI.Widgets.TextEdit
 where
 
 import qualified Graphics.UI.LUI.Widget as Widget
-import qualified Graphics.UI.LUI.Image as Image
-import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
 import Graphics.UI.LUI.Widget(WidgetFuncs(..))
 
-import Data.Editor.Function(result)
-import Data.Accessor(Accessor, accessor, (^.), setVal)
+import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
+import qualified Graphics.UI.LUI.Keymap as Keymap
+import Graphics.UI.LUI.Keymap(Keymap, ModKey)
+import qualified Graphics.UI.LUI.KeyGroup as KeyGroup
 
-import qualified Graphics.UI.SDL as SDL
-import qualified Graphics.UI.HaskGame.Key as Key
-import qualified Graphics.UI.HaskGame.Keys as Keys
-import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, ctrl)
-import Graphics.UI.HaskGame.Vector2(Vector2(..))
-import Graphics.UI.HaskGame.Color(Color)
-import Graphics.UI.HaskGame.Font(Font)
+import Data.Accessor(Accessor, accessor, (^.), setVal)
+import Data.Editor.Function(result)
+
+import qualified Graphics.DrawingCombinators as Draw
+import Graphics.DrawingCombinators(Image, Any, Font, Color, (%%))
 
 import qualified Data.Map as Map
-import Data.Map((!))
-import Data.Monoid(mconcat)
-import Control.Arrow(first, second)
+import Data.Monoid(mappend, mconcat)
 import Control.Category((>>>))
 
 type Cursor = Int
 
-defaultCursorWidth :: Int
+defaultCursorWidth :: Draw.R
 defaultCursorWidth = 2
 
-data Mutable = Mutable
-    {
-      mutableText :: String
-    , mutableCursor :: Cursor
-    }
--- TODO: TH
+data Mutable = Mutable {
+  mutableText :: String,
+  mutableCursor :: Cursor
+  }
+-- TODO: fclabels
 aMutableCursor :: Accessor Mutable Cursor
 aMutableCursor = accessor mutableCursor (\n x -> x{mutableCursor=n})
 aMutableText :: Accessor Mutable String
 aMutableText = accessor mutableText  (\n x -> x{mutableText=n})
 
-insert :: Mutable -> Key.ModKey -> Mutable
-insert (Mutable oldText oldCursor) key =
-    let iText = Keys.keysUnicode!key
-        (preOldText, postOldText) = splitAt oldCursor oldText
-        newText = concat [preOldText, iText, postOldText]
-        newCursor = oldCursor + length iText
-    in Mutable newText newCursor
+insert :: ModKey -> Mutable -> Mutable
+insert key (Mutable oldText oldCursor) = Mutable newText (oldCursor + length iText)
+  where
+    iText = maybe "" return . KeyGroup.unicodeOf $ key
+    (preOldText, postOldText) = splitAt oldCursor oldText
+    newText = concat [preOldText, iText, postOldText]
 
 delBackward :: Int -> Mutable -> Mutable
 delBackward count (Mutable oldText oldCursor) =
@@ -97,77 +91,92 @@ goEnd (Mutable text _) = Mutable text (length text)
 actBackspace, actDelete, actMovePrev, actMoveNext, actHome, actEnd ::
     (String, Mutable -> Mutable)
 
-actBackspace = ("Delete previous character", delBackward 1)
-actDelete = ("Delete next character",        delForward 1)
-actMovePrev = ("Move to previous character", moveCursor (subtract 1))
-actMoveNext = ("Move to next character",     moveCursor (+1))
-actHome = ("Move to beginning of text",      goHome)
-actEnd = ("Move to end of text",             goEnd)
+actBackspace = ("Delete previous character",  delBackward 1)
+actDelete    = ("Delete next character",      delForward 1)
+actMovePrev  = ("Move to previous character", moveCursor (subtract 1))
+actMoveNext  = ("Move to next character",     moveCursor (+1))
+actHome      = ("Move to beginning of text",  goHome)
+actEnd       = ("Move to end of text",        goEnd)
 
-keysMap :: Mutable -> Widget.ActionHandlers Mutable
-keysMap mutable = Map.fromList . (map . first) ((,) Widget.KeyDown) $
-    (Keys.printableGroup, ("Insert", insert mutable)) :
-    (map . second . second) (const . ($mutable)) (normalActions mutable ++ ctrlActions mutable)
+keysMap :: Mutable -> Keymap Mutable
+keysMap = insertionActions `mappend` normalActions
 
-cond :: Bool -> [a] -> [a]
-cond p i = if p then i else []
+insertionActions :: Mutable -> Keymap Mutable
+insertionActions mutable =
+  Keymap.fromGroups [("Printables", ("Insert", printablesMap))]
+  where
+    printablesMap = Map.fromList
+                    [ (key, insert key mutable)
+                    | key <- KeyGroup.printables ]
 
-normalActions :: Mutable -> [(Key.KeyGroup, (String, Mutable -> Mutable))]
-normalActions mutable =
-    let cursor = mutableCursor mutable
-        text = mutableText mutable
-    in (map . first) (asKeyGroup noMods) . concat $
-           [cond (cursor > 0)
-                     [(SDL.SDLK_BACKSPACE, actBackspace)
-                     ,(SDL.SDLK_LEFT, actMovePrev)
-                     ,(SDL.SDLK_HOME, actHome)]
-           ,cond (cursor < length text)
-                     [(SDL.SDLK_DELETE, actDelete)
-                     ,(SDL.SDLK_RIGHT, actMoveNext)
-                     ,(SDL.SDLK_END, actEnd)]
-           ]
+normalActions :: Mutable -> Keymap Mutable
+normalActions mutable@(Mutable text cursor) =
+  -- Keymap (Mutable -> Mutable) -> Keymap Mutable
+  fmap ($mutable) .
 
-ctrlActions :: Mutable -> [(Key.KeyGroup, (String, Mutable -> Mutable))]
-ctrlActions mutable =
-    let cursor = mutableCursor mutable
-        text = mutableText mutable
-    in (map . first) (asKeyGroup ctrl) . concat $
-           [cond (cursor > 0)
-                     [(SDL.SDLK_h, actBackspace)
-                     ,(SDL.SDLK_a, actHome)]
-           ,cond (cursor < length text)
-                     [(SDL.SDLK_d, actDelete)
-                     ,(SDL.SDLK_e, actEnd)]
-           ]
+  mconcat . concat $ [
+    [backActions | cursor > 0],
+    [forwardActions | cursor < length text]
+  ]
+  where
+    backActions =
+      mconcat [
+        Keymap.simpleton KeyGroup.leftKey `uncurry` actMovePrev,
 
-new :: Int -> Color -> Color -> Font -> Color -> Widget.New model Mutable
+        Keymap.simpleton KeyGroup.backspaceKey `uncurry` actBackspace,
+        Keymap.simpleton (KeyGroup.ctrlCharKey 'h') `uncurry` actBackspace,
+
+        Keymap.simpleton KeyGroup.homeKey `uncurry` actHome,
+        Keymap.simpleton (KeyGroup.ctrlCharKey 'a') `uncurry` actHome
+      ]
+    forwardActions =
+      mconcat [
+        Keymap.simpleton KeyGroup.rightKey `uncurry` actMoveNext,
+
+        Keymap.simpleton KeyGroup.deleteKey `uncurry` actDelete,
+        Keymap.simpleton (KeyGroup.ctrlCharKey 'd') `uncurry` actDelete,
+
+        Keymap.simpleton KeyGroup.endKey `uncurry` actEnd,
+        Keymap.simpleton (KeyGroup.ctrlCharKey 'e') `uncurry` actEnd
+       ]
+
+both :: (a -> b) -> (a, a) -> (b, b)
+both f (x, y) = (f x, f y)
+
+drawText :: Font -> String -> Image Any
+drawText = (result . result) (Widget.scale ((1/10), (1/10)) %%) Draw.text
+
+textSize :: Font -> String -> Draw.R2
+textSize = (result . result) (both (/10)) Draw.textSize
+
+new :: Draw.R -> Color -> Color -> Font -> Color -> Widget.New model Mutable
 new cursorWidth bgColor cursorColor font textColor acc model =
   let mutable@(Mutable text cursor) = model ^. acc
+      textImage = textColor `Draw.tint` drawText font text
   in WidgetFuncs
   {
     widgetImage = \drawInfo ->
       if Widget.diHasFocus drawInfo
       then
-        let textSize = Image.textSize font text
-            Vector2 w h = Image.textSize font $ take cursor text
-            cursorSize = Vector2 cursorWidth h
-            cursorPos = Vector2 w 0
+        let ts = textSize font text
+            (w, h) = textSize font $ take cursor text
+            cursorSize = (cursorWidth, h)
+            cursorPos = (w, 0)
         in
-          mconcat
-          [
-           Image.rect bgColor textSize
-          ,Image.text textColor font text
-          ,Image.move cursorPos $ Image.rect cursorColor cursorSize
+          mconcat [
+             Widget.scale ts %% bgColor `Draw.tint` Widget.rect
+            ,textImage
+            ,(Draw.translate cursorPos `mappend` Widget.scale cursorSize) %%
+             cursorColor `Draw.tint` Widget.rect
           ]
       else
-        Image.text textColor font text
+        textImage
 
-  , widgetSize = const $ Image.textSize font text
+  , widgetSize = const $ textSize font text
 
   , widgetGetKeymap =
     let applyToModel newMutable = acc `setVal` newMutable $ model
-    in Just $
-       (Map.map . second . result) applyToModel $ keysMap mutable
+    in Just . fmap applyToModel . keysMap $ mutable
   }
 
 type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
@@ -180,7 +189,7 @@ delegatedMutable :: Bool -> String -> Cursor -> DelegatedMutable
 delegatedMutable startInside text cursor =
     (FocusDelegator.Mutable startInside, Mutable text cursor)
 
-newDelegatedWith :: Color -> Int -> Color -> Color -> Font -> Color ->
+newDelegatedWith :: Color -> Draw.R -> Color -> Color -> Font -> Color ->
                     Widget.New model DelegatedMutable
 newDelegatedWith focusColor cursorWidth bgColor cursorColor font textColor acc =
     let textEdit = new cursorWidth bgColor cursorColor font textColor $

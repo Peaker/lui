@@ -1,4 +1,3 @@
-* Complete convertion to Data.Accessor
 * Convert to use image combinators
 
 * Use Data-Accessor-Template to avoid the repetative data accessors

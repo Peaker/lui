@@ -3,44 +3,30 @@
 module Main(main) where
 
 import qualified Graphics.UI.LUI.Run as Run
-import qualified Graphics.UI.LUI.Image as Image
 import qualified Graphics.UI.LUI.Widgets.TextEdit as TextEdit
 import qualified Graphics.UI.LUI.Widgets.TextView as TextView
-import qualified Graphics.UI.LUI.Widgets.Scroll as Scroll
+--import qualified Graphics.UI.LUI.Widgets.Scroll as Scroll
 import qualified Graphics.UI.LUI.Widgets.Grid as Grid
 import qualified Graphics.UI.LUI.Widgets.Box as Box
 import qualified Graphics.UI.LUI.Widgets.Space as Space
-import qualified Graphics.UI.LUI.Widgets.KeysTable as KeysTable
-import qualified Graphics.UI.LUI.Widgets.Adapter as Adapter
+--import qualified Graphics.UI.LUI.Widgets.KeysTable as KeysTable
+--import qualified Graphics.UI.LUI.Widgets.Adapter as Adapter
 import Graphics.UI.LUI.Widget(Widget)
 import Data.Accessor(Accessor, accessor, (^.))
 import Data.Accessor.Map(aMapValue)
 
-import qualified Graphics.UI.HaskGame.Font as Font
-import qualified Graphics.UI.HaskGame as HaskGame
-import Graphics.UI.HaskGame.Vector2(Vector2(..))
-import Graphics.UI.HaskGame.Font(Font)
-import Graphics.UI.HaskGame.Color(Color(..))
-import Graphics.UI.HaskGame.Rect(Rect(..))
+import qualified Graphics.DrawingCombinators as Draw
+import Graphics.DrawingCombinators(Color(..), Font)
+import qualified Graphics.UI.GLUT as GLUT
+import Graphics.UI.GLUT(($~), ($=))
 
 import qualified Data.Map as Map
-import Data.Maybe(listToMaybe)
-import Control.Monad(mapM)
+import Data.Maybe(fromMaybe, listToMaybe)
 import Control.Category((>>>))
+import Control.Concurrent.MVar(newMVar, readMVar, modifyMVar_)
 
 isSorted :: (Ord a) => [a] -> Bool
 isSorted xs = and $ zipWith (<=) xs (tail xs)
-
-simpleRead :: Read a => String -> Maybe a
-simpleRead = listToMaybe . map fst . filter (null . snd) . reads
-
-main :: IO ()
-main = HaskGame.withInit $ do
-    gui <- makeGui
-    resultModel <- Run.mainLoop gui guiModel
-    -- Prove that we have the new model here:
-    print $ gridModel resultModel ^. Grid.aDelegatedMutableCursor
-    return ()
 
 -- Model:
 data Model = Model
@@ -48,19 +34,19 @@ data Model = Model
       vboxModel :: Box.DelegatedMutable
     , textEditModels :: Map.Map Grid.Cursor TextEdit.DelegatedMutable
     , gridModel :: Grid.DelegatedMutable
-    , scrollModel :: Scroll.Mutable
+--    , scrollModel :: Scroll.Mutable
     }
 
 data Fonts = Fonts
     {
-      defaultFont, textViewFont, keysFont, descFont :: Font
+      defaultFont, textViewFont, keysFont, descFont :: Draw.Font
     }
 
 -- TODO: Replace with TH auto-gen
 avboxModel :: Accessor Model Box.DelegatedMutable
 avboxModel = accessor vboxModel (\new x -> x{vboxModel=new})
-scrollerModel :: Accessor Model Scroll.Mutable
-scrollerModel = accessor scrollModel (\new x -> x{scrollModel=new})
+-- scrollerModel :: Accessor Model Scroll.Mutable
+-- scrollerModel = accessor scrollModel (\new x -> x{scrollModel=new})
 atextEditModels :: Accessor Model (Map.Map Grid.Cursor TextEdit.DelegatedMutable)
 atextEditModels = accessor textEditModels (\new x -> x{textEditModels=new})
 agridModel :: Accessor Model Grid.DelegatedMutable
@@ -87,17 +73,17 @@ guiModel =
                     , y <- [0..1]
                     , let text = texts !! (y*2 + x)]
     , gridModel = Grid.delegatedMutable False (0, 0)
-    , scrollModel = Scroll.Mutable $ Vector2 0 0
+    -- , scrollModel = Scroll.Mutable $ Vector2 0 0
     }
 
 
 -- Widgets
 
 textEditCursorColor, textViewColor, textEditColor, textEditingColor :: Color
-textEditingColor = Color 30 20 100
-textEditColor = Color 255 255 255
-textViewColor = Color 255 100 255
-textEditCursorColor = Color 255 0 0
+textEditingColor = Color 0.15 0.20 0.3 1
+textEditColor = Color 1 1 1 1
+textViewColor = Color 1 0.4 1 1
+textEditCursorColor = Color 1 0 0 1
 
 textEdit :: Grid.Cursor -> Fonts -> Widget Model
 textEdit cursor fonts =
@@ -121,6 +107,9 @@ grid fonts =
 proxy1 :: Fonts -> Widget Model
 proxy1 fonts model =
     textEdit (model ^. (agridModel >>> Grid.aDelegatedMutableCursor)) fonts model
+
+simpleRead :: Read a => String -> Maybe a
+simpleRead = listToMaybe . map fst . filter (null . snd) . reads
 
 readCursor :: String -> Maybe Grid.Cursor
 readCursor text =
@@ -146,17 +135,17 @@ proxy2 fonts model =
              (\cur -> textEdit cur fonts model) $
        readCursor text
 
-scrollBox :: Fonts -> Widget Model
-scrollBox fonts = Scroll.new (Vector2 200 200) box scrollerModel
-    where
-      font = defaultFont fonts
-      box = Box.new Box.Vertical items $ Box.noAcc 0
-      items = [Box.Item (Adapter.adaptImage
-                         (Image.cropRect $ Rect i 0 (w-i-i) h) $
-                         textView text font) 0.5
-               | i <- [0,20..250]
-              , let text = "THIS IS A TRUNCATED VIEW: " ++ show i
-                    Vector2 w h = Image.textSize font text]
+-- scrollBox :: Fonts -> Widget Model
+-- scrollBox fonts = Scroll.new (Vector2 200 200) box scrollerModel
+--     where
+--       font = defaultFont fonts
+--       box = Box.new Box.Vertical items $ Box.noAcc 0
+--       items = [Box.Item (Adapter.adaptImage
+--                          (Image.cropRect $ Rect i 0 (w-i-i) h) $
+--                          textView text font) 0.5
+--                | i <- [0,20..250]
+--               , let text = "THIS IS A TRUNCATED VIEW: " ++ show i
+--                     Vector2 w h = Image.textSize font text]
 
 vbox :: Fonts -> Widget Model
 vbox fonts = Box.newDelegated Box.Vertical items avboxModel
@@ -165,13 +154,39 @@ vbox fonts = Box.newDelegated Box.Vertical items avboxModel
               ,Box.Item (Space.newH 100) 0.5
               ,Box.Item (proxy1 fonts) 0.5
               ,Box.Item (proxy2 fonts) 0.5
-              ,Box.Item (scrollBox fonts) 0.5
+--              ,Box.Item (scrollBox fonts) 0.5
               ]
 
 withKeysTable :: Fonts -> Widget Model
-withKeysTable fonts = KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fonts) (descFont fonts) (vbox fonts)
+withKeysTable fonts = --KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fonts) (descFont fonts)
+                      (vbox fonts)
+
+fontFilename :: FilePath
+fontFilename = "/usr/share/fonts/truetype/freefont/FreeMono.ttf"
 
 makeGui :: IO (Widget Model)
 makeGui = do
-  [f15, f25, f30] <- mapM Font.defaultFont [15, 25, 30]
-  return . withKeysTable $ Fonts f30 f15 f25 f25
+  font <- Draw.openFont fontFilename
+  return . withKeysTable $ Fonts font font font font
+
+main :: IO ()
+main = do
+  _ <- GLUT.getArgsAndInitialize
+  GLUT.initialWindowSize $= GLUT.Size 800 600
+  GLUT.initialDisplayMode $~ (GLUT.DoubleBuffered:)
+  GLUT.createWindow "example"
+
+  gui <- makeGui
+  curModel <- newMVar guiModel
+  GLUT.idleCallback $=
+    Just ((Run.draw . gui =<< readMVar curModel) >>
+          GLUT.swapBuffers)
+  GLUT.keyboardMouseCallback $=
+    Just (\key keyState mods mousePos ->
+           case keyState of
+             GLUT.Up -> return ()
+             GLUT.Down ->
+               modifyMVar_ curModel
+               (\model -> return . fromMaybe model .
+                          Run.keyEvent (mods, key) . gui $ model))
+  GLUT.mainLoop

@@ -19,46 +19,48 @@ where
 
 import Control.Category((>>>))
 import qualified Graphics.UI.LUI.Widget as Widget
-import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
-import qualified Graphics.UI.LUI.Image as Image
-
 import Graphics.UI.LUI.Widget(Widget, WidgetFuncs(..))
 
-import Data.Editor.Function((~>), result)
-import Data.Tuple.Swap(swap)
+import qualified Graphics.UI.LUI.Keymap as Keymap
+import Graphics.UI.LUI.Keymap(Keymap, Doc)
+import Graphics.UI.LUI.KeyGroup(KeyGroupName, showModKey, ModKey, noMods, ctrl)
+
+import qualified Graphics.UI.LUI.Widgets.FocusDelegator as FocusDelegator
+import qualified Graphics.UI.GLUT as GLUT
+import qualified Graphics.DrawingCombinators as Draw
+import Graphics.DrawingCombinators((%%))
+
 import Data.Accessor(Accessor, (^.), setVal)
 import Data.Accessor.Simple(reader)
 import Data.Accessor.Basic(fromWrapper)
 
-import qualified Graphics.UI.SDL as SDL
-import qualified Graphics.UI.HaskGame.Vector2 as Vector2
-import Graphics.UI.HaskGame.Key(asKeyGroup, noMods, shift)
-import Graphics.UI.HaskGame.Color(Color)
-import Graphics.UI.HaskGame.Vector2(Vector2(..))
-
 import qualified Data.Map as Map
-import Control.Arrow(second)
+import Data.Map(Map, (!))
+
+import Data.Maybe(listToMaybe)
+
+import Control.Arrow(first, second)
 import Data.List(transpose)
-import Data.Maybe(isJust, isNothing, fromMaybe)
-import Data.Monoid(mempty, mconcat)
+import Data.Maybe(isJust)
+import Data.Monoid(Monoid(..))
 
-data Item model = Item
-    {
-      itemWidget :: Widget model
+data Item model = Item {
+  itemWidget :: Widget model,
 
-      -- alignments are a number between 0..1 that
-      -- represents where in the grid item's left..right
-      -- and top..down the item should be in
-    , itemAlignments :: (Double, Double)
-    }
+  -- alignments are a number between 0..1 that
+  -- represents where in the grid item's left..right
+  -- and top..down the item should be in
+  itemAlignments :: (Draw.R, Draw.R)
+  }
 
-type Items model = Map.Map Cursor (Item model)
+type Items model = Map Cursor (Item model)
 type Cursor = (Int, Int)
+type Size = Cursor
 
-data Mutable = Mutable
-    {
-      mutableCursor :: Cursor
-    }
+data Mutable = Mutable {
+  mutableCursor :: Cursor
+  }
+
 -- TODO: Auto-TH for this
 aMutableCursor :: Accessor Mutable Cursor
 aMutableCursor = fromWrapper Mutable mutableCursor
@@ -66,7 +68,7 @@ aMutableCursor = fromWrapper Mutable mutableCursor
 selectedItem :: Mutable -> Items model -> Maybe (Item model)
 selectedItem (Mutable cursor) items = cursor `Map.lookup` items
 
-gridRows :: Cursor -> Items model -> [[(Cursor, Maybe (Item model))]]
+gridRows :: Size -> Items model -> [[(Cursor, Maybe (Item model))]]
 gridRows (sizex, sizey) items =
     [[((x,y), (x,y) `Map.lookup` items) | x <- [0..sizex-1]] | y <- [0..sizey-1]]
 
@@ -74,111 +76,107 @@ gridDrawInfo :: Mutable -> Cursor -> Widget.DrawInfo -> Widget.DrawInfo
 gridDrawInfo (Mutable cursor) itemIndex (Widget.DrawInfo drawInfo) =
     Widget.DrawInfo (drawInfo && cursor==itemIndex)
 
-getRowColumnSizes :: model -> Mutable -> Items model -> Cursor -> Widget.DrawInfo ->
-                     ([Int], [Int])
+getRowColumnSizes :: model -> Mutable -> Items model -> Size -> Widget.DrawInfo ->
+                     ([Draw.R], [Draw.R])
 getRowColumnSizes model mutable items size drawInfo = (rowHeights, columnWidths)
     where
       mapItems = map . map
       rowsSizes = mapItems itemWidgetSize (gridRows size items)
       itemWidgetSize (itemIndex, mItem) =
         case mItem of
-          Nothing -> Vector2 0 0
+          Nothing -> (0, 0)
           Just item -> widgetSize (itemWidget item model)
                                   (gridDrawInfo mutable itemIndex drawInfo)
-      rowsHeights = mapItems Vector2.snd rowsSizes
-      rowsWidths =  mapItems Vector2.fst rowsSizes
+      rowsHeights = mapItems snd rowsSizes
+      rowsWidths =  mapItems fst rowsSizes
 
       rowHeights =   map maximum             $ rowsHeights
       columnWidths = map maximum . transpose $ rowsWidths
 
-mutableCursorApply :: (Cursor -> Cursor) -> Mutable -> Mutable
-mutableCursorApply func (Mutable oldCursor) = Mutable $ func oldCursor
-
-mutableMoveTo :: (Int, Int) -> Mutable -> Mutable
-mutableMoveTo newCursor = mutableCursorApply (const newCursor)
-
 itemSelectable :: model -> Item model -> Bool
-itemSelectable model (Item widget _) =
-    isJust . widgetGetKeymap $ widget model
+itemSelectable model (Item widget _) = isJust . widgetGetKeymap . widget $ model
 
 isSorted :: (Ord a) => [a] -> Bool
 isSorted xs = and $ zipWith (<=) xs (tail xs)
 
-getSelectables :: ((Int, Int) -> (Int, Int)) ->
-                  (Int -> Int) ->
-                  Cursor -> model -> Mutable -> Items model ->
-                  [(Int, Int)]
-getSelectables toSwap cursorFunc size model (Mutable oldCursor) items =
-    let (sizeA,_) = toSwap size
-        (oldA,b) = toSwap oldCursor
-        nexts = takeWhile (\a -> isSorted [0, a, sizeA-1]) .
-                iterate cursorFunc $ oldA
-        coor a = toSwap (a, b)
-        itemAt a = (coor a, items Map.! coor a)
-    in map fst . filter (itemSelectable model . snd) . map itemAt . drop 1 $ nexts
+inRange :: Size -> Cursor -> Bool
+inRange (w, h) (x, y) =
+  isSorted [0, x, w-1] &&
+  isSorted [0, y, h-1]
 
-getSelectablesX, getSelectablesY :: (Int -> Int) ->
-                                    Cursor -> model -> Mutable -> Items model ->
-                                    [(Int, Int)]
-getSelectablesX = getSelectables id
-getSelectablesY = getSelectables swap
+type Direction = Size -> Cursor -> [Cursor]
 
-getSelectablesXY :: [Int] -> (Int -> Int) ->
-                    Cursor -> model -> Mutable -> Items model ->
-                    [(Int, Int)]
-getSelectablesXY xrange cursorFunc size model (Mutable oldCursor) items =
-    let (sizeX,sizeY) = size
-        (oldX,oldY) = oldCursor
-        xnexts = drop 1 . takeWhile (\x -> isSorted [0, x, sizeX-1]) .
-                 iterate cursorFunc $ oldX
-        ynexts = drop 1 . takeWhile (\y -> isSorted [0, y, sizeY-1]) .
-                 iterate cursorFunc $ oldY
-        nexts = map (flip (,) oldY) xnexts ++
-                [(x, y) | y <- ynexts, x <- xrange]
-        itemAt cursor = (cursor, items Map.! cursor)
-    in map fst . filter (itemSelectable model . snd) . map itemAt $ nexts
+left :: Direction
+right :: Direction
+up :: Direction
+down :: Direction
+next :: Direction
+prev :: Direction
+left = nextCursors $ first (subtract 1)
+right = nextCursors $ first (+1)
+up = nextCursors $ second (subtract 1)
+down = nextCursors $ second (+1)
+next = scan first second (+1)
+prev = scan first second (subtract 1)
 
-leftKeyGroup,
- rightKeyGroup,
- upKeyGroup,
- downKeyGroup,
- nextKeyGroup,
- prevKeyGroup :: Widget.KeyAction
+nextCursors :: (Cursor -> Cursor) -> Direction
+nextCursors forward size =
+  takeWhile (`inRange` size) . drop 1 . iterate forward
 
-leftKeyGroup  = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_LEFT)
-rightKeyGroup = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_RIGHT)
-upKeyGroup    = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_UP)
-downKeyGroup  = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_DOWN)
-nextKeyGroup  = (Widget.KeyDown, asKeyGroup noMods SDL.SDLK_TAB)
-prevKeyGroup  = (Widget.KeyDown, asKeyGroup shift  SDL.SDLK_TAB)
-
-keysMap :: Cursor -> model -> Mutable -> Items model -> Widget.ActionHandlers Mutable
-keysMap size@(sizeX, _) model mutable items =
-    Map.fromList $ concat $
-           [let opts = axis size model mutable items
-            in cond opts (key, (desc, const $ head opts `mutableMoveTo` mutable))
-            | (key, axis, desc) <-
-                [(leftKeyGroup,  getSelectablesX (subtract 1),
-                  "Move left")
-                ,(rightKeyGroup, getSelectablesX (+1),
-                  "Move right")
-                ,(upKeyGroup,    getSelectablesY (subtract 1),
-                  "Move up")
-                ,(downKeyGroup,  getSelectablesY (+1),
-                  "Move down")
-                ,(nextKeyGroup,  getSelectablesXY [0..sizeX-1] (+1),
-                  "Move to next")
-                ,(prevKeyGroup,  getSelectablesXY [sizeX-1,sizeX-2..0] (subtract 1),
-                  "Move to prev")
-                ]
-           ]
+type Endo a = a -> a
+type CursorComponent = Endo Int -> Endo Cursor
+scan :: CursorComponent -> CursorComponent -> Endo Int -> Direction
+scan quick slow forward size cur = takeWhile inside . drop 1 . iterate smartNext $ cur
     where
-      cond p i = if not . null $ p then [i] else []
+      inside = inRange size
+      smartNext c = if inside (quickNext c)
+                    then quickNext c
+                    else slowNext c
+      quickNext = quick forward
+      slowNext = quick (const 0) . slow forward
 
-inFrac :: (Integral a, RealFrac b) => (b -> b) -> a -> a
-inFrac = fromIntegral ~> floor
+type GetSelectables model =
+  Items model ->  -- ^ items
+  model ->        -- ^ model
+  [Cursor] ->     -- ^ cursors
+  [Cursor]        -- ^ selectable forward cursors
 
-posSizes :: [Int] -> [(Int, Int)]
+filterSelectables :: GetSelectables model
+filterSelectables items model  =
+  filter (itemSelectable model . (items !))
+
+type KeyGroupHandlers model = Map KeyGroupName (Doc, Map ModKey model)
+
+makeHandlers :: ModKey -> Doc -> model -> KeyGroupHandlers model
+makeHandlers modKey doc model =
+  Map.singleton (showModKey modKey)
+  (doc, Map.singleton modKey model)
+
+directionHandlers :: [(Direction, model -> KeyGroupHandlers model)]
+directionHandlers = [
+  (left,  makeHandlers (noMods, GLUT.SpecialKey GLUT.KeyLeft)  "Move left"),
+  (right, makeHandlers (noMods, GLUT.SpecialKey GLUT.KeyRight) "Move right"),
+  (up,    makeHandlers (noMods, GLUT.SpecialKey GLUT.KeyUp)    "Move up"),
+  (down,  makeHandlers (noMods, GLUT.SpecialKey GLUT.KeyDown)  "Move down"),
+  (next,  makeHandlers (noMods, GLUT.Char '\t')   "Move to next"),
+  (prev,  makeHandlers (ctrl,  GLUT.Char '\t')   "Move to prev")
+  ]
+
+keysMap :: Size -> Items model -> model -> Mutable -> Maybe (Keymap Mutable)
+keysMap size items model (Mutable cursor) =
+  -- If all item keymaps are Nothing, we get a Nothing. Otherwise, we
+  -- get a Just . mconcat of all the keymaps
+  mconcat allItemKeymaps
+  where
+    allItemKeymaps = map keymapOfDH directionHandlers
+    keymapOfDH (direction, handlers) =
+      listToMaybe .
+      map (Keymap.make . handlers . Mutable) .
+      filterSelectables items model .
+      direction size $
+      cursor
+
+posSizes :: [Draw.R] -> [(Draw.R, Draw.R)]
 posSizes sizes =
     let positions = scanl (+) 0 sizes
     in zip positions sizes
@@ -186,13 +184,9 @@ posSizes sizes =
 noAcc :: Cursor -> Accessor model Mutable
 noAcc cursor = reader . Mutable $ cursor
 
-new :: Cursor -> Items model -> Widget.New model Mutable
+new :: Size -> Items model -> Widget.New model Mutable
 new size items acc model =
-    let mutable = model ^. acc
-        rows = gridRows size items
-        rowColumnSizes drawInfo = getRowColumnSizes model mutable items size drawInfo
-    in WidgetFuncs
-    {
+    WidgetFuncs {
       widgetImage = \drawInfo -> let
         (rowHeights, columnWidths) = rowColumnSizes drawInfo
         images =
@@ -203,34 +197,27 @@ new size items acc model =
               case mItem of
                 Nothing -> mempty
                 Just item ->
-                    let Item childWidget (ax, ay) = item
-                        childDrawInfo = gridDrawInfo mutable itemIndex drawInfo
-                        childWidgetFuncs = childWidget model
-                        childImage = widgetImage childWidgetFuncs childDrawInfo
-                        Vector2 w h = widgetSize childWidgetFuncs childDrawInfo
-                        pos = Vector2 (xpos + inFrac (*ax) (width-w))
-                                      (ypos + inFrac (*ay) (height-h))
-                    in Image.move pos childImage
+                  let Item childWidget (ax, ay) = item
+                      childDrawInfo = gridDrawInfo mutable itemIndex drawInfo
+                      childWidgetFuncs = childWidget model
+                      childImage = widgetImage childWidgetFuncs childDrawInfo
+                      (w, h) = widgetSize childWidgetFuncs childDrawInfo
+                      pos = ((xpos + ax * (width-w)),
+                             ((ypos + ay * (height-h))))
+                  in Draw.translate pos %% childImage
         in mconcat . concat $ images
 
-    , widgetSize =
-        \drawInfo ->
-            let (rowHeights, columnWidths) = rowColumnSizes drawInfo
-            in Vector2 (sum columnWidths) (sum rowHeights)
-
-    , widgetGetKeymap =
-      if all isNothing .
-         map (widgetGetKeymap . ($model) . itemWidget) .
-         Map.elems $ items
-      then Nothing
-      else Just $
-        let childKeys = fromMaybe Map.empty $ do
-                          Item childWidget _ <- selectedItem mutable items
-                          widgetGetKeymap $ childWidget model
-            applyToModel newMutable = acc `setVal` newMutable $ model
-        in childKeys `Map.union` ((Map.map . second . result) applyToModel $
-                                  keysMap size model mutable items)
+    , widgetSize = gridSize . rowColumnSizes
+    , widgetGetKeymap = ownKeymap `mappend` curChildKeymap
     }
+  where
+    ownKeymap = (fmap . fmap) applyToModel $ keysMap size items model mutable
+    applyToModel newMutable = acc `setVal` newMutable $ model
+    curChildKeymap = widgetGetKeymap . (`itemWidget` model) =<< selectedItem mutable items
+    mutable = model ^. acc
+    rows = gridRows size items
+    rowColumnSizes drawInfo = getRowColumnSizes model mutable items size drawInfo
+    gridSize (rowHeights, columnWidths) = (sum columnWidths, sum rowHeights)
 
 type DelegatedMutable = FocusDelegator.DelegatedMutable Mutable
 
@@ -241,7 +228,7 @@ delegatedMutable :: Bool -> Cursor -> DelegatedMutable
 delegatedMutable startInside cursor =
     (FocusDelegator.Mutable startInside, Mutable cursor)
 
-newDelegatedWith :: Color -> Cursor -> Items model -> Widget.New model DelegatedMutable
+newDelegatedWith :: Draw.Color -> Size -> Items model -> Widget.New model DelegatedMutable
 newDelegatedWith focusColor size items acc =
     let grid = new size items $ acc >>> FocusDelegator.aDelegatedMutable
     in FocusDelegator.newWith focusColor "Go in" "Go out" grid $

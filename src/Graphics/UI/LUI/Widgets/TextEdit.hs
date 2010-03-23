@@ -26,10 +26,9 @@ import Graphics.UI.LUI.Keymap(Keymap, ModKey)
 import qualified Graphics.UI.LUI.KeyGroup as KeyGroup
 
 import Data.Accessor(Accessor, accessor, (^.), setVal)
-import Data.Editor.Function(result)
 
 import qualified Graphics.DrawingCombinators as Draw
-import Graphics.DrawingCombinators(Image, Any, Font, Color, (%%))
+import Graphics.DrawingCombinators(Font, Color, (%%))
 
 import qualified Data.Map as Map
 import Data.Monoid(mappend, mconcat)
@@ -140,26 +139,17 @@ normalActions mutable@(Mutable text cursor) =
         Keymap.simpleton (KeyGroup.ctrlCharKey 'e') `uncurry` actEnd
        ]
 
-both :: (a -> b) -> (a, a) -> (b, b)
-both f (x, y) = (f x, f y)
-
-drawText :: Font -> String -> Image Any
-drawText = (result . result) (Widget.scale ((1/10), (1/10)) %%) Draw.text
-
-textSize :: Font -> String -> Draw.R2
-textSize = (result . result) (both (/10)) Draw.textSize
-
 new :: Draw.R -> Color -> Color -> Font -> Color -> Widget.New model Mutable
 new cursorWidth bgColor cursorColor font textColor acc model =
   let mutable@(Mutable text cursor) = model ^. acc
-      textImage = textColor `Draw.tint` drawText font text
+      textImage = textColor `Draw.tint` Widget.drawText font text
+      ts = Widget.textSize font text
   in WidgetFuncs
   {
     widgetImage = \drawInfo ->
       if Widget.diHasFocus drawInfo
       then
-        let ts = textSize font text
-            (w, h) = textSize font $ take cursor text
+        let (w, h) = Widget.textSize font $ take cursor text
             cursorSize = (cursorWidth, h)
             cursorPos = (w, 0)
         in
@@ -172,7 +162,7 @@ new cursorWidth bgColor cursorColor font textColor acc model =
       else
         textImage
 
-  , widgetSize = const $ textSize font text
+  , widgetSize = const ts
 
   , widgetGetKeymap =
     let applyToModel newMutable = acc `setVal` newMutable $ model

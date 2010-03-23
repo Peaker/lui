@@ -127,13 +127,13 @@ textView text font =
 
 proxy2 :: Fonts -> Widget Model
 proxy2 fonts model =
-    let cursor = model ^. (agridModel >>> Grid.aDelegatedMutableCursor)
-        text = model ^. (atextEditModels >>> aMapValue cursor >>>
-                         TextEdit.aDelegatedMutableText)
-    in maybe (textView ("Invalid cursor position selected: " ++ text)
-                       (textViewFont fonts) model)
-             (\cur -> textEdit cur fonts model) $
-       readCursor text
+  maybe invalidPos (\cur -> textEdit cur fonts model) $ readCursor text
+  where
+    invalidPos = textView ("Invalid cursor position selected: " ++ text)
+                 (textViewFont fonts) model
+    cursor = model ^. (agridModel >>> Grid.aDelegatedMutableCursor)
+    text = model ^. (atextEditModels >>> aMapValue cursor >>>
+                     TextEdit.aDelegatedMutableText)
 
 -- scrollBox :: Fonts -> Widget Model
 -- scrollBox fonts = Scroll.new (Vector2 200 200) box scrollerModel
@@ -151,7 +151,7 @@ vbox :: Fonts -> Widget Model
 vbox fonts = Box.newDelegated Box.Vertical items avboxModel
     where
       items = [Box.Item (grid fonts) 1
-              ,Box.Item (Space.newH 100) 0.5
+              ,Box.Item (Space.newH 0.1) 0.5
               ,Box.Item (proxy1 fonts) 0.5
               ,Box.Item (proxy2 fonts) 0.5
 --              ,Box.Item (scrollBox fonts) 0.5

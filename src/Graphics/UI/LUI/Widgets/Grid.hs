@@ -44,6 +44,11 @@ import Data.List(transpose)
 import Data.Maybe(isJust)
 import Data.Monoid(Monoid(..))
 
+-- import Debug.Trace(trace)
+
+-- traceId :: Show a => String -> a -> a
+-- traceId prefix x = trace (prefix ++ show x) x
+
 data Item model = Item {
   itemWidget :: Widget model,
 
@@ -60,6 +65,7 @@ type Size = Cursor
 data Mutable = Mutable {
   mutableCursor :: Cursor
   }
+  deriving (Show)
 
 -- TODO: Auto-TH for this
 aMutableCursor :: Accessor Mutable Cursor
@@ -112,16 +118,16 @@ up :: Direction
 down :: Direction
 next :: Direction
 prev :: Direction
-left = nextCursors $ first (subtract 1)
+left  = nextCursors $ first (subtract 1)
 right = nextCursors $ first (+1)
-up = nextCursors $ second (subtract 1)
-down = nextCursors $ second (+1)
-next = scan first second (+1)
-prev = scan first second (subtract 1)
+up    = nextCursors $ second (subtract 1)
+down  = nextCursors $ second (+1)
+next  = scan first second (+1)
+prev  = scan first second (subtract 1)
 
 nextCursors :: (Cursor -> Cursor) -> Direction
 nextCursors forward size =
-  takeWhile (`inRange` size) . drop 1 . iterate forward
+  takeWhile (inRange size) . drop 1 . iterate forward
 
 type Endo a = a -> a
 type CursorComponent = Endo Int -> Endo Cursor
@@ -135,13 +141,7 @@ scan quick slow forward size cur = takeWhile inside . drop 1 . iterate smartNext
       quickNext = quick forward
       slowNext = quick (const 0) . slow forward
 
-type GetSelectables model =
-  Items model ->  -- ^ items
-  model ->        -- ^ model
-  [Cursor] ->     -- ^ cursors
-  [Cursor]        -- ^ selectable forward cursors
-
-filterSelectables :: GetSelectables model
+filterSelectables :: Items model -> model -> [Cursor] -> [Cursor]
 filterSelectables items model  =
   filter (itemSelectable model . (items !))
 
@@ -158,8 +158,8 @@ directionHandlers = [
   (right, makeHandlers (noMods, GLUT.SpecialKey GLUT.KeyRight) "Move right"),
   (up,    makeHandlers (noMods, GLUT.SpecialKey GLUT.KeyUp)    "Move up"),
   (down,  makeHandlers (noMods, GLUT.SpecialKey GLUT.KeyDown)  "Move down"),
-  (next,  makeHandlers (noMods, GLUT.Char '\t')   "Move to next"),
-  (prev,  makeHandlers (ctrl,  GLUT.Char '\t')   "Move to prev")
+  (next,  makeHandlers (noMods, GLUT.Char '\t')                "Move to next"),
+  (prev,  makeHandlers (ctrl,  GLUT.Char '\t')                 "Move to prev")
   ]
 
 keysMap :: Size -> Items model -> model -> Mutable -> Maybe (Keymap Mutable)
@@ -208,7 +208,7 @@ new size items acc model =
         in mconcat . concat $ images
 
     , widgetSize = gridSize . rowColumnSizes
-    , widgetGetKeymap = ownKeymap `mappend` curChildKeymap
+    , widgetGetKeymap = curChildKeymap `mappend` ownKeymap
     }
   where
     ownKeymap = (fmap . fmap) applyToModel $ keysMap size items model mutable

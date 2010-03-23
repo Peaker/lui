@@ -38,7 +38,7 @@ import Control.Category((>>>))
 type Cursor = Int
 
 defaultCursorWidth :: Draw.R
-defaultCursorWidth = 2
+defaultCursorWidth = 0.02
 
 data Mutable = Mutable {
   mutableText :: String,
@@ -164,10 +164,10 @@ new cursorWidth bgColor cursorColor font textColor acc model =
             cursorPos = (w, 0)
         in
           mconcat [
-             Widget.scale ts %% bgColor `Draw.tint` Widget.rect
-            ,textImage
-            ,(Draw.translate cursorPos `mappend` Widget.scale cursorSize) %%
-             cursorColor `Draw.tint` Widget.rect
+            (Draw.translate cursorPos `mappend` Widget.scale cursorSize) %%
+            cursorColor `Draw.tint` Widget.rect,
+            textImage,
+            Widget.scale ts %% bgColor `Draw.tint` Widget.rect
           ]
       else
         textImage

@@ -122,8 +122,8 @@ left  = nextCursors $ first (subtract 1)
 right = nextCursors $ first (+1)
 up    = nextCursors $ second (subtract 1)
 down  = nextCursors $ second (+1)
-next  = scan first second (+1)
-prev  = scan first second (subtract 1)
+next  = scan first second (const 0)          (+1)
+prev  = scan first second (subtract 1 . fst) (subtract 1)
 
 nextCursors :: (Cursor -> Cursor) -> Direction
 nextCursors forward size =
@@ -131,15 +131,15 @@ nextCursors forward size =
 
 type Endo a = a -> a
 type CursorComponent = Endo Int -> Endo Cursor
-scan :: CursorComponent -> CursorComponent -> Endo Int -> Direction
-scan quick slow forward size cur = takeWhile inside . drop 1 . iterate smartNext $ cur
+scan :: CursorComponent -> CursorComponent -> (Size -> Int) -> Endo Int -> Direction
+scan quick slow newQuick forward size cur = takeWhile inside . drop 1 . iterate smartNext $ cur
     where
       inside = inRange size
       smartNext c = if inside (quickNext c)
                     then quickNext c
                     else slowNext c
       quickNext = quick forward
-      slowNext = quick (const 0) . slow forward
+      slowNext = quick (const (newQuick size)) . slow forward
 
 filterSelectables :: Items model -> model -> [Cursor] -> [Cursor]
 filterSelectables items model  =
@@ -189,6 +189,7 @@ new size items acc model =
     WidgetFuncs {
       widgetImage = \drawInfo -> let
         (rowHeights, columnWidths) = rowColumnSizes drawInfo
+        totalHeight = sum rowHeights
         images =
           flip map (zip (posSizes rowHeights) rows) $
           \((ypos, height), row) ->
@@ -202,8 +203,8 @@ new size items acc model =
                       childWidgetFuncs = childWidget model
                       childImage = widgetImage childWidgetFuncs childDrawInfo
                       (w, h) = widgetSize childWidgetFuncs childDrawInfo
-                      pos = ((xpos + ax * (width-w)),
-                             ((ypos + ay * (height-h))))
+                      pos = (xpos + ax * (width-w),
+                             totalHeight - height - (ypos + ay * (height-h)))
                   in Draw.translate pos %% childImage
         in mconcat . concat $ images
 

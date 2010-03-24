@@ -13,8 +13,7 @@ module Graphics.UI.LUI.Widgets.TextEdit
     ,aDelegatedMutableText
     ,delegatedMutable
     ,newDelegatedWith
-    ,newDelegated
-    )
+    ,newDelegated)
 where
 
 import qualified Graphics.UI.LUI.Widget as Widget
@@ -37,7 +36,7 @@ import Control.Category((>>>))
 type Cursor = Int
 
 defaultCursorWidth :: Draw.R
-defaultCursorWidth = 0.02
+defaultCursorWidth = 0.005
 
 data Mutable = Mutable {
   mutableText :: String,
@@ -144,8 +143,7 @@ new cursorWidth bgColor cursorColor font textColor acc model =
   let mutable@(Mutable text cursor) = model ^. acc
       textImage = textColor `Draw.tint` Widget.drawText font text
       ts = Widget.textSize font text
-  in WidgetFuncs
-  {
+  in WidgetFuncs {
     widgetImage = \drawInfo ->
       if Widget.diHasFocus drawInfo
       then

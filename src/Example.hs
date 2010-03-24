@@ -162,7 +162,8 @@ withKeysTable fonts = --KeysTable.newBoxedWidget Box.Horizontal 50 (keysFont fon
                       (vbox fonts)
 
 fontFilename :: FilePath
-fontFilename = "/usr/share/fonts/truetype/freefont/FreeMono.ttf"
+fontFilename = --"/usr/share/fonts/truetype/freefont/FreeMono.ttf"
+               "/usr/share/fonts/truetype/msttcorefonts/times.ttf"
 
 makeGui :: IO (Widget Model)
 makeGui = do

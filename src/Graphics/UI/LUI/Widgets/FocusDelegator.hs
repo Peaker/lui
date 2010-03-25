@@ -63,10 +63,12 @@ newWith focusColor startStr stopStr childWidget acc model =
         let haveFocus = Widget.diHasFocus drawInfo
             delegatorHasFocus = haveFocus && not delegating
             childDrawInfo = Widget.DrawInfo { Widget.diHasFocus = haveFocus && delegating }
+            size@(_, childHeight) = childWidgetSize childDrawInfo
         in widgetImage childWidgetFuncs childDrawInfo
            `mappend`
            if delegatorHasFocus
-           then Widget.scale (childWidgetSize childDrawInfo) %%
+           then Draw.translate (0, -childHeight) `mappend`
+                Widget.scale size %%
                 focusColor `Draw.tint` Widget.rect
            else mempty
            

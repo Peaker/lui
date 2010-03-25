@@ -149,13 +149,14 @@ new cursorWidth bgColor cursorColor font textColor acc model =
       then
         let (w, h) = Widget.textSize font $ take cursor text
             cursorSize = (cursorWidth, h)
-            cursorPos = (w, 0)
+            cursorPos = (w, -h)
         in
           mconcat [
             (Draw.translate cursorPos `mappend` Widget.scale cursorSize) %%
             cursorColor `Draw.tint` Widget.rect,
             textImage,
-            Widget.scale ts %% bgColor `Draw.tint` Widget.rect
+            (Draw.translate (0, -h) `mappend` Widget.scale ts) %%
+            bgColor `Draw.tint` Widget.rect
           ]
       else
         textImage

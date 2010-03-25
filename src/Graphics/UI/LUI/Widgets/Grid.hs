@@ -204,7 +204,7 @@ new size items acc model =
                       childImage = widgetImage childWidgetFuncs childDrawInfo
                       (w, h) = widgetSize childWidgetFuncs childDrawInfo
                       pos = (xpos + ax * (width-w),
-                             totalHeight - height - (ypos + ay * (height-h)))
+                             - (ypos + ay * (height-h)))
                   in Draw.translate pos %% childImage
         in mconcat . concat $ images
 

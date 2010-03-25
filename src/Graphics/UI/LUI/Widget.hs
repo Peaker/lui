@@ -5,7 +5,7 @@ module Graphics.UI.LUI.Widget
 where
 
 import Data.Accessor(Accessor)
-import Data.Monoid(mappend)
+import Data.Monoid(mconcat)
 import Graphics.UI.LUI.Keymap(Keymap)
 
 import qualified Graphics.DrawingCombinators as Draw
@@ -18,17 +18,28 @@ scale :: Draw.R2 -> Draw.Affine
 scale = uncurry Draw.scale
 
 -- Draw.text puts text at (0, -descenderHeight)..(width, ascenderHeight)
--- drawText puts text at (0, 0)..(width, totalHeight)
+-- drawText puts text at (0, 0)..(width, -totalHeight)
 -- where descenderHeight = -fontDescender [which is negative].
 
+textScale :: Draw.R2
+textScale = (1/30, 1/20)
+
 drawText :: Font -> String -> Image Any
-drawText font str = scale ((1/10), (1/10)) `mappend`
-                    Draw.translate (0, -Draw.fontDescender font)
-                    %% Draw.text font str
+drawText font str =
+  mconcat [
+    Draw.translate (0, -textHeight),
+    scale textScale,
+    Draw.translate (0, -Draw.fontDescender font)
+    ] %%
+  Draw.text font str
+  where
+    (_, textHeight) = textSize font str
+
+liftTuple2 :: (a -> b -> c) -> (a, a) -> (b, b) -> (c, c)
+liftTuple2 f (a1, a2) (b1, b2) = (f a1 b1, f a2 b2)
 
 textSize :: Font -> String -> Draw.R2
-textSize font str = (Draw.textWidth font str / 10,
-                     Draw.fontHeight font / 10)
+textSize font str = liftTuple2 (*) textScale $ Draw.textSize font str
 
 data DrawInfo = DrawInfo { diHasFocus :: Bool }
   deriving (Eq, Ord, Show, Read)
@@ -37,7 +48,7 @@ data DrawInfo = DrawInfo { diHasFocus :: Bool }
 --type SizedImage a = (Draw.R2, Image a)
 
 data WidgetFuncs model = WidgetFuncs {
-  -- The image should be neatly bound in (0, 0)..widgetSize
+  -- The image should be neatly bound in (0, 0)..(width, -height)
     widgetImage :: DrawInfo -> Image Any
   , widgetSize :: DrawInfo -> Draw.R2
   , widgetGetKeymap :: Maybe (Keymap model)

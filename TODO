@@ -1,13 +1,12 @@
-* Convert to use image combinators
-
 * Use Data-Accessor-Template to avoid the repetative data accessors
 * Draw Info to be moved out to the Widget function itself, not in the record
 
 * Consider removing the accessor arg and using adapter always
   This means child containers have to be parameterized on the child
   rather than on the generic model, so Grid is not Widget model
-  but Widget (Mutable, Map Cursor childModel)?
-  Then, you can adapt the real model to that tuple.
+  but Widget (Mutable, childModel)?
+  Then, you can adapt the real model to that tuple, and the childModel
+  to each child's model.
   This is probably less convenient than what I have now
 
 * Scrollable

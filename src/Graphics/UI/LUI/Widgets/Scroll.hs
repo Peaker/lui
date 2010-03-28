@@ -17,10 +17,9 @@ import qualified Data.Map as Map
 import Data.Monoid(Monoid(..))
 import Control.Applicative(liftA2)
 
-data Mutable = Mutable
-    {
-      mutablePos :: Vector2 Int
-    }
+data Mutable = Mutable {
+  mutablePos :: Vector2 Int
+  }
 
 leftKeyGroup,
  rightKeyGroup,

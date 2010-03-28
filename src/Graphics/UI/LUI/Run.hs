@@ -14,4 +14,7 @@ keyEvent :: Keymap.ModKey -> WidgetFuncs model -> Maybe model
 keyEvent key widgetFuncs = (snd . snd) `fmap` (Keymap.lookup key =<< widgetGetKeymap widgetFuncs)
 
 draw :: WidgetFuncs model -> IO ()
-draw widgetFuncs = Draw.clearRender $ Draw.translate (-1, 1) %% widgetImage widgetFuncs (Widget.DrawInfo True)
+draw widgetFuncs =
+  Draw.clearRender $
+  Draw.translate (-1, 1) %%
+  widgetImage widgetFuncs (Widget.DrawInfo True)

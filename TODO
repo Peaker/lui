@@ -1,3 +1,18 @@
+* Decide on SDL or GLUT and remove the other...
+
+  * If SDL, better integrate some of the improvements of the GLUT branch...
+
+* Downloads:
+
+  * Data-Accessor-Template
+
+  * ftgl sources
+
+  * freetype sources
+
+  * direct freetype bindings, or figure out why antialiasing is turned
+    off when ftgl uses freetype?
+
 * Use Data-Accessor-Template to avoid the repetative data accessors
 * Draw Info to be moved out to the Widget function itself, not in the record
 
